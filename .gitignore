@@ -1,0 +1,29 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Database (data, not code)
+app/db.sqlite3
+*.sqlite3
+
+# Backup files from update scripts
+*.backup
+
+# Editor & OS junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/
+
+# Secrets
+.env
+
+# Project Docs & Raw Data
+docs/
+data/

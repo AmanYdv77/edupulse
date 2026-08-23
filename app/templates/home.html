@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% comment %}
+  The HOME page is now a ROLE-BASED DASHBOARD.
+  The `dashboard` data comes from the view, chosen by the user's role.
+  Same page, different content per role — the heart of the hierarchy.
+{% endcomment %}
+
+{% block title %}{{ dashboard.title }} — Result Platform{% endblock %}
+
+{% block body %}
+  <!-- Top bar: brand + who's logged in + logout -->
+  <div class="topbar">
+    <div class="brand">🎓 Result Platform</div>
+    <div class="userbox">
+      <span>{{ user.get_full_name|default:user.username }}</span>
+      <span class="role-badge">{{ role_label }}</span>
+      <a href="#" class="btn btn-light"
+         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</a>
+      <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">
+        {% csrf_token %}
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>{{ dashboard.title }}</h1>
+    <p class="subtitle">{{ dashboard.subtitle }}</p>
+    <p class="muted">Welcome back, {{ user.get_full_name|default:user.username }}! 👋</p>
+
+    {% if is_admin %}
+      <p class="muted" style="margin-top:10px;">
+        Tip: You can manage everything in the
+        <a href="/admin/">Django admin panel</a>.
+      </p>
+    {% endif %}
+
+    <!-- Role-specific cards -->
+    <div class="grid">
+      {% for card in dashboard.cards %}
+        {% if card.link %}
+          <a href="{% url card.link %}" class="dash-card" style="text-decoration:none; color:inherit; display:block;">
+            <div class="icon">{{ card.icon }}</div>
+            <div class="label">{{ card.label }} →</div>
+            <div class="desc">{{ card.desc }}</div>
+          </a>
+        {% else %}
+          <div class="dash-card">
+            <div class="icon">{{ card.icon }}</div>
+            <div class="label">{{ card.label }}</div>
+            <div class="desc">{{ card.desc }}</div>
+          </div>
+        {% endif %}
+      {% empty %}
+        <p>No dashboard items yet.</p>
+      {% endfor %}
+    </div>
+
+    <p class="muted" style="margin-top:30px;">
+      📌 These panels are placeholders for now. Real data (your subjects, marks &
+      analytics) gets connected in the next milestone.
+    </p>
+  </div>
+{% endblock %}

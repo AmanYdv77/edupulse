@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}My Results — Result Platform{% endblock %}
+
+{% block body %}
+  <div class="topbar">
+    <div class="brand">🎓 Result Platform</div>
+    <div class="userbox">
+      <a href="{% url 'home' %}" class="btn btn-light">← Dashboard</a>
+      <a href="#" class="btn btn-light"
+         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</a>
+      <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
+    </div>
+  </div>
+
+  <div class="container">
+    {% if no_profile %}
+      <h1>My Results</h1>
+      <p class="muted">No student profile is linked to your account yet.
+         (An admin needs to create your student profile.)</p>
+
+    {% elif not has_results %}
+      <h1>My Results</h1>
+      <p class="muted">No results have been published for you yet.</p>
+
+    {% else %}
+      <h1>My Results 📄</h1>
+      <p class="subtitle">
+        {{ student.user.get_full_name }} &nbsp;•&nbsp; Roll No: <b>{{ student.roll_no }}</b>
+        {% if student.course %} &nbsp;•&nbsp; {{ student.course.name }}{% endif %}
+      </p>
+
+      {% for sem in semester_list %}
+        <div class="dash-card" style="margin-top:22px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <h2 style="font-size:1.25rem; color:#3a3f58;">Semester {{ sem.semester }}</h2>
+            <div>
+              <span class="role-badge" style="background:linear-gradient(135deg,#0c9d61,#1597a5);">
+                {{ sem.status }}
+              </span>
+              <span style="margin-left:10px; font-weight:700; color:#3b45c4;">
+                SGPA: {{ sem.sgpa }} &nbsp;|&nbsp; {{ sem.percentage }}%
+              </span>
+            </div>
+          </div>
+
+          <table style="width:100%; border-collapse:collapse; margin-top:14px; font-size:0.92rem;">
+            <thead>
+              <tr style="background:#f7f8fd; text-align:left;">
+                <th style="padding:10px;">Code</th>
+                <th style="padding:10px;">Subject</th>
+                <th style="padding:10px;">Internal</th>
+                <th style="padding:10px;">External</th>
+                <th style="padding:10px;">Total</th>
+                <th style="padding:10px;">Grade</th>
+                <th style="padding:10px;">Teacher</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in sem.rows %}
+                <tr style="border-bottom:1px solid #eef0f7;">
+                  <td style="padding:10px;">{{ r.subject.code }}</td>
+                  <td style="padding:10px;">{{ r.subject.title }}</td>
+                  <td style="padding:10px;">{{ r.internal_marks }}</td>
+                  <td style="padding:10px;">{{ r.external_marks }}</td>
+                  <td style="padding:10px;"><b>{{ r.total_secured }}</b> / {{ r.max_marks }}</td>
+                  <td style="padding:10px;">
+                    <span class="role-badge" style="background:#eef1ff; color:#3b45c4;">{{ r.letter_grade }}</span>
+                  </td>
+                  <td style="padding:10px; color:#6b7089;">
+                    {% if r.teacher %}{{ r.teacher.user.get_full_name }}{% else %}—{% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+
+      <p class="muted" style="margin-top:24px;">
+        ✅ This is REAL data from your database — your first live results page!
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}

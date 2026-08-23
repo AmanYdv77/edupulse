@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% comment %}
+  The LOGIN page. Django's built-in login looks for this exact path:
+  registration/login.html
+{% endcomment %}
+
+{% block title %}Login — Result Platform{% endblock %}
+
+{% block body %}
+  <div class="center-wrap">
+    <div class="card">
+      <h1>🎓 Result Platform</h1>
+      <p>Please log in to continue.</p>
+
+      {% if form.errors %}
+        <div class="error">Wrong username or password. Please try again.</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+
+        <label for="id_username">Username</label>
+        {{ form.username }}
+
+        <label for="id_password">Password</label>
+        {{ form.password }}
+
+        <button type="submit" class="btn btn-block">Log in</button>
+      </form>
+
+      <p class="muted" style="margin-top:18px;">
+        Try: <b>student_cs</b>, <b>teacher_cse</b>, <b>hod_cse</b>, <b>vc</b> …<br>
+        (sample password: <b>Pass@123</b>)
+      </p>
+    </div>
+  </div>
+{% endblock %}
