@@ -1,78 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Results Overview — Result Platform{% endblock %}
 
-{% block body %}
-  <div class="topbar">
-    <div class="brand">🎓 Result Platform</div>
-    <div class="userbox">
-      <span class="role-badge">{{ role_label }}</span>
-      <a href="{% url 'home' %}" class="btn btn-light">← Dashboard</a>
-      <a href="#" class="btn btn-light"
-         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</a>
-      <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
-    </div>
-  </div>
+{% block title %}Department Records Overview{% endblock %}
+{% block header_title %}Cohort Performance Ledger{% endblock %}
 
-  <div class="container">
-    <h1>Results Overview</h1>
-    <p class="subtitle">
-      You are viewing: <b>{{ scope_label }}</b>
-    </p>
-
-    <!-- Quick stats -->
-    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
-      <div class="dash-card">
-        <div class="icon">👥</div>
-        <div class="label">{{ student_count }}</div>
-        <div class="desc">Students in your scope</div>
-      </div>
-      <div class="dash-card">
-        <div class="icon">📊</div>
-        <div class="label">{{ overall.avg|floatformat:1|default:"—" }}</div>
-        <div class="desc">Average marks (out of 100)</div>
-      </div>
-      <div class="dash-card">
-        <div class="icon">📄</div>
-        <div class="label">{{ overall.total }}</div>
-        <div class="desc">Total result records</div>
-      </div>
+{% block content %}
+<div class="grid-kpi">
+    <div class="kpi-card">
+        <div class="kpi-label">Students in Ledger</div>
+        <div class="kpi-value mono">{{ student_count }}</div>
+        <div class="kpi-footer">
+            <span class="mono">Scope: {{ scope_label }}</span>
+        </div>
     </div>
 
-    <!-- Per-student table -->
-    {% if students %}
-      <div class="dash-card" style="margin-top:22px;">
-        <h2 style="font-size:1.2rem; color:#3a3f58;">Students (ranked by average)</h2>
-        <table style="width:100%; border-collapse:collapse; margin-top:12px; font-size:0.92rem;">
-          <thead>
-            <tr style="background:#f7f8fd; text-align:left;">
-              <th style="padding:10px;">#</th>
-              <th style="padding:10px;">Roll No</th>
-              <th style="padding:10px;">Name</th>
-              <th style="padding:10px;">Department</th>
-              <th style="padding:10px;">Subjects</th>
-              <th style="padding:10px;">Avg Marks</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in students %}
-              <tr style="border-bottom:1px solid #eef0f7;">
-                <td style="padding:10px;">{{ forloop.counter }}</td>
-                <td style="padding:10px;">{{ s.student__roll_no }}</td>
-                <td style="padding:10px;">{{ s.student__user__first_name }} {{ s.student__user__last_name }}</td>
-                <td style="padding:10px; color:#6b7089;">{{ s.student__course__department__name }}</td>
-                <td style="padding:10px;">{{ s.subjects }}</td>
-                <td style="padding:10px;"><b>{{ s.avg_marks|floatformat:1 }}</b></td>
-              </tr>
-            {% endfor %}
-          </tbody>
+    <div class="kpi-card">
+        <div class="kpi-label">Aggregated Avg Score</div>
+        <div class="kpi-value mono">{{ overall.avg|floatformat:1|default:"0.0" }}%</div>
+        <div class="kpi-footer">
+            <span class="mono">Across {{ overall.total|default:0 }} Result Records</span>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-label">User Access Role</div>
+        <div class="kpi-value mono" style="font-size: 20px; padding-top: 4px;">{{ role_label }}</div>
+        <div class="kpi-footer">
+            <span class="mono">Monolith Policy Filter Active</span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Student Performance Master Table</div>
+            <div class="card-subtitle">Filtered to {{ scope_label }} authority scope</div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="monolith-table">
+            <thead>
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Department</th>
+                    <th>Graded Subjects</th>
+                    <th>Average Mark</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="mono" style="font-weight: 600;">{{ s.student__roll_no }}</td>
+                    <td>{{ s.student__user__first_name }} {{ s.student__user__last_name }}</td>
+                    <td>{{ s.student__course__department__name }}</td>
+                    <td class="mono">{{ s.subjects }}</td>
+                    <td class="mono" style="font-weight: 700; font-size: 14px;">{{ s.avg_marks|floatformat:1 }}%</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No academic records found within your assigned scope.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-      </div>
-      <p class="muted" style="margin-top:20px;">
-        ✅ This list is automatically filtered to your role's scope. A higher role
-        would see more students; a lower role, fewer. That's the hierarchy! 🔐
-      </p>
-    {% else %}
-      <p class="muted" style="margin-top:22px;">No results found in your scope yet.</p>
-    {% endif %}
-  </div>
+    </div>
+</div>
 {% endblock %}

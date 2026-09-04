@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Notice | Monolith Dark</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-canvas: #090a0c;
+            --bg-card: #14161c;
+            --border-subtle: #20242e;
+            --border-default: #2d3340;
+            --text-primary: #ffffff;
+            --text-secondary: #9da3b4;
+            --text-muted: #5e6475;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .error-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            padding: 36px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background-color: #ffffff;
+            color: #000000;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+        }
+
+        p {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .technical-reason {
+            background-color: #0d0f14;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+            text-align: left;
+            margin-bottom: 28px;
+            word-break: break-word;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background-color: #ffffff;
+            color: #090a0c;
+            border: 1px solid #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #e2e4e9;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-card);
+            color: #ffffff;
+            border: 1px solid var(--border-default);
+        }
+
+        .btn-secondary:hover {
+            border-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="security-badge mono">Security Protocol 403</div>
+        <h1>Security Token Synchronized</h1>
+        <p>
+            Your CSRF validation token was rotated or expired. This commonly occurs when using the browser <strong>Back</strong> button, switching between student and teacher accounts, or opening multiple tabs.
+        </p>
+
+        <div class="technical-reason mono">
+            Reason: {{ reason|default:"CSRF token from POST incorrect (rotated/cached session mismatch)" }}
+        </div>
+
+        <div class="btn-group">
+            <button onclick="window.location.reload();" class="btn btn-primary">
+                Reload & Continue
+            </button>
+            <button onclick="window.location.href='/accounts/login/';" class="btn btn-secondary">
+                Return to Login
+            </button>
+        </div>
+    </div>
+</body>
+</html>

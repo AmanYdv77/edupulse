@@ -25,7 +25,19 @@ SECRET_KEY = 'django-insecure-^=-5i9@0-qy%-#d5klc^46@v+pj!th%=p3*-l!&4lm7@@p99zx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+
+# CSRF & Cookie Configuration for Local Development & Telemetry
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://0.0.0.0:8000",
+]
+
+CSRF_COOKIE_HTTPONLY = False  # Allows client-side auto-synchronization of CSRF tokens
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "Lax"
+
 
 
 # Application definition

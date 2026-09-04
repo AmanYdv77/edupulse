@@ -1,37 +1,51 @@
 {% extends "base.html" %}
-{% comment %}
-  The LOGIN page. Django's built-in login looks for this exact path:
-  registration/login.html
-{% endcomment %}
 
-{% block title %}Login — Result Platform{% endblock %}
+{% block title %}Authentication{% endblock %}
 
-{% block body %}
-  <div class="center-wrap">
-    <div class="card">
-      <h1>🎓 Result Platform</h1>
-      <p>Please log in to continue.</p>
+{% block content %}
+<div style="min-height: 80vh; display: flex; align-items: center; justify-content: center;">
+    <div style="width: 100%; max-width: 440px;">
+        <div style="text-align: center; margin-bottom: 28px;">
+            <div class="brand-icon" style="margin: 0 auto 16px auto; width: 44px; height: 44px; font-size: 18px;">EP</div>
+            <h1 style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px;">Sign In to EduPulse</h1>
+            <p style="color: var(--text-secondary); font-size: 13.5px;">Dual-Model Academic Telemetry & Performance Engine</p>
+        </div>
 
-      {% if form.errors %}
-        <div class="error">Wrong username or password. Please try again.</div>
-      {% endif %}
+        <div class="card" style="padding: 32px; border-color: var(--border-default);">
+            {% if form.errors %}
+            <div class="alert" style="border-color: #ffffff; margin-bottom: 20px;">
+                <span>Invalid credentials entered. Please verify your login details.</span>
+            </div>
+            {% endif %}
 
-      <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="id_username">Username / Roll No</label>
+                    <input type="text" name="username" autofocus required id="id_username" class="form-control mono" placeholder="e.g. 25-engg-cse-ug-001">
+                </div>
 
-        <label for="id_username">Username</label>
-        {{ form.username }}
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" for="id_password">Password</label>
+                    <input type="password" name="password" required id="id_password" class="form-control" placeholder="••••••••">
+                </div>
 
-        <label for="id_password">Password</label>
-        {{ form.password }}
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px;">
+                    Authenticate Session
+                </button>
+            </form>
 
-        <button type="submit" class="btn btn-block">Log in</button>
-      </form>
-
-      <p class="muted" style="margin-top:18px;">
-        Try: <b>student_cs</b>, <b>teacher_cse</b>, <b>hod_cse</b>, <b>vc</b> …<br>
-        (sample password: <b>Pass@123</b>)
-      </p>
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+                <div style="font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 10px;">
+                    Demo Credentials:
+                </div>
+                <div class="mono" style="font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
+                    <div>• Student: <span style="color: var(--text-primary);">25-engg-cse-ug-001</span> / <span style="color: var(--text-muted);">password123</span></div>
+                    <div>• Faculty: <span style="color: var(--text-primary);">cse_fac01</span> / <span style="color: var(--text-muted);">password123</span></div>
+                    <div>• Admin: <span style="color: var(--text-primary);">Aman_Yadav</span> / <span style="color: var(--text-muted);">password123</span></div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+</div>
 {% endblock %}

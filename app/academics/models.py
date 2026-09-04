@@ -220,3 +220,102 @@ class SemesterResult(models.Model):
 
     def __str__(self):
         return f"{self.student.roll_no} | Sem {self.semester} | SGPA {self.sgpa}"
+
+
+# ---------------------------------------------------------------------------
+# HABIT TRACKING & DATA COLLECTION
+# ---------------------------------------------------------------------------
+from django.utils import timezone
+
+class StudentHabitPreference(models.Model):
+    FREQUENCY_CHOICES = [
+        ("DAILY", "Daily Quick-Check (30 sec)"),
+        ("WEEKLY", "Weekly Summary (2 min)"),
+    ]
+    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name="habit_preference")
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default="DAILY")
+    streak_count = models.IntegerField(default=0)
+    last_checkin_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.roll_no} - {self.frequency} (Streak: {self.streak_count})"
+
+
+class HabitCheckInLog(models.Model):
+    LOG_TYPES = [
+        ("DAILY", "Daily Log"),
+        ("WEEKLY", "Weekly Log"),
+    ]
+    MOTIVATION_CHOICES = [
+        ("Low", "Low"),
+        ("Medium", "Medium"),
+        ("High", "High"),
+    ]
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="habit_logs")
+    log_type = models.CharField(max_length=10, choices=LOG_TYPES, default="DAILY")
+    log_date = models.DateField(default=timezone.now)
+    hours_studied = models.FloatField(default=0.0, help_text="Hours studied (today if daily, total for week if weekly)")
+    sleep_hours = models.FloatField(default=7.0, help_text="Hours slept (last night if daily, avg/night if weekly)")
+    motivation_level = models.CharField(max_length=10, choices=MOTIVATION_CHOICES, default="Medium")
+    tutoring_sessions = models.IntegerField(default=0, help_text="Tutoring sessions attended")
+    physical_activity = models.IntegerField(default=0, help_text="Hours/days of physical activity or exercise")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-log_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.student.roll_no} | {self.log_type} on {self.log_date} | Study: {self.hours_studied}h, Sleep: {self.sleep_hours}h"
+
+
+def sync_habits_to_semester_result(student):
+    """
+    Aggregates recent Daily or Weekly HabitCheckInLogs for this student,
+    computes normalized weekly figures (hours_studied_per_week, sleep_hours_per_night, motivation_level),
+    and updates their current active SemesterResult so the ML model has live data.
+    """
+    from datetime import timedelta
+    
+    current_sem = student.current_semester
+    sem_result, _ = SemesterResult.objects.get_or_create(
+        student=student, semester=current_sem,
+        defaults={"percentage": 0, "sgpa": 0, "attendance_percentage": 85.0}
+    )
+    
+    today = timezone.now().date()
+    seven_days_ago = today - timedelta(days=7)
+    
+    recent_logs = student.habit_logs.filter(log_date__gte=seven_days_ago)
+    if not recent_logs.exists():
+        recent_logs = student.habit_logs.filter(log_date__gte=today - timedelta(days=30))
+        
+    if recent_logs.exists():
+        daily_logs = recent_logs.filter(log_type="DAILY")
+        weekly_logs = recent_logs.filter(log_type="WEEKLY")
+        
+        if weekly_logs.exists():
+            latest_weekly = weekly_logs.first()
+            sem_result.hours_studied_per_week = latest_weekly.hours_studied
+            sem_result.sleep_hours_per_night = latest_weekly.sleep_hours
+            sem_result.motivation_level = latest_weekly.motivation_level
+            sem_result.tutoring_sessions = latest_weekly.tutoring_sessions
+            sem_result.physical_activity = latest_weekly.physical_activity
+        elif daily_logs.exists():
+            total_study = sum(log.hours_studied for log in daily_logs)
+            count = daily_logs.count()
+            avg_daily_study = total_study / count if count else 0
+            sem_result.hours_studied_per_week = round(avg_daily_study * 7, 1)
+            
+            avg_sleep = sum(log.sleep_hours for log in daily_logs) / count if count else 7.0
+            sem_result.sleep_hours_per_night = round(avg_sleep, 1)
+            
+            latest_daily = daily_logs.first()
+            sem_result.motivation_level = latest_daily.motivation_level
+            sem_result.tutoring_sessions = latest_daily.tutoring_sessions
+            sem_result.physical_activity = latest_daily.physical_activity
+            
+        sem_result.save()
+    return sem_result

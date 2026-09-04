@@ -1,106 +1,89 @@
 {% extends "base.html" %}
 
-{% block title %}At-Risk Students warning list — Result Platform{% endblock %}
+{% block title %}At-Risk Student Radar{% endblock %}
+{% block header_title %}Early Warning & Risk Radar{% endblock %}
 
-{% block body %}
-  <!-- Top bar -->
-  <div class="topbar">
-    <div class="brand">🎓 Result Platform</div>
-    <div class="userbox">
-      <span>{{ user.get_full_name|default:user.username }}</span>
-      <span class="role-badge">{{ role_label }}</span>
-      <a href="{% url 'home' %}" class="btn btn-light">Dashboard</a>
-    </div>
-  </div>
-
-  <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
-      <div>
-        <h1>⚠️ At-Risk Students Early Warning</h1>
-        <p class="subtitle">Scope: {{ scope_label }}</p>
-      </div>
-      <div style="background:#fdf3f2; color:#e74c3c; font-weight:700; padding:10px 18px; border-radius:10px; font-size:0.95rem; border: 1px solid #fadbd8;">
-        Total Students At Risk: {{ total_at_risk }}
-      </div>
+{% block content %}
+<div class="grid-kpi">
+    <div class="kpi-card">
+        <div class="kpi-label">Flagged At-Risk Cohort</div>
+        <div class="kpi-value mono" style="color: var(--text-primary);">{{ total_at_risk }}</div>
+        <div class="kpi-footer">
+            <span class="tag tag-high-risk">Urgent Attention</span>
+        </div>
     </div>
 
-    <p style="margin-bottom: 25px; font-size: 0.95rem; color:#6b7089;">
-      The list below highlights students who are predicted by the ML model to secure less than 50% in any of their current active semester subjects. This allows departments to take early corrective actions (counseling, remedial classes, etc.).
-    </p>
+    <div class="kpi-card">
+        <div class="kpi-label">Monitored Scope</div>
+        <div class="kpi-value mono" style="font-size: 18px; padding-top: 4px;">{{ scope_label }}</div>
+        <div class="kpi-footer">
+            <span class="mono">Active Departmental Boundary</span>
+        </div>
+    </div>
 
-    <!-- Students Warning List -->
-    {% if at_risk_list %}
-      <div style="display:flex; flex-direction:column; gap:20px;">
-        {% for item in at_risk_list %}
-          <div style="background:#fff; border-radius:16px; padding:24px; box-shadow:0 6px 24px rgba(60,70,120,0.06); border:1px solid #eef0f7; display:flex; flex-direction:column; gap:16px;">
-            
-            <!-- Student Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid #f0f2fa; padding-bottom:12px;">
-              <div>
-                <h3 style="color:#3a3f58; margin-bottom:2px;">{{ item.student.user.get_full_name }}</h3>
-                <span class="muted">Roll No: <strong>{{ item.student.roll_no }}</strong> | Course: <strong>{{ item.student.course.name }}</strong></span>
-              </div>
-              <div style="text-align:right;">
-                <span style="font-size: 0.78rem; font-weight:700; color:#b5730f; background:#fff4e5; padding:5px 12px; border-radius:30px; border:1px solid #fdebd0;">
-                  ACTIVE SEMESTER: {{ item.student.current_semester }}
-                </span>
-              </div>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-label">Primary Risk Factor</div>
+        <div class="kpi-value mono" style="font-size: 20px; padding-top: 4px;">Study Deficit &lt; 8h/w</div>
+        <div class="kpi-footer">
+            <span class="mono">Detected via Telemetry Aggregates</span>
+        </div>
+    </div>
+</div>
 
-            <!-- Failing Subjects Predictions -->
-            <div>
-              <h4 style="font-size:0.9rem; color:#8c92ac; text-transform:uppercase; font-weight:700; margin-bottom:10px;">Predicted Failures (Score < 50%):</h4>
-              <div style="display:flex; flex-wrap:wrap; gap:12px;">
-                {% for sub in item.failing_subjects %}
-                  <div style="background:#fdf3f2; border:1.5px solid #fadbd8; padding:12px 16px; border-radius:10px; flex:1; min-width:240px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                      <strong style="color:#c0392b;">{{ sub.subject_code }}</strong>
-                      <div style="font-size:0.85rem; color:#5b6079; margin-top:2px;">{{ sub.subject_title }}</div>
-                    </div>
-                    <div style="text-align:right;">
-                      <div style="font-size:1.15rem; font-weight:800; color:#e74c3c;">{{ sub.predicted_percentage }}%</div>
-                      <span style="font-size:0.75rem; color:#c0392b; font-weight:700;">Grade: {{ sub.expected_grade }}</span>
-                    </div>
-                  </div>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Students Requiring Intervention</div>
+            <div class="card-subtitle">Generated by predictive engine based on current semester performance vector</div>
+        </div>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="monolith-table">
+            <thead>
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Course / Dept</th>
+                    <th>Failing Subjects</th>
+                    <th>Avg Risk Score</th>
+                    <th>Behavioral Telemetry</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in at_risk_list %}
+                <tr>
+                    <td class="mono" style="font-weight: 700;">{{ item.student.roll_no }}</td>
+                    <td>{{ item.student.user.get_full_name|default:item.student.user.username }}</td>
+                    <td>{{ item.student.course.name }}</td>
+                    <td>
+                        {% for sub in item.failing_subjects %}
+                        <div class="mono" style="font-size: 12px; margin-bottom: 2px;">
+                            • {{ sub.subject_code }}: <strong style="color: var(--text-primary);">{{ sub.predicted_percentage }}%</strong>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    <td class="mono" style="font-weight: 700;">
+                        <span class="tag tag-high-risk">{{ item.avg_risk_score }}%</span>
+                    </td>
+                    <td class="mono" style="font-size: 12px; color: var(--text-secondary);">
+                        <div>Study: {{ item.behavior.hours_studied_per_week|default:"0" }}h/wk</div>
+                        <div>Attd: {{ item.behavior.attendance_percentage|default:"85" }}%</div>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="alert('Intervention logged for student {{ item.student.roll_no }}')">Intervene</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 28px;">
+                        No students currently flagged in high-risk categories. Cohort is performing optimally.
+                    </td>
+                </tr>
                 {% endfor %}
-              </div>
-            </div>
-
-            <!-- Behavioral Insights (context on why they are failing) -->
-            {% if item.behavior %}
-              <div style="background:#f8fafc; border-radius:10px; padding:14px 18px; font-size:0.9rem; display:flex; flex-direction:column; gap:8px;">
-                <h5 style="color:#5b6079; font-weight:700;">Model Inference Insights:</h5>
-                <div style="display:flex; flex-wrap:wrap; gap:20px; color:#6b7089;">
-                  <span>Attendance: <strong style="color:{% if item.behavior.attendance_percentage < 75 %}#e74c3c{% else %}#2d3142{% endif %};">{{ item.behavior.attendance_percentage }}%</strong></span>
-                  <span>Study Hours: <strong>{{ item.behavior.hours_studied_per_week }} hrs/week</strong></span>
-                  <span>Sleep: <strong>{{ item.behavior.sleep_hours_per_night }} hrs/night</strong></span>
-                  <span>Motivation Level: <strong>{{ item.behavior.motivation_level }}</strong></span>
-                  <span>Parental Involvement: <strong>{{ item.behavior.parental_involvement }}</strong></span>
-                </div>
-              </div>
-            {% endif %}
-
-            <!-- Action Buttons -->
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-              <a href="mailto:{{ item.student.user.email }}" class="btn btn-light" style="font-size:0.85rem; padding:6px 12px;">✉ Email Student</a>
-              <button class="btn" style="font-size:0.85rem; padding:6px 12px; background:linear-gradient(135deg,#e74c3c,#d35400);" onclick="alert('Early Warning warning sent to HOD & Student Profile!')">⚠️ Issue Warning</button>
-            </div>
-
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div style="background:#eefdf4; border:1px solid #d4efdf; padding:40px; border-radius:16px; text-align:center; margin-top:20px;">
-        <span style="font-size: 3rem;">🎉</span>
-        <h3 style="color:#27ae60; margin:15px 0 5px;">Excellent! No At-Risk Students</h3>
-        <p style="color:#5b6079; max-width:500px; margin:0 auto;">
-          The ML model currently predicts that 100% of students in your scope are on track to pass all their active subjects.
-        </p>
-      </div>
-    {% endif %}
-
-    <div style="margin-top:30px; text-align:center;">
-      <a href="{% url 'home' %}" class="btn">Back to Dashboard</a>
+            </tbody>
+        </table>
     </div>
-  </div>
+</div>
 {% endblock %}

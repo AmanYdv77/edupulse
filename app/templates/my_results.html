@@ -1,84 +1,65 @@
 {% extends "base.html" %}
-{% block title %}My Results — Result Platform{% endblock %}
 
-{% block body %}
-  <div class="topbar">
-    <div class="brand">🎓 Result Platform</div>
-    <div class="userbox">
-      <a href="{% url 'home' %}" class="btn btn-light">← Dashboard</a>
-      <a href="#" class="btn btn-light"
-         onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log out</a>
-      <form id="logout-form" action="{% url 'logout' %}" method="post" style="display:none;">{% csrf_token %}</form>
-    </div>
-  </div>
+{% block title %}Academic Transcripts{% endblock %}
+{% block header_title %}Official Academic Transcripts{% endblock %}
 
-  <div class="container">
-    {% if no_profile %}
-      <h1>My Results</h1>
-      <p class="muted">No student profile is linked to your account yet.
-         (An admin needs to create your student profile.)</p>
-
-    {% elif not has_results %}
-      <h1>My Results</h1>
-      <p class="muted">No results have been published for you yet.</p>
-
-    {% else %}
-      <h1>My Results 📄</h1>
-      <p class="subtitle">
-        {{ student.user.get_full_name }} &nbsp;•&nbsp; Roll No: <b>{{ student.roll_no }}</b>
-        {% if student.course %} &nbsp;•&nbsp; {{ student.course.name }}{% endif %}
-      </p>
-
-      {% for sem in semester_list %}
-        <div class="dash-card" style="margin-top:22px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-            <h2 style="font-size:1.25rem; color:#3a3f58;">Semester {{ sem.semester }}</h2>
+{% block content %}
+{% if no_profile %}
+<div class="alert">
+    <span>No student profile linked to this account.</span>
+</div>
+{% elif not has_results %}
+<div class="card" style="text-align: center; padding: 48px;">
+    <div class="card-title" style="margin-bottom: 8px;">No Results Published Yet</div>
+    <div style="color: var(--text-secondary); font-size: 13.5px;">Your official semester exam records have not been uploaded by the examination division.</div>
+</div>
+{% else %}
+<div style="display: flex; flex-direction: column; gap: 28px;">
+    {% for sem in semester_list %}
+    <div class="card">
+        <div class="card-header">
             <div>
-              <span class="role-badge" style="background:linear-gradient(135deg,#0c9d61,#1597a5);">
-                {{ sem.status }}
-              </span>
-              <span style="margin-left:10px; font-weight:700; color:#3b45c4;">
-                SGPA: {{ sem.sgpa }} &nbsp;|&nbsp; {{ sem.percentage }}%
-              </span>
+                <div class="card-title">Semester {{ sem.semester }} Results Record</div>
+                <div class="card-subtitle">Aggregate Status: <strong style="color: var(--text-primary);">{{ sem.status }}</strong></div>
             </div>
-          </div>
-
-          <table style="width:100%; border-collapse:collapse; margin-top:14px; font-size:0.92rem;">
-            <thead>
-              <tr style="background:#f7f8fd; text-align:left;">
-                <th style="padding:10px;">Code</th>
-                <th style="padding:10px;">Subject</th>
-                <th style="padding:10px;">Internal</th>
-                <th style="padding:10px;">External</th>
-                <th style="padding:10px;">Total</th>
-                <th style="padding:10px;">Grade</th>
-                <th style="padding:10px;">Teacher</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in sem.rows %}
-                <tr style="border-bottom:1px solid #eef0f7;">
-                  <td style="padding:10px;">{{ r.subject.code }}</td>
-                  <td style="padding:10px;">{{ r.subject.title }}</td>
-                  <td style="padding:10px;">{{ r.internal_marks }}</td>
-                  <td style="padding:10px;">{{ r.external_marks }}</td>
-                  <td style="padding:10px;"><b>{{ r.total_secured }}</b> / {{ r.max_marks }}</td>
-                  <td style="padding:10px;">
-                    <span class="role-badge" style="background:#eef1ff; color:#3b45c4;">{{ r.letter_grade }}</span>
-                  </td>
-                  <td style="padding:10px; color:#6b7089;">
-                    {% if r.teacher %}{{ r.teacher.user.get_full_name }}{% else %}—{% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span class="mono" style="font-size: 13px; color: var(--text-secondary);">SGPA: <strong style="color: var(--text-primary); font-size: 16px;">{{ sem.sgpa }}</strong></span>
+                <span class="mono" style="font-size: 13px; color: var(--text-secondary);">Percentage: <strong style="color: var(--text-primary); font-size: 16px;">{{ sem.percentage }}%</strong></span>
+            </div>
         </div>
-      {% endfor %}
 
-      <p class="muted" style="margin-top:24px;">
-        ✅ This is REAL data from your database — your first live results page!
-      </p>
-    {% endif %}
-  </div>
+        <div class="table-wrapper">
+            <table class="monolith-table">
+                <thead>
+                    <tr>
+                        <th>Subject Code</th>
+                        <th>Subject Name</th>
+                        <th>Internal</th>
+                        <th>External</th>
+                        <th>Total Secured</th>
+                        <th>Max</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in sem.rows %}
+                    <tr>
+                        <td class="mono" style="font-weight: 600;">{{ row.subject.code }}</td>
+                        <td>{{ row.subject.name }}</td>
+                        <td class="mono">{{ row.internal_marks }}</td>
+                        <td class="mono">{{ row.external_marks }}</td>
+                        <td class="mono" style="font-weight: 700;">{{ row.total_secured }}</td>
+                        <td class="mono">{{ row.max_marks }}</td>
+                        <td>
+                            <span class="tag tag-moderate-risk mono">{{ row.letter_grade|default:"P" }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}
