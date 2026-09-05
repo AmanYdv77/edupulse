@@ -5,6 +5,7 @@ semester results. This is the production-grade shape.
 """
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 # ---------------------------------------------------------------------------
@@ -203,6 +204,10 @@ class SemesterResult(models.Model):
     gc_no = models.CharField(max_length=20, blank=True)
     exam_session = models.CharField(max_length=30, blank=True)
     declaration_date = models.CharField(max_length=20, blank=True)
+    is_published = models.BooleanField(
+        default=True,
+        help_text="Final official result published by Admin. When False, held as draft until bulk release."
+    )
 
     # ML Dynamic/Behavioral Features (from Kaggle Dataset)
     attendance_percentage = models.FloatField(default=0)
@@ -219,7 +224,44 @@ class SemesterResult(models.Model):
         unique_together = ("student", "semester")
 
     def __str__(self):
-        return f"{self.student.roll_no} | Sem {self.semester} | SGPA {self.sgpa}"
+        return f"{self.student.roll_no} | Sem {self.semester} | SGPA {self.sgpa} | {'Published' if self.is_published else 'Draft'}"
+
+
+# ---------------------------------------------------------------------------
+# CONTINUOUS EVALUATION / INTERNAL ASSESSMENTS (Uploaded by Faculty)
+# ---------------------------------------------------------------------------
+
+class InternalAssessment(models.Model):
+    ASSESSMENT_TYPES = [
+        ("MIDTERM", "Mid-Semester Examination"),
+        ("ASSIGNMENT", "Continuous Assignment"),
+        ("QUIZ", "Class Test / Quiz"),
+        ("LAB", "Practical / Lab Assessment"),
+        ("PROJECT", "Term Project / Seminar"),
+    ]
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="internal_assessments")
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="internal_assessments")
+    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name="internal_assessments")
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="internal_assessments")
+    semester = models.IntegerField(default=1)
+    title = models.CharField(max_length=100, help_text="e.g. Midterm Test 1, Assignment 2")
+    assessment_type = models.CharField(max_length=20, choices=ASSESSMENT_TYPES, default="ASSIGNMENT")
+    marks_obtained = models.FloatField(default=0.0)
+    max_marks = models.FloatField(default=25.0)
+    date_conducted = models.DateField(default=timezone.now)
+    is_submitted = models.BooleanField(default=True, help_text="Visible across hierarchical scope when submitted")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date_conducted", "-created_at"]
+
+    @property
+    def percentage(self):
+        return round((self.marks_obtained / self.max_marks) * 100, 1) if self.max_marks > 0 else 0.0
+
+    def __str__(self):
+        return f"{self.student.roll_no} | {self.subject.code} | {self.title}: {self.marks_obtained}/{self.max_marks}"
 
 
 # ---------------------------------------------------------------------------

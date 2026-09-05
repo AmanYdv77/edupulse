@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Internal Marks Entry{% endblock %}
+{% block header_title %}Faculty Assessment Portal{% endblock %}
+
+{% block content %}
+<style>
+    .tab-container {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 24px;
+    }
+    .tab-btn {
+        padding: 10px 18px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .tab-btn.active {
+        color: var(--text-primary);
+        border-bottom-color: var(--text-primary);
+        font-weight: 600;
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+    .drop-zone {
+        border: 2px dashed var(--border-default);
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        background-color: var(--bg-card);
+        cursor: pointer;
+        transition: border-color 0.15s ease;
+    }
+    .drop-zone:hover {
+        border-color: var(--text-primary);
+    }
+</style>
+
+<!-- Top Assignment Selector -->
+<div class="card" style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <div class="card-title">Select Active Class & Subject</div>
+            <div class="card-subtitle">Choose the course batch you wish to record internal evaluation marks for</div>
+        </div>
+        <form method="get" action="{% url 'teacher_internal_marks' %}" style="display: flex; gap: 10px; align-items: center;">
+            <select name="assignment" class="form-control" style="min-width: 280px;" onchange="this.form.submit()">
+                {% for a in assignments %}
+                <option value="{{ a.id }}" {% if selected_assignment and selected_assignment.id == a.id %}selected{% endif %}>
+                    {{ a.subject.code }} — {{ a.subject.title }} ({{ a.batch.batch_code }})
+                </option>
+                {% empty %}
+                <option value="">No teaching assignments found</option>
+                {% endfor %}
+            </select>
+            <noscript><button type="submit" class="btn btn-secondary btn-sm">Load</button></noscript>
+        </form>
+    </div>
+</div>
+
+{% if selected_assignment %}
+<!-- Assessment Parameters Form -->
+<form method="post" enctype="multipart/form-data" action="{% url 'teacher_internal_marks' %}?assignment={{ selected_assignment.id }}">
+    {% csrf_token %}
+    
+    <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Assessment Metadata</div>
+                <div class="card-subtitle">Course: {{ selected_assignment.subject.code }} | Batch: {{ selected_assignment.batch.batch_code }}</div>
+            </div>
+            <span class="tag tag-low-risk mono">Live Scope</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px;">
+            <div>
+                <label class="form-label">Assessment Title</label>
+                <input type="text" name="title" class="form-control" placeholder="e.g. Midterm 1, Assignment 2, Lab Viva" required>
+            </div>
+            <div>
+                <label class="form-label">Type</label>
+                <select name="assessment_type" class="form-control">
+                    <option value="MIDTERM">Mid-Semester Exam</option>
+                    <option value="ASSIGNMENT" selected>Continuous Assignment</option>
+                    <option value="QUIZ">Class Test / Quiz</option>
+                    <option value="LAB">Practical / Lab Test</option>
+                    <option value="PROJECT">Term Project / Seminar</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Max Marks</label>
+                <input type="number" step="0.5" name="max_marks" class="form-control" value="25.0" required>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabbed Entry Interface -->
+    <div class="tab-container">
+        <button type="button" class="tab-btn active" onclick="switchTab('inline')">Tabular Mark Entry ({{ students|length }} Students)</button>
+        <button type="button" class="tab-btn" onclick="switchTab('csv')">CSV Bulk File Upload</button>
+    </div>
+
+    <!-- TAB 1: Inline Mark Entry -->
+    <div id="tab-inline" class="tab-content active">
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="table-wrapper">
+                <table class="monolith-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 160px;">Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Current Degree</th>
+                            <th style="width: 180px;">Marks Obtained</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for st in students %}
+                        <tr>
+                            <td class="mono" style="font-weight: 600;">{{ st.roll_no }}</td>
+                            <td>{{ st.user.get_full_name|default:st.user.username }}</td>
+                            <td>{{ st.course.name|default:"General" }}</td>
+                            <td>
+                                <input type="number" step="0.5" min="0" max="100" name="marks_{{ st.id }}" class="form-control" placeholder="Score..." style="padding: 6px 10px;">
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 24px;">No students enrolled in this batch.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if students %}
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Save & Submit Marks to Department
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TAB 2: CSV Drag & Drop Upload -->
+    <div id="tab-csv" class="tab-content">
+        <div class="card" style="margin-bottom: 24px;">
+            <div class="drop-zone" onclick="document.getElementById('csv_input').click()">
+                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 12px; color: var(--text-secondary); display: block;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">Choose a CSV file or drag it here</div>
+                <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">Expected columns: <code class="mono" style="color: var(--text-primary);">roll_no, marks</code></div>
+                <input type="file" id="csv_input" name="csv_file" accept=".csv" style="display: none;" onchange="updateFileName(this)">
+                <div id="file-chosen" class="mono" style="font-size: 13px; color: var(--text-primary); font-weight: 600;"></div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end;">
+                <button type="submit" class="btn btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    Upload & Publish CSV Marks
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Recent Submissions for this Subject -->
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Recent Submissions for this Batch</div>
+            <div class="card-subtitle">Continuous evaluations recorded for {{ selected_assignment.subject.code }}</div>
+        </div>
+        <span class="tag tag-low-risk mono">{{ recent_assessments|length }} Record{{ recent_assessments|length|pluralize }}</span>
+    </div>
+
+    <div class="table-wrapper">
+        <table class="monolith-table">
+            <thead>
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Student Name</th>
+                    <th>Assessment Title</th>
+                    <th>Type</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Date Recorded</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in recent_assessments %}
+                <tr>
+                    <td class="mono" style="font-weight: 600;">{{ a.student.roll_no }}</td>
+                    <td>{{ a.student.user.get_full_name|default:a.student.user.username }}</td>
+                    <td>{{ a.title }}</td>
+                    <td class="mono">{{ a.get_assessment_type_display }}</td>
+                    <td class="mono" style="font-weight: 600;">{{ a.marks_obtained }} / {{ a.max_marks }}</td>
+                    <td class="mono" style="font-weight: 700;">{{ a.percentage }}%</td>
+                    <td class="mono">{{ a.date_conducted }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No internal assessments recorded for this course batch yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    if (tabId === 'inline') {
+        document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+        document.getElementById('tab-inline').classList.add('active');
+    } else {
+        document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+        document.getElementById('tab-csv').classList.add('active');
+    }
+}
+
+function updateFileName(input) {
+    const display = document.getElementById('file-chosen');
+    if (input.files && input.files[0]) {
+        display.textContent = 'Selected: ' + input.files[0].name;
+    }
+}
+</script>
+{% endblock %}
