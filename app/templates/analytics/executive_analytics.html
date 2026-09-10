@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}University Institutional Intelligence{% endblock %}
+{% block header_title %}Executive Institutional Analytics Cockpit{% endblock %}
+
+{% block content %}
+<!-- University Governance Filter Bar -->
+<div class="card" style="margin-bottom: 24px; padding: 14px 20px;">
+    <form method="GET" action="{% url 'analytics_hub' %}" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Institutional Filter:</span>
+            <select name="school" class="form-control" style="width: auto; min-width: 260px; padding: 6px 12px; font-size: 13px;" onchange="this.form.submit()">
+                <option value="">All Schools (Entire University)</option>
+                {% for s in schools %}
+                <option value="{{ s.id }}" {% if selected_school and selected_school.id == s.id %}selected{% endif %}>
+                    {{ s.name }} ({{ s.code }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                🏛️ {{ univ.name|default:"Apex University" }}
+            </span>
+            <a href="{% url 'scoped_results' %}" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">
+                View Master Ledger
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- 1. Executive Macro KPI Strip -->
+<div class="grid-kpi" style="margin-bottom: 24px;">
+    <!-- University Gold Medalist -->
+    <div class="kpi-card" style="border-top: 2px solid #10b981;">
+        <div class="kpi-label">University Gold Medalist Candidate 🥇</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #10b981;">
+            {% if cohort_stats.topper %}
+            {{ cohort_stats.topper.sgpa }} <span style="font-size: 13px; color: var(--text-muted);">SGPA ({{ cohort_stats.topper.percentage }}%)</span>
+            {% else %}
+            N/A
+            {% endif %}
+        </div>
+        <div class="kpi-footer">
+            <span style="color: var(--text-primary); font-weight: 600;">
+                {% if cohort_stats.topper %}{{ cohort_stats.topper.name }} ({{ cohort_stats.topper.course }}){% else %}No published records{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Exam Moderation Anomaly Alerts -->
+    <div class="kpi-card" style="border-top: 2px solid {% if anomaly_flags > 0 %}#f59e0b{% else %}#10b981{% endif %};">
+        <div class="kpi-label">Exam Moderation Flags 🔍</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: {% if anomaly_flags > 0 %}#f59e0b{% else %}#10b981{% endif %};">
+            {{ anomaly_flags }} <span style="font-size: 13px; color: var(--text-muted);">Anomalies</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="mono">&gt;35% Internal/External Score Variance</span>
+        </div>
+    </div>
+
+    <!-- Institutional Backlog Count -->
+    <div class="kpi-card" style="border-top: 2px solid #ef4444;">
+        <div class="kpi-label">Total Institutional Backlogs ⚠️</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #ef4444;">
+            {{ cohort_stats.failed_count }} <span style="font-size: 13px; color: var(--text-muted);">/ {{ cohort_stats.total_count }}</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="tag tag-low-risk">University Pass: {{ cohort_stats.pass_percentage }}%</span>
+        </div>
+    </div>
+
+    <!-- Pending Statutory Drafts -->
+    <div class="kpi-card">
+        <div class="kpi-label">Drafts Pending CoE Release</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: var(--text-primary);">
+            {{ drafts_count }} <span style="font-size: 13px; color: var(--text-muted);">Drafts</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="mono">Awaiting Statutory Sign-off</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Visualizations: Grade Inflation Audit Scatter & Bell Curve -->
+<div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <!-- Moderation & Grade Inflation Audit -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Grade Inflation & Moderation Audit Scatter</div>
+                <div class="card-subtitle">Compares Internal Continuous Marks vs. Final University Examination Scores</div>
+            </div>
+            <span class="brand-badge" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">Audit Integrity</span>
+        </div>
+        <div style="height: 280px; position: relative; padding: 10px 0;">
+            <canvas id="moderationChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Institutional Bell Curve -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">University Grade Distribution</div>
+                <div class="card-subtitle">Frequency distribution across all university schools</div>
+            </div>
+            <span class="brand-badge">Distribution</span>
+        </div>
+        <div style="height: 280px; position: relative; padding: 10px 0;">
+            <canvas id="execDistChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Comparative School Health Ledger -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Constituent Schools Benchmark Ledger</div>
+            <div class="card-subtitle">University-wide comparison of schools, cohorts, and top academic ranks</div>
+        </div>
+        <span class="brand-badge">Statutory Audit</span>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>School Name</th>
+                    <th>Code</th>
+                    <th>Total Students</th>
+                    <th>School Mean SGPA</th>
+                    <th>School Topper</th>
+                    <th>Audit Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sc in school_cards %}
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-primary);">{{ sc.school.name }}</td>
+                    <td class="mono">{{ sc.school.code }}</td>
+                    <td class="mono">{{ sc.student_count }} Students</td>
+                    <td class="mono" style="font-weight: 700; color: #6366f1;">{{ sc.avg_sgpa }}</td>
+                    <td>
+                        {% if sc.topper %}
+                        <span class="mono" style="color: #10b981;">{{ sc.topper.student.user.get_full_name|default:sc.topper.student.user.username }} ({{ sc.topper.sgpa }} SGPA)</span>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="tag tag-low-risk">✓ Verified</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No schools registered in database.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js Config -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Moderation Scatter Chart
+        const modCtx = document.getElementById('moderationChart');
+        if (modCtx) {
+            const rawPoints = {{ moderation_scatter|safe }};
+            new Chart(modCtx.getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Results Audited',
+                        data: rawPoints,
+                        backgroundColor: function(ctx) {
+                            const raw = ctx.raw;
+                            if (!raw) return '#6366f1';
+                            return raw.is_anomaly ? '#ef4444' : '#10b981';
+                        },
+                        pointRadius: function(ctx) {
+                            const raw = ctx.raw;
+                            return (raw && raw.is_anomaly) ? 6 : 4;
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'Internal Assessment %', color: '#9da3b4', font: { size: 11 } },
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', font: { family: 'JetBrains Mono' } }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            title: { display: true, text: 'Final University Exam %', color: '#9da3b4', font: { size: 11 } },
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', font: { family: 'JetBrains Mono' } }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const p = ctx.raw;
+                                    const alertStr = p.is_anomaly ? ' [⚠️ MODERATION ANOMALY]' : '';
+                                    return `${p.student_name} (${p.subject}): Internal ${p.x}%, External ${p.y}%${alertStr}`;
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 2. University Bell Curve
+        const execDistCtx = document.getElementById('execDistChart');
+        if (execDistCtx) {
+            new Chart(execDistCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: {{ cohort_stats.chart_labels|safe }},
+                    datasets: [{
+                        label: 'Students',
+                        data: {{ cohort_stats.chart_data|safe }},
+                        backgroundColor: 'rgba(16, 185, 129, 0.65)',
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', font: { family: 'JetBrains Mono' } }
+                        },
+                        x: {
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

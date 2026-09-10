@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Classroom & Subject Diagnostics{% endblock %}
+{% block header_title %}Faculty Subject Analytics Cockpit{% endblock %}
+
+{% block content %}
+<!-- Assignment Switcher Bar -->
+<div class="card" style="margin-bottom: 24px; padding: 14px 20px;">
+    <form method="GET" action="{% url 'analytics_hub' %}" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary);">Class Section:</span>
+            <select name="assignment" class="form-control" style="width: auto; min-width: 280px; padding: 6px 12px; font-size: 13px;" onchange="this.form.submit()">
+                {% for a in assignments %}
+                <option value="{{ a.id }}" {% if selected_assignment and selected_assignment.id == a.id %}selected{% endif %}>
+                    {{ a.subject.code }} — {{ a.subject.title }} (Batch: {{ a.batch.batch_code }})
+                </option>
+                {% empty %}
+                <option value="">No Active Teaching Assignments</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if selected_assignment %}
+        <div style="display: flex; gap: 8px;">
+            <a href="{% url 'teacher_internal_marks' %}?assignment={{ selected_assignment.id }}" class="btn btn-primary" style="font-size: 12px; padding: 6px 14px;">
+                + Enter Marks for this Class
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- 1. Cohort Statistical Banner (Topper, Failed, 5-Number Spread) -->
+<div class="grid-kpi" style="margin-bottom: 24px;">
+    <!-- Batch Topper -->
+    <div class="kpi-card" style="border-top: 2px solid #10b981;">
+        <div class="kpi-label">Class Topper 🥇</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #10b981;">
+            {% if cohort_stats.topper %}
+            {{ cohort_stats.topper.sgpa }} <span style="font-size: 13px; color: var(--text-muted);">SGPA ({{ cohort_stats.topper.percentage }}%)</span>
+            {% else %}
+            N/A
+            {% endif %}
+        </div>
+        <div class="kpi-footer">
+            <span style="color: var(--text-primary); font-weight: 500;">
+                {% if cohort_stats.topper %}{{ cohort_stats.topper.name }} ({{ cohort_stats.topper.roll_no }}){% else %}No published records{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Failed Students Count -->
+    <div class="kpi-card" style="border-top: 2px solid {% if cohort_stats.failed_count > 0 %}#ef4444{% else %}#10b981{% endif %};">
+        <div class="kpi-label">Failed / Backlogs ⚠️</div>
+        <div class="kpi-value mono" style="font-size: 24px; color: {% if cohort_stats.failed_count > 0 %}#ef4444{% else %}#10b981{% endif %};">
+            {{ cohort_stats.failed_count }} <span style="font-size: 14px; color: var(--text-muted);">/ {{ cohort_stats.total_count }}</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="tag {% if cohort_stats.failed_count > 0 %}tag-high-risk{% else %}tag-low-risk{% endif %}">
+                Pass Rate: {{ cohort_stats.pass_percentage }}%
+            </span>
+        </div>
+    </div>
+
+    <!-- Median & Average -->
+    <div class="kpi-card">
+        <div class="kpi-label">Median & Class Average</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #6366f1;">
+            {{ cohort_stats.median_sgpa }} <span style="font-size: 14px; color: var(--text-muted);">Med | {{ cohort_stats.avg_sgpa }} Avg</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="mono">Q1: {{ cohort_stats.q1_sgpa }} • Q3: {{ cohort_stats.q3_sgpa }}</span>
+        </div>
+    </div>
+
+    <!-- Min & Max Spread -->
+    <div class="kpi-card">
+        <div class="kpi-label">Statistical Spread (Min / Max)</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: var(--text-primary);">
+            {{ cohort_stats.min_sgpa }} - {{ cohort_stats.max_sgpa }}
+        </div>
+        <div class="kpi-footer">
+            <span class="mono">Percentage: {{ cohort_stats.min_pct }}% to {{ cohort_stats.max_pct }}%</span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Visualizations: Bell Curve Distribution & Attendance vs Score Scatter -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <!-- Distribution Bell Curve -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Score Distribution (Histogram / Bell Curve)</div>
+                <div class="card-subtitle">Frequency of scores across percentage bins with 40% pass cutoff</div>
+            </div>
+            <span class="brand-badge">Distribution</span>
+        </div>
+        <div style="height: 270px; position: relative; padding: 10px 0;">
+            <canvas id="histogramChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Attendance vs Internal Score Scatter -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Attendance vs. Assessment Correlation</div>
+                <div class="card-subtitle">Highlighting student risks correlating low attendance with low internal marks</div>
+            </div>
+            <span class="brand-badge" style="color: #f59e0b; border-color: rgba(245, 158, 11, 0.3);">Risk Matrix</span>
+        </div>
+        <div style="height: 270px; position: relative; padding: 10px 0;">
+            <canvas id="scatterChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Failed / Backlog Students Ledger -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Struggling & Backlog Students Roster</div>
+            <div class="card-subtitle">Students scoring below 40% or flagged with active backlogs requiring faculty consultation</div>
+        </div>
+        <span class="tag tag-high-risk">{{ cohort_stats.failed_count }} Flagged</span>
+    </div>
+
+    {% if cohort_stats.failed_students %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Student Name</th>
+                    <th>Course & Batch</th>
+                    <th>Semester</th>
+                    <th>SGPA</th>
+                    <th>Percentage</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in cohort_stats.failed_students %}
+                <tr>
+                    <td class="mono font-semibold" style="color: var(--text-primary);">{{ f.roll_no }}</td>
+                    <td>{{ f.name }}</td>
+                    <td>{{ f.batch }}</td>
+                    <td class="mono">Sem {{ f.semester }}</td>
+                    <td class="mono" style="color: #ef4444; font-weight: 700;">{{ f.sgpa }}</td>
+                    <td class="mono" style="color: #ef4444;">{{ f.percentage }}%</td>
+                    <td>
+                        <a href="{% url 'teacher_internal_marks' %}?assignment={{ selected_assignment.id }}" class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;">
+                            Review Mark
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+        <p>🎉 Excellent! Zero students in this cohort are currently flagged with failing marks or active backlogs.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Chart.js Config -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Histogram Chart
+        const histCtx = document.getElementById('histogramChart');
+        if (histCtx) {
+            new Chart(histCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: {{ cohort_stats.chart_labels|safe }},
+                    datasets: [{
+                        label: 'Student Count',
+                        data: {{ cohort_stats.chart_data|safe }},
+                        backgroundColor: function(context) {
+                            const index = context.dataIndex;
+                            return index === 0 ? 'rgba(239, 68, 68, 0.7)' : (index >= 5 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(99, 102, 241, 0.6)');
+                        },
+                        borderColor: function(context) {
+                            const index = context.dataIndex;
+                            return index === 0 ? '#ef4444' : (index >= 5 ? '#10b981' : '#6366f1');
+                        },
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', stepSize: 1, font: { family: 'JetBrains Mono' } }
+                        },
+                        x: {
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // 2. Scatter Chart
+        const scatterCtx = document.getElementById('scatterChart');
+        if (scatterCtx) {
+            const rawPoints = {{ scatter_points|safe }};
+            new Chart(scatterCtx.getContext('2d'), {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Students',
+                        data: rawPoints,
+                        backgroundColor: function(ctx) {
+                            const raw = ctx.raw;
+                            if (!raw) return '#6366f1';
+                            if (raw.x < 75 || raw.y < 10) return '#ef4444';
+                            return '#10b981';
+                        },
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            min: 50,
+                            max: 100,
+                            title: { display: true, text: 'Attendance Percentage (%)', color: '#9da3b4', font: { size: 11 } },
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', font: { family: 'JetBrains Mono' } }
+                        },
+                        y: {
+                            min: 0,
+                            max: 25,
+                            title: { display: true, text: 'Internal Mark (/25)', color: '#9da3b4', font: { size: 11 } },
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', font: { family: 'JetBrains Mono' } }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const p = ctx.raw;
+                                    return `${p.name} (${p.roll_no}): Attendance ${p.x}%, Mark ${p.y}/25`;
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

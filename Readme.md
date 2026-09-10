@@ -162,10 +162,12 @@ Student_Performance_Prediction/
 │   │   ├── migrations/            # Database schema migrations
 │   │   ├── forms.py               # Telemetry and preference forms
 │   │   ├── models.py              # Models: HabitCheckInLog, StudentHabitPreference, etc.
+│   │   ├── analytics_engine.py    # Multi-Tier 5-number summary, topper, & failure engine
 │   │   └── views.py
 │   ├── accounts/                  # User identity, RBAC, and dashboards
 │   │   ├── models.py              # Custom User with role hierarchy
 │   │   ├── views.py               # Dashboard, prediction, and radar controllers
+│   │   ├── analytics_views.py     # Role-based analytics dispatcher & JSON query API
 │   │   └── urls.py                # App routing
 │   ├── resultplatform/            # Django root configuration
 │   │   ├── settings.py            # Trusted origins, CSRF, and session settings
@@ -179,6 +181,7 @@ Student_Performance_Prediction/
 │       ├── at_risk_students.html  # Faculty Early Warning Radar
 │       ├── my_results.html        # Academic transcripts
 │       ├── scoped_results.html    # Departmental ledger
+│       ├── analytics/             # Multi-Tier Analytics Cockpits (Student, Teacher, HOD, Dean, VC)
 │       └── registration/
 │           └── login.html         # High-contrast sign-in page
 ├── scripts/                       # Seeding and model training utilities

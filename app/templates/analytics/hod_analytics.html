@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Department Academic Diagnostics{% endblock %}
+{% block header_title %}HOD Department Analytics Cockpit{% endblock %}
+
+{% block content %}
+<!-- Department Cohort Filter Bar -->
+<div class="card" style="margin-bottom: 24px; padding: 14px 20px;">
+    <form method="GET" action="{% url 'analytics_hub' %}" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Course</span>
+                <select name="course" class="form-control" style="width: auto; min-width: 180px; padding: 6px 12px; font-size: 13px;" onchange="this.form.submit()">
+                    {% for c in courses %}
+                    <option value="{{ c.id }}" {% if selected_course and selected_course.id == c.id %}selected{% endif %}>
+                        {{ c.code }} ({{ c.name }})
+                    </option>
+                    {% empty %}
+                    <option value="">No Department Courses</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Batch Cohort</span>
+                <select name="batch" class="form-control" style="width: auto; min-width: 160px; padding: 6px 12px; font-size: 13px;" onchange="this.form.submit()">
+                    {% for b in batches %}
+                    <option value="{{ b.id }}" {% if selected_batch and selected_batch.id == b.id %}selected{% endif %}>
+                        {{ b.batch_code }} (Sem {{ b.current_semester }})
+                    </option>
+                    {% empty %}
+                    <option value="">No Batches</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Semester</span>
+                <select name="semester" class="form-control" style="width: auto; min-width: 120px; padding: 6px 12px; font-size: 13px;" onchange="this.form.submit()">
+                    {% for s in "12345678"|make_list %}
+                    <option value="{{ s }}" {% if semester|stringformat:"s" == s %}selected{% endif %}>Semester {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <a href="{% url 'at_risk_students' %}" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">
+                ⚠️ Open Risk Radar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- 1. Cohort Statistical Banner -->
+<div class="grid-kpi" style="margin-bottom: 24px;">
+    <!-- Batch Topper Card -->
+    <div class="kpi-card" style="border-top: 2px solid #10b981;">
+        <div class="kpi-label">Batch Gold Medalist / Topper 🥇</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #10b981;">
+            {% if cohort_stats.topper %}
+            {{ cohort_stats.topper.sgpa }} <span style="font-size: 13px; color: var(--text-muted);">SGPA ({{ cohort_stats.topper.percentage }}%)</span>
+            {% else %}
+            N/A
+            {% endif %}
+        </div>
+        <div class="kpi-footer">
+            <span style="color: var(--text-primary); font-weight: 600;">
+                {% if cohort_stats.topper %}{{ cohort_stats.topper.name }} ({{ cohort_stats.topper.roll_no }}){% else %}No published records{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Failed / Backlog Count -->
+    <div class="kpi-card" style="border-top: 2px solid {% if cohort_stats.failed_count > 0 %}#ef4444{% else %}#10b981{% endif %};">
+        <div class="kpi-label">Backlogs & Failures ⚠️</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: {% if cohort_stats.failed_count > 0 %}#ef4444{% else %}#10b981{% endif %};">
+            {{ cohort_stats.failed_count }} <span style="font-size: 13px; color: var(--text-muted);">/ {{ cohort_stats.total_count }} Students</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="tag {% if cohort_stats.failed_count > 0 %}tag-high-risk{% else %}tag-low-risk{% endif %}">
+                Clear Pass: {{ cohort_stats.pass_percentage }}%
+            </span>
+        </div>
+    </div>
+
+    <!-- 5-Number Spread & Median -->
+    <div class="kpi-card">
+        <div class="kpi-label">Median & Average Spread</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #6366f1;">
+            {{ cohort_stats.median_sgpa }} <span style="font-size: 13px; color: var(--text-muted);">Med | {{ cohort_stats.avg_sgpa }} Avg</span>
+        </div>
+        <div class="kpi-footer">
+            <span class="mono">Spread: {{ cohort_stats.min_sgpa }} (Min) to {{ cohort_stats.max_sgpa }} (Max)</span>
+        </div>
+    </div>
+
+    <!-- Most Improved (Rising Star) -->
+    <div class="kpi-card" style="border-top: 2px solid #06b6d4;">
+        <div class="kpi-label">Most Improved ("Rising Star") 🚀</div>
+        <div class="kpi-value mono" style="font-size: 22px; color: #06b6d4;">
+            {% if cohort_stats.most_improved %}
+            +{{ cohort_stats.most_improved.delta }} <span style="font-size: 13px; color: var(--text-muted);">SGPA Jump</span>
+            {% else %}
+            Steady Cohort
+            {% endif %}
+        </div>
+        <div class="kpi-footer">
+            <span style="color: var(--text-primary); font-weight: 500;">
+                {% if cohort_stats.most_improved %}{{ cohort_stats.most_improved.name }} ({{ cohort_stats.most_improved.prev_sgpa }} &rarr; {{ cohort_stats.most_improved.current_sgpa }}){% else %}Baseline Semester{% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Curriculum Bottleneck Heatmap & Bell Curve -->
+<div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; margin-bottom: 24px;">
+    <!-- Curriculum Bottleneck Table -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Curriculum Bottleneck Diagnostic</div>
+                <div class="card-subtitle">Identifies subjects with low pass rates or high academic friction</div>
+            </div>
+            <span class="brand-badge">Curriculum Health</span>
+        </div>
+        <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject Code & Title</th>
+                        <th>Average Score</th>
+                        <th>Pass Rate</th>
+                        <th>Friction Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bottlenecks %}
+                    <tr>
+                        <td>
+                            <div class="mono font-semibold" style="color: var(--text-primary);">{{ b.code }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ b.title }}</div>
+                        </td>
+                        <td class="mono">{{ b.avg_score }}%</td>
+                        <td class="mono" style="font-weight: 700; color: {% if b.pass_rate < 70 %}#ef4444{% else %}#10b981{% endif %};">
+                            {{ b.pass_rate }}%
+                        </td>
+                        <td>
+                            {% if b.is_bottleneck %}
+                            <span class="tag tag-high-risk">Curriculum Bottleneck</span>
+                            {% else %}
+                            <span class="tag tag-low-risk">Optimal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No subjects found for this semester.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Distribution Bell Curve -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">Cohort Bell Curve</div>
+                <div class="card-subtitle">Frequency distribution across percentage intervals</div>
+            </div>
+            <span class="brand-badge">Distribution</span>
+        </div>
+        <div style="height: 250px; position: relative; padding: 10px 0;">
+            <canvas id="hodBellChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Faculty Submission Compliance Tracker -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <div>
+            <div class="card-title">Faculty Continuous Assessment Compliance</div>
+            <div class="card-subtitle">Live status of continuous internal evaluations submitted by department teachers</div>
+        </div>
+        <span class="brand-badge">Department Governance</span>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Faculty Member</th>
+                    <th>Assigned Subject</th>
+                    <th>Batch</th>
+                    <th>Submission Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in compliance_list %}
+                <tr>
+                    <td style="font-weight: 600; color: var(--text-primary);">{{ c.teacher_name }}</td>
+                    <td class="mono">{{ c.subject }}</td>
+                    <td class="mono">{{ c.batch }}</td>
+                    <td>
+                        {% if c.status == "Submitted" %}
+                        <span class="tag tag-low-risk">✓ Finalized & Live</span>
+                        {% else %}
+                        <span class="tag" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">Pending Entry</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No teaching assignments found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart.js Config -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const bellCtx = document.getElementById('hodBellChart');
+        if (bellCtx) {
+            new Chart(bellCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: {{ cohort_stats.chart_labels|safe }},
+                    datasets: [{
+                        label: 'Students',
+                        data: {{ cohort_stats.chart_data|safe }},
+                        backgroundColor: function(context) {
+                            const idx = context.dataIndex;
+                            return idx === 0 ? 'rgba(239, 68, 68, 0.7)' : (idx >= 5 ? 'rgba(16, 185, 129, 0.7)' : 'rgba(99, 102, 241, 0.6)');
+                        },
+                        borderColor: function(context) {
+                            const idx = context.dataIndex;
+                            return idx === 0 ? '#ef4444' : (idx >= 5 ? '#10b981' : '#6366f1');
+                        },
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4', stepSize: 1, font: { family: 'JetBrains Mono' } }
+                        },
+                        x: {
+                            grid: { color: '#20242e' },
+                            ticks: { color: '#9da3b4' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
