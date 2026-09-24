@@ -217,16 +217,46 @@ class SemesterResult(models.Model):
         help_text="Final official result published by Admin. When False, held as draft until bulk release."
     )
 
-    # ML Dynamic/Behavioral Features (from Kaggle Dataset)
-    attendance_percentage = models.FloatField(default=0)
-    hours_studied_per_week = models.FloatField(default=0)
-    sleep_hours_per_night = models.FloatField(default=0)
-    motivation_level = models.CharField(max_length=20, blank=True, null=True)
-    tutoring_sessions = models.IntegerField(default=0)
-    extracurricular_activities = models.BooleanField(default=False)
-    physical_activity = models.IntegerField(default=0)
-    parental_involvement = models.CharField(max_length=20, blank=True, null=True)
-    peer_influence = models.CharField(max_length=20, blank=True, null=True)
+    # Behavioral / Habit Telemetry Fields (Official Institute Records or Left Blank)
+    # NOTE (Task A16): These fields represent official recorded data at semester conclusion,
+    # NOT self-reported daily logs. Missing values MUST remain None/NULL so that downstream
+    # models and analysis do not train on invented defaults.
+    attendance_percentage = models.FloatField(
+        null=True, blank=True, default=None,
+        help_text="Official attendance percentage recorded by the institution (0-100). None if unrecorded."
+    )
+    hours_studied_per_week = models.FloatField(
+        null=True, blank=True, default=None,
+        help_text="Official study hours per week. None if unrecorded."
+    )
+    sleep_hours_per_night = models.FloatField(
+        null=True, blank=True, default=None,
+        help_text="Official sleep hours per night. None if unrecorded."
+    )
+    motivation_level = models.CharField(
+        max_length=20, blank=True, null=True, default=None,
+        help_text="Official motivation level ('Low', 'Medium', 'High'). None if unrecorded."
+    )
+    tutoring_sessions = models.IntegerField(
+        null=True, blank=True, default=None,
+        help_text="Official count of tutoring sessions attended. None if unrecorded."
+    )
+    extracurricular_activities = models.BooleanField(
+        null=True, blank=True, default=None,
+        help_text="Official participation status in extracurricular activities. None if unrecorded."
+    )
+    physical_activity = models.IntegerField(
+        null=True, blank=True, default=None,
+        help_text="Official physical activity days/hours per week. None if unrecorded."
+    )
+    parental_involvement = models.CharField(
+        max_length=20, blank=True, null=True, default=None,
+        help_text="Official parental involvement level. None if unrecorded."
+    )
+    peer_influence = models.CharField(
+        max_length=20, blank=True, null=True, default=None,
+        help_text="Official peer influence level. None if unrecorded."
+    )
 
     class Meta:
         unique_together = ("student", "semester")
@@ -323,49 +353,15 @@ class HabitCheckInLog(models.Model):
 
 def sync_habits_to_semester_result(student):
     """
-    Aggregates recent Daily or Weekly HabitCheckInLogs for this student,
-    computes normalized weekly figures (hours_studied_per_week, sleep_hours_per_night, motivation_level),
-    and updates their current active SemesterResult so the ML model has live data.
+    Deprecated (Task A16).
+    Self-reported habit logs must NOT overwrite official SemesterResult academic records.
+    Use `academics.services.habits.habit_summary(student)` to query self-reported habit metrics.
     """
-    from datetime import timedelta
-    
-    current_sem = student.current_semester
-    sem_result, _ = SemesterResult.objects.get_or_create(
-        student=student, semester=current_sem,
-        defaults={"percentage": 0, "sgpa": 0, "attendance_percentage": 85.0}
+    import warnings
+    warnings.warn(
+        "sync_habits_to_semester_result is deprecated and no longer writes to SemesterResult. "
+        "Use academics.services.habits.habit_summary(student) instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
-    
-    today = timezone.now().date()
-    seven_days_ago = today - timedelta(days=7)
-    
-    recent_logs = student.habit_logs.filter(log_date__gte=seven_days_ago)
-    if not recent_logs.exists():
-        recent_logs = student.habit_logs.filter(log_date__gte=today - timedelta(days=30))
-        
-    if recent_logs.exists():
-        daily_logs = recent_logs.filter(log_type="DAILY")
-        weekly_logs = recent_logs.filter(log_type="WEEKLY")
-        
-        if weekly_logs.exists():
-            latest_weekly = weekly_logs.first()
-            sem_result.hours_studied_per_week = latest_weekly.hours_studied
-            sem_result.sleep_hours_per_night = latest_weekly.sleep_hours
-            sem_result.motivation_level = latest_weekly.motivation_level
-            sem_result.tutoring_sessions = latest_weekly.tutoring_sessions
-            sem_result.physical_activity = latest_weekly.physical_activity
-        elif daily_logs.exists():
-            total_study = sum(log.hours_studied for log in daily_logs)
-            count = daily_logs.count()
-            avg_daily_study = total_study / count if count else 0
-            sem_result.hours_studied_per_week = round(avg_daily_study * 7, 1)
-            
-            avg_sleep = sum(log.sleep_hours for log in daily_logs) / count if count else 7.0
-            sem_result.sleep_hours_per_night = round(avg_sleep, 1)
-            
-            latest_daily = daily_logs.first()
-            sem_result.motivation_level = latest_daily.motivation_level
-            sem_result.tutoring_sessions = latest_daily.tutoring_sessions
-            sem_result.physical_activity = latest_daily.physical_activity
-            
-        sem_result.save()
-    return sem_result
+    return SemesterResult.objects.filter(student=student, semester=student.current_semester).first()
