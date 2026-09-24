@@ -56,8 +56,7 @@ INSTALLED_APPS = [
     'academics',
 ]
 
-# Tell Django to use OUR custom user (with the `role` field) instead of the default.
-# This line MUST be present before the first migrate. Format: "app_name.ModelName".
+# Custom User model with institutional role hierarchy
 AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
@@ -137,10 +136,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# ---- Login / logout behaviour (Milestone 2) ----
-# Where to send a user AFTER they log in successfully:
-LOGIN_REDIRECT_URL = "home"     # the name of our home page URL
-# Where to send a user AFTER they log out:
-LOGOUT_REDIRECT_URL = "login"   # back to the login page
-# Where @login_required sends people who aren't logged in:
+# Authentication redirects
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"

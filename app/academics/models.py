@@ -1,7 +1,6 @@
 """
-Academic models — upgraded (Milestone 6: Big Data Load) to match the rich
-university.db structure: full grade cards, credits, teaching assignments,
-semester results. This is the production-grade shape.
+Academic models representing university structure, courses, grades, teaching assignments,
+and student habit telemetry.
 """
 from django.conf import settings
 from django.db import models

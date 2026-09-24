@@ -1,21 +1,20 @@
 """
-Big Data Load — import the full 800-student dataset from university.db into Django.
+Import sample academic dataset from university.db into Django.
 
 Run with:
-  python manage.py shell -c "exec(open('import_university_data.py').read())"
+  python manage.py shell -c "exec(open('scripts/import_university_data.py').read())"
 
 Requirements:
-  * university.db must be in the SAME folder as this script (next to manage.py).
+  * university.db must be located at data/university.db.
 
 What it does:
-  * Reads university.db (the rich sample dataset).
+  * Reads university.db.
   * Creates University/School/Department/Course/Batch/Subject.
-  * Creates User accounts for all staff + students (password from DEMO_USER_PASSWORD).
+  * Creates User accounts for staff and students (password from DEMO_USER_PASSWORD).
   * Creates Teacher/Student profiles, teaching assignments, results, semester cards.
-  * PRESERVES your existing superuser admin account.
+  * Preserves existing superuser admin accounts.
 
-Safe to re-run: it clears previously imported academic data first (but NOT your
-superuser). Uses login_id/roll_no/codes to avoid duplicates.
+Safe to re-run: it clears previously imported academic data first (but NOT superusers).
 """
 import os
 import sqlite3
@@ -44,7 +43,7 @@ else:
     src.row_factory = sqlite3.Row
     s = src.cursor()
 
-    print("\n=== Big Data Load: importing university.db ===")
+    print("\n=== Importing sample dataset from university.db ===")
 
     # Speed: hash the shared password ONCE, reuse for all imported users.
     # (Hashing 800+ passwords individually is the slow part; they're all the same.)
