@@ -128,6 +128,15 @@ class StudentProfile(models.Model):
     access_to_resources = models.CharField(max_length=20, blank=True, null=True)
     learning_disabilities = models.BooleanField(default=False)
 
+    DATA_ORIGIN_CHOICES = [("demo", "Demo"), ("real", "Real")]
+    data_origin = models.CharField(
+        max_length=10,
+        choices=DATA_ORIGIN_CHOICES,
+        default="real",
+        db_index=True,
+        help_text="Tracks whether student record is synthetic demo data or real institutional data."
+    )
+
     @property
     def department(self):
         return self.course.department if self.course else None

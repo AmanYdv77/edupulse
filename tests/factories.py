@@ -203,6 +203,7 @@ class StudentProfileFactory(factory.django.DjangoModelFactory):
     internet_access = True
     access_to_resources = "Medium"
     learning_disabilities = False
+    data_origin = "real"
 
 
 class TeachingAssignmentFactory(factory.django.DjangoModelFactory):
