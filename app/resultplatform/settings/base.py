@@ -150,3 +150,11 @@ MODEL_ARTIFACT_DIR = env("MODEL_ARTIFACT_DIR", default=None)
 
 # Academic performance standards
 PASS_MARK_PERCENT = 40.0
+
+# Model B (Institutional Custom Model) Training & Promotion Thresholds
+MODEL_B_MIN_STUDENTS = 200
+MODEL_B_MIN_ROWS = 1000
+MODEL_B_MIN_SEMESTERS = 3
+MODEL_B_PROMOTION_MARGIN_RMSE = 2.0
+MODEL_B_USE_HABITS = False
+MODEL_B_MIN_SNAPSHOT_SEMESTERS = 1
