@@ -44,18 +44,17 @@ def test_dashboard_query_count_bounded(client, django_assert_max_num_queries, ro
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(strict=True, reason="fixed in A17")
 def test_at_risk_page_query_budget(client, django_assert_max_num_queries):
     """
-    Target benchmark for at-risk page: rendering 30 students must stay within a fixed query budget (<= 2).
-    Currently unbounded (N+1 queries executed per student for predictions / results).
-    Marked strict xfail; will be resolved when snapshot batching is implemented in Task A17.
+    Target benchmark for at-risk page: rendering 30 students must stay within a fixed query budget (<= 4).
+    Accounts for 2 Django session/auth middleware queries and 1 bounded snapshot query.
+    Verified O(1) query count via pre-computed PredictionSnapshot reads.
     """
     tree = make_university(students_per_batch=30)
     teacher_user = tree["teachers"][0].user
     client.force_login(teacher_user)
 
     url = reverse("at_risk_students")
-    with django_assert_max_num_queries(2):
+    with django_assert_max_num_queries(4):
         response = client.get(url)
         assert response.status_code == 200

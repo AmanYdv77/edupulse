@@ -67,3 +67,46 @@ def assert_real_training_data(data: Union[QuerySet, pd.DataFrame]) -> bool:
         raise TypeError(f"Expected QuerySet or DataFrame, got {type(data).__name__}")
 
     return True
+
+
+def scoped_snapshots_for(user) -> tuple[QuerySet, str]:
+    """
+    Returns (snapshots_queryset, scope_label) adhering to the academic organizational hierarchy.
+    Enforces strict object-level access boundaries in a single database query.
+    """
+    from .models import PredictionSnapshot
+
+    role = getattr(user, "role", None)
+
+    if role in ("VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN") or getattr(user, "is_superuser", False):
+        return PredictionSnapshot.objects.all(), "Entire University"
+
+    if role == "DEAN":
+        school_id = getattr(user, "school_id", None)
+        if school_id:
+            qs = PredictionSnapshot.objects.filter(student__course__department__school_id=school_id)
+            label = f"School: {user.school}"
+        else:
+            qs = PredictionSnapshot.objects.none()
+            label = "Your School (Unassigned)"
+        return qs, label
+
+    if role == "HOD":
+        dept_id = getattr(user, "department_id", None)
+        if dept_id:
+            qs = PredictionSnapshot.objects.filter(student__course__department_id=dept_id)
+            label = f"Department: {user.department}"
+        else:
+            qs = PredictionSnapshot.objects.none()
+            label = "Your Department (Unassigned)"
+        return qs, label
+
+    if role == "TEACHER":
+        qs = PredictionSnapshot.objects.filter(student__results__teacher__user_id=user.id).distinct()
+        return qs, "Students you teach"
+
+    if role == "STUDENT":
+        qs = PredictionSnapshot.objects.filter(student__user_id=user.id)
+        return qs, "Your Academic Forecast"
+
+    return PredictionSnapshot.objects.none(), "No Scope"
