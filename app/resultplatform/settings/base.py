@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # --- our apps ---
     'accounts',
     'academics',
+    'predictions',
 ]
 
 # Custom User model with institutional role hierarchy
@@ -143,3 +144,6 @@ STATIC_URL = 'static/'
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"
+
+# Machine Learning model artifact storage directory
+MODEL_ARTIFACT_DIR = env("MODEL_ARTIFACT_DIR", default=None)

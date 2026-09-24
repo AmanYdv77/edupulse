@@ -11,6 +11,10 @@ if DEBUG:
 
 require_db_name(disallowed_suffixes=("_dev", "_test", "_e2e"))
 
+if not MODEL_ARTIFACT_DIR:
+    raise ImproperlyConfigured("MODEL_ARTIFACT_DIR environment variable must be set in production.")
+
+
 # Deployment & HTTPS Security Hardening
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
