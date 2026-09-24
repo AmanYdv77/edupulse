@@ -1,0 +1,10 @@
+# Development and testing dependencies
+# To compile/update requirements-dev.txt:
+# pip-compile requirements-dev.in -o requirements-dev.txt
+
+-c requirements.txt
+pytest
+pytest-django
+pytest-cov
+factory-boy
+Faker
