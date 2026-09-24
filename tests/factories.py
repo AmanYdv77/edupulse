@@ -254,6 +254,7 @@ class ResultFactory(factory.django.DjangoModelFactory):
 class SemesterResultFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SemesterResult
+        django_get_or_create = ("student", "semester")
 
     student = factory.SubFactory(StudentProfileFactory)
     semester = 1

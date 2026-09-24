@@ -14,26 +14,12 @@ class HabitSummary:
     sample_count: int
 
 
-def habit_summary(
-    student,
-    semester: Optional[int] = None,
-    window_days: int = 28,
-) -> HabitSummary:
+def compute_habit_summary_from_logs(logs: list) -> HabitSummary:
     """
-    Computes rolling behavioral habit summary metrics from self-reported HabitCheckInLog records.
-
-    CRITICAL (Task A16):
-    - This is a READ-ONLY aggregation service.
-    - It NEVER writes to, modifies, or creates SemesterResult rows.
-    - Official academic examination results must remain strictly separate from self-reported habit check-ins.
-    - When no logs exist, all metric fields return None (no invented fallback constants like 85.0 or 7.0).
+    Computes a HabitSummary dataclass directly from a sequence of HabitCheckInLog instances.
+    Enables zero-query batch aggregation when logs are pre-fetched across cohorts.
     """
-    today = timezone.now().date()
-    cutoff_date = today - timedelta(days=window_days)
-
-    logs_qs = student.habit_logs.filter(log_date__gte=cutoff_date).order_by("-log_date", "-id")
-
-    sample_count = logs_qs.count()
+    sample_count = len(logs)
     if sample_count == 0:
         return HabitSummary(
             hours_studied_per_week=None,
@@ -44,8 +30,8 @@ def habit_summary(
             sample_count=0,
         )
 
-    weekly_logs = list(logs_qs.filter(log_type="WEEKLY"))
-    daily_logs = list(logs_qs.filter(log_type="DAILY"))
+    weekly_logs = [log for log in logs if log.log_type == "WEEKLY"]
+    daily_logs = [log for log in logs if log.log_type == "DAILY"]
 
     if weekly_logs and not daily_logs:
         avg_study = sum(log.hours_studied for log in weekly_logs) / len(weekly_logs)
@@ -67,8 +53,8 @@ def habit_summary(
         total_count = len(daily_logs) + len(weekly_logs)
         avg_study = total_weekly_study_units / total_count if total_count else None
 
-        avg_sleep = sum(log.sleep_hours for log in logs_qs) / sample_count if sample_count else None
-        latest = logs_qs.first()
+        avg_sleep = sum(log.sleep_hours for log in logs) / sample_count if sample_count else None
+        latest = logs[0] if logs else None
         motivation = latest.motivation_level if latest else None
         tutoring = latest.tutoring_sessions if latest else None
         physical = latest.physical_activity if latest else None
@@ -81,3 +67,25 @@ def habit_summary(
         physical_activity=physical,
         sample_count=sample_count,
     )
+
+
+def habit_summary(
+    student,
+    semester: Optional[int] = None,
+    window_days: int = 28,
+) -> HabitSummary:
+    """
+    Computes rolling behavioral habit summary metrics from self-reported HabitCheckInLog records.
+
+    CRITICAL (Task A16):
+    - This is a READ-ONLY aggregation service.
+    - It NEVER writes to, modifies, or creates SemesterResult rows.
+    - Official academic examination results must remain strictly separate from self-reported habit check-ins.
+    - When no logs exist, all metric fields return None (no invented fallback constants like 85.0 or 7.0).
+    """
+    today = timezone.now().date()
+    cutoff_date = today - timedelta(days=window_days)
+
+    logs = list(student.habit_logs.filter(log_date__gte=cutoff_date).order_by("-log_date", "-id"))
+    return compute_habit_summary_from_logs(logs)
+

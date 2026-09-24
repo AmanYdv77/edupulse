@@ -19,7 +19,8 @@ from academics.models import (
 from academics.services.habits import habit_summary
 from academics.forms import HabitCheckInForm, HabitPreferenceForm
 
-from academics.predictor import predict_current_subjects
+from predictions.services import predict_for_students, predict_current_subjects
+from predictions.selectors import scoped_snapshots_for
 
 
 ROLE_DASHBOARDS = {
@@ -181,19 +182,25 @@ def home(request):
         class_avg_stat = teacher_results.aggregate(avg=Avg("total_secured"))
         class_avg = round(class_avg_stat["avg"] or 72.4, 1)
 
-        # Assigned students & at-risk detection
+        # Assigned students & at-risk detection via single batch prediction call
         assigned_student_ids = teacher_results.values_list("student_id", flat=True).distinct()
-        teacher_students = StudentProfile.objects.filter(id__in=assigned_student_ids).select_related("user", "course")
+        teacher_students = list(StudentProfile.objects.filter(id__in=assigned_student_ids).select_related("user", "course")[:25])
+        all_preds = predict_for_students(teacher_students)
+        preds_by_student = {}
+        for p in all_preds:
+            preds_by_student.setdefault(p.student_id, []).append(p)
+
         at_risk_teacher_list = []
-        for s in teacher_students[:25]:
-            preds = predict_current_subjects(s)
-            failing = [p for p in preds if p["is_at_risk"]]
+        for s in teacher_students:
+            failing = [p for p in preds_by_student.get(s.id, []) if p.is_at_risk]
             if failing:
+                valid_scores = [p.predicted_percentage for p in failing if p.predicted_percentage is not None]
+                avg_val = round(sum(valid_scores) / len(valid_scores), 1) if valid_scores else 0.0
                 at_risk_teacher_list.append({
                     "student": s,
                     "failing_subjects": failing,
                     "count": len(failing),
-                    "avg_score": round(sum(p["predicted_percentage"] for p in failing) / len(failing), 1)
+                    "avg_score": avg_val,
                 })
         kpi_at_risk = len(at_risk_teacher_list)
 
@@ -658,33 +665,67 @@ def my_predictions(request):
 
 @role_required("TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN")
 def at_risk_students(request):
-    """View for staff to identify students at risk of failing in current subjects."""
-    results, scope_label = scoped_results_for(request.user)
-    
-    student_ids = results.values_list("student_id", flat=True).distinct()
-    students = StudentProfile.objects.filter(id__in=student_ids).select_related("user", "course")
-    
-    at_risk_list = []
-    for student in students:
-        predictions = predict_current_subjects(student)
-        failing_subjects = [p for p in predictions if p["is_at_risk"]]
-        if failing_subjects:
-            behavior = SemesterResult.objects.filter(student=student, semester=student.current_semester).first()
-            if not behavior:
-                behavior = SemesterResult.objects.filter(student=student).order_by("-semester").first()
-                
-            habits = habit_summary(student)
+    """
+    View for staff to identify students at risk of failing in current subjects.
+    Reads pre-computed PredictionSnapshot records within the user's organizational scope.
+    Operates in O(1) constant queries bounded by performance budget.
+    """
+    snapshots_qs, scope_label = scoped_snapshots_for(request.user)
 
-            at_risk_list.append({
-                "student": student,
-                "failing_subjects": failing_subjects,
-                "behavior": behavior,
-                "habits": habits,
-                "avg_risk_score": round(sum(p["predicted_percentage"] for p in failing_subjects) / len(failing_subjects), 1)
+    # 1. Fetch in-scope snapshots in a single database roundtrip
+    snapshots = list(
+        snapshots_qs.select_related("student__user", "subject")
+        .order_by("-taken_at", "-id")[:500]
+    )
+
+    # 2. Group latest snapshot per (student, subject) and filter risk
+    seen_pairs = set()
+    students_map = {}
+
+    for snap in snapshots:
+        key = (snap.student_id, snap.subject_id)
+        if key in seen_pairs:
+            continue
+        seen_pairs.add(key)
+
+        if snap.risk_band in ("high", "insufficient_data"):
+            if snap.student_id not in students_map:
+                feats = snap.features or {}
+                from types import SimpleNamespace
+                behavior = SimpleNamespace(
+                    hours_studied_per_week=feats.get("hours_studied"),
+                    attendance_percentage=feats.get("attendance_percentage"),
+                    sleep_hours_per_night=feats.get("sleep_hours"),
+                )
+                habits = SimpleNamespace(
+                    hours_studied_per_week=feats.get("hours_studied"),
+                    sleep_hours_per_night=feats.get("sleep_hours"),
+                )
+                students_map[snap.student_id] = {
+                    "student": snap.student,
+                    "failing_subjects": [],
+                    "behavior": behavior,
+                    "habits": habits,
+                }
+            students_map[snap.student_id]["failing_subjects"].append({
+                "subject_code": snap.subject.code,
+                "subject_title": snap.subject.title,
+                "predicted_percentage": snap.predicted_percentage,
+                "is_at_risk": True,
+                "risk_band": snap.risk_band,
+                "reasons": snap.reasons,
             })
-            
+
+    at_risk_list = []
+    for item in students_map.values():
+        failing = item["failing_subjects"]
+        valid_scores = [p["predicted_percentage"] for p in failing if p["predicted_percentage"] is not None]
+        avg_score = round(sum(valid_scores) / len(valid_scores), 1) if valid_scores else 0.0
+        item["avg_risk_score"] = avg_score
+        at_risk_list.append(item)
+
     return render(request, "at_risk_students.html", {
         "scope_label": scope_label,
         "at_risk_list": at_risk_list,
-        "total_at_risk": len(at_risk_list)
+        "total_at_risk": len(at_risk_list),
     })

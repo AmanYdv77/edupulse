@@ -147,3 +147,6 @@ LOGIN_URL = "login"
 
 # Machine Learning model artifact storage directory
 MODEL_ARTIFACT_DIR = env("MODEL_ARTIFACT_DIR", default=None)
+
+# Academic performance standards
+PASS_MARK_PERCENT = 40.0
