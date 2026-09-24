@@ -3,6 +3,7 @@
 # pip-compile requirements.in -o requirements.txt
 
 Django>=6.0,<6.1
+django-environ
 scikit-learn
 pandas
 numpy

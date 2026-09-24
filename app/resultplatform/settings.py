@@ -10,29 +10,30 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import environ
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = BASE_DIR.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+env = environ.Env()
+# Read .env from repo root if present (real environment variables take precedence)
+env_file = REPO_DIR / ".env"
+if env_file.is_file():
+    environ.Env.read_env(env_file)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^=-5i9@0-qy%-#d5klc^46@v+pj!th%=p3*-l!&4lm7@@p99zx'
+SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DJANGO_DEBUG", default=False)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
-# CSRF & Cookie Configuration for Local Development & Telemetry
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
-    "http://0.0.0.0:8000",
-]
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 
 CSRF_COOKIE_HTTPONLY = False  # Allows client-side auto-synchronization of CSRF tokens
 CSRF_COOKIE_SAMESITE = "Lax"

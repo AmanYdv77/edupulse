@@ -10,6 +10,8 @@ cloudpickle==3.1.2
     # via joblib
 django==6.0.8
     # via -r requirements.in
+django-environ==0.14.0
+    # via -r requirements.in
 joblib==1.6.0
     # via
     #   -r requirements.in
