@@ -42,6 +42,17 @@
     </div>
 </div>
 
+{% if not predictions %}
+<div class="card" style="margin-bottom: 24px; padding: 20px; border-left: 4px solid var(--accent, #6366f1); background: var(--bg-card);">
+    <div style="font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px;">
+        No active prediction model
+    </div>
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+        The machine learning prediction service is currently awaiting model registration under the new ML Feature Contract. Validated predictions will be displayed here once an approved model version is activated.
+    </div>
+</div>
+{% endif %}
+
 <!-- Prescriptive Recommendations Matrix -->
 <div class="card" style="margin-bottom: 28px;">
     <div class="card-header">
@@ -88,7 +99,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No course predictions available.</td>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No active prediction model. Predictions will be available once a validated model is registered.</td>
                 </tr>
                 {% endfor %}
             </tbody>
