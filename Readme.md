@@ -86,18 +86,6 @@ To prevent logging fatigue, students choose their preferred input rhythm:
 
 ---
 
-## 🔑 Demo Accounts & Credentials
-
-The platform includes pre-seeded roles ready for testing:
-
-| Role | Username | Password | Purpose & Scope |
-| :--- | :--- | :--- | :--- |
-| **Student** | `25-engg-cse-ug-001` | `password123` | Interactive Habit Logging, AI Forecast Matrix, Academic Transcripts |
-| **Teacher / Faculty** | `cse_fac01` | `password123` | Department Cohort Monitoring, Early Warning Radar, Student Interventions |
-| **Administrator** | `Aman_Yadav` | `password123` | University-wide administration, curriculum setup, data imports |
-
----
-
 ## 🚀 Quick Start & Installation
 
 ### 1. Prerequisites
@@ -138,7 +126,7 @@ Visit **`http://127.0.0.1:8000/`** in your browser to access the platform.
 
 ### Student Workflow
 1. Navigate to `http://127.0.0.1:8000/accounts/login/`.
-2. Sign in with **`25-engg-cse-ug-001`** / **`password123`**.
+2. Sign in with student credentials (e.g. **`25-engg-cse-ug-001`**).
 3. On the **Command Dashboard**, review forecasted marks, attendance, and habit streaks.
 4. Click **Log Habits** in the sidebar (or visit `/habits/check-in/`):
    * Switch between **Daily Quick-Check** and **Weekly Summary** modes.
@@ -146,7 +134,7 @@ Visit **`http://127.0.0.1:8000/`** in your browser to access the platform.
 5. Click **AI Predictions** in the sidebar (or visit `/my-predictions/`) to view the updated subject forecast matrix and prescriptive guidance.
 
 ### Faculty Workflow
-1. Click **Exit** in the sidebar footer and sign in with **`cse_fac01`** / **`password123`**.
+1. Click **Exit** in the sidebar footer and sign in with faculty credentials (e.g. **`cse_fac01`**).
 2. On the **Faculty Dashboard**, review monitored student counts and at-risk metrics.
 3. Click **At-Risk Radar** (`/at-risk/`) to view flagged students with failing course trajectories.
 4. Click **Dept Records** (`/results-overview/`) to view the department-scoped performance ledger.

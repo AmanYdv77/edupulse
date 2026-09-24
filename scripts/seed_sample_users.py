@@ -1,24 +1,27 @@
 """
-Milestone 1 — create a FEW sample users so you can see the system working.
+Create sample users for local development.
 
-Run it with:   python manage.py shell < seed_sample_users.py
-
-We deliberately create only ~6 users (not all 800) so you can understand each
-one. Importing the full university.db comes in a later milestone.
-
-All sample passwords are:  Pass@123   (fine for learning; never for real use)
+Run with: python manage.py shell < scripts/seed_sample_users.py
 """
+
+import os
+import sys
+
+demo_password = os.environ.get("DEMO_USER_PASSWORD")
+if not demo_password:
+    print("ERROR: DEMO_USER_PASSWORD environment variable is required.", file=sys.stderr)
+    sys.exit(1)
 
 from accounts.models import User
 
 # (username, password, role, first_name, last_name, email, is_staff, is_superuser)
 SAMPLE_USERS = [
-    ("admin",      "Pass@123", User.Role.SYSADMIN,    "System", "Admin",  "admin@adu.edu.in",   True,  True),
-    ("vc",         "Pass@123", User.Role.VC,          "Ishaan", "Sharma", "vc@adu.edu.in",      True,  False),
-    ("dean_engg",  "Pass@123", User.Role.DEAN,        "Tara",   "Iyer",   "dean@adu.edu.in",    True,  False),
-    ("hod_cse",    "Pass@123", User.Role.HOD,         "Shreya", "Mehta",  "hod@adu.edu.in",     True,  False),
-    ("teacher_cse","Pass@123", User.Role.TEACHER,     "Vikram", "Kumar",  "teacher@adu.edu.in", True,  False),
-    ("student_cs", "Pass@123", User.Role.STUDENT,     "Nisha",  "Das",    "nisha@student.adu.edu.in", False, False),
+    ("admin",      demo_password, User.Role.SYSADMIN,    "System", "Admin",  "admin@adu.edu.in",   True,  True),
+    ("vc",         demo_password, User.Role.VC,          "Ishaan", "Sharma", "vc@adu.edu.in",      True,  False),
+    ("dean_engg",  demo_password, User.Role.DEAN,        "Tara",   "Iyer",   "dean@adu.edu.in",    True,  False),
+    ("hod_cse",    demo_password, User.Role.HOD,         "Shreya", "Mehta",  "hod@adu.edu.in",     True,  False),
+    ("teacher_cse",demo_password, User.Role.TEACHER,     "Vikram", "Kumar",  "teacher@adu.edu.in", True,  False),
+    ("student_cs", demo_password, User.Role.STUDENT,     "Nisha",  "Das",    "nisha@student.adu.edu.in", False, False),
 ]
 
 print("\nSeeding sample users...")
@@ -38,4 +41,5 @@ for username, pw, role, fn, ln, email, is_staff, is_super in SAMPLE_USERS:
     print(f"  [{status}] {username:12s} -> {user.get_role_display()}")
 
 print(f"\nDone. Total users now: {User.objects.count()}")
-print("Login at /admin with  admin / Pass@123  (the superuser).")
+print("Login at /admin with superuser username: admin.")
+

@@ -10,7 +10,7 @@ Requirements:
 What it does:
   * Reads university.db (the rich sample dataset).
   * Creates University/School/Department/Course/Batch/Subject.
-  * Creates User accounts for all staff + students (password = Pass@123).
+  * Creates User accounts for all staff + students (password from DEMO_USER_PASSWORD).
   * Creates Teacher/Student profiles, teaching assignments, results, semester cards.
   * PRESERVES your existing superuser admin account.
 
@@ -19,7 +19,13 @@ superuser). Uses login_id/roll_no/codes to avoid duplicates.
 """
 import os
 import sqlite3
+import sys
 from django.db import transaction
+
+DEFAULT_PASSWORD = os.environ.get("DEMO_USER_PASSWORD")
+if not DEFAULT_PASSWORD:
+    print("ERROR: DEMO_USER_PASSWORD environment variable is required.", file=sys.stderr)
+    sys.exit(1)
 
 from accounts.models import User
 from academics.models import (University, School, Department, Course, Batch,
@@ -30,8 +36,6 @@ if "__file__" in globals():
     DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data/university.db"))
 else:
     DB_PATH = "../data/university.db"
-
-DEFAULT_PASSWORD = "Pass@123"
 
 if not os.path.exists(DB_PATH):
     print(f"ERROR: {DB_PATH} not found. Expected raw database at {DB_PATH}.")
@@ -221,5 +225,5 @@ else:
     print(f"  Teachers:     {TeacherProfile.objects.count()}")
     print(f"  Results:      {Result.objects.count()}")
     print(f"  Sem results:  {SemesterResult.objects.count()}")
-    print("\n  All imported accounts use password: Pass@123")
+    print("\n  All imported accounts use password configured in DEMO_USER_PASSWORD")
     print("  Sample logins: vc | dean_engg | hod_cse | cse_fac01 | 25-engg-cse-ug-001")
