@@ -4,6 +4,7 @@
 
 Django>=6.0,<6.1
 django-environ
+psycopg[binary]
 scikit-learn
 pandas
 numpy

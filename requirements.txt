@@ -26,6 +26,10 @@ numpy==2.5.3
     #   scipy
 pandas==3.0.6
     # via -r requirements.in
+psycopg[binary]==3.3.6
+    # via -r requirements.in
+psycopg-binary==3.3.6
+    # via psycopg
 python-dateutil==2.9.0.post0
     # via pandas
 scikit-learn==1.9.1
@@ -38,7 +42,10 @@ sqlparse==0.6.0
     # via django
 threadpoolctl==3.7.0
     # via scikit-learn
+typing-extensions==4.16.0
+    # via psycopg
 tzdata==2026.4
     # via
     #   django
     #   pandas
+    #   psycopg
