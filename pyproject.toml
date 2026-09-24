@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "resultplatform.settings.test"
+pythonpath = [".", "app"]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests requiring integration services (e.g. Redis)",
+    "e2e: marks end-to-end browser tests",
+]
+addopts = "-m 'not e2e' --reuse-db"
