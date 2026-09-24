@@ -29,6 +29,10 @@ if "DATABASE_URL" not in os.environ:
 
 from .base import *
 
+# Ensure test clients (testserver) and local test hosts are allowed
+ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ["localhost", "127.0.0.1", "testserver"]))
+
+
 # Pre-flight environment guards
 if os.environ.get("DJANGO_ENV", "").strip().lower() == "prod":
     sys.stderr.write("Security Violation: Test suite cannot run in production environment (DJANGO_ENV=prod).\n")

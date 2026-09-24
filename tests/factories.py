@@ -294,6 +294,11 @@ class HabitCheckInLogFactory(factory.django.DjangoModelFactory):
 # HIERARCHY HELPER
 # ---------------------------------------------------------------------------
 
+import itertools
+
+_univ_counter = itertools.count(1000)
+
+
 def make_university(students_per_batch: int = 10) -> dict:
     """
     Construct a complete, connected university hierarchy for testing.
@@ -306,11 +311,12 @@ def make_university(students_per_batch: int = 10) -> dict:
     - 2 Subjects and 2 Teachers with TeachingAssignments
     - `students_per_batch` Students with Profiles, SemesterResults, Subject Results, and Habit Logs
     """
-    univ_suffix = random.randint(100, 999)
+    univ_suffix = next(_univ_counter)
     university = UniversityFactory(
         name=f"Apex Institute of Technology {univ_suffix}",
         code=f"AIT{univ_suffix}",
     )
+
 
     vc = VCUserFactory(username=f"vc_apex_{univ_suffix}")
     registrar = RegistrarUserFactory(username=f"registrar_apex_{univ_suffix}")
