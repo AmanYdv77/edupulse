@@ -1,0 +1,8 @@
+# EduPulse notebook dependencies (exploration only)
+# To compile/update requirements-notebook.txt:
+# pip-compile requirements-notebook.in -o requirements-notebook.txt
+
+-r requirements.in
+matplotlib
+seaborn
+ipykernel
