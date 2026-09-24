@@ -38,6 +38,5 @@ model_artifacts/
 
 # Raw data and datasets (except test fixtures)
 data/
-docs/
 *.csv
 !tests/fixtures/**
