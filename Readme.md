@@ -101,7 +101,7 @@ The platform includes pre-seeded roles ready for testing:
 ## 🚀 Quick Start & Installation
 
 ### 1. Prerequisites
-*   Python 3.11 or 3.12 installed
+*   Python 3.12 installed
 *   Git
 
 ### 2. Setup Virtual Environment

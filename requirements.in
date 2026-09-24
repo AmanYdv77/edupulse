@@ -1,0 +1,9 @@
+# EduPulse direct runtime dependencies
+# To compile/update requirements.txt:
+# pip-compile requirements.in -o requirements.txt
+
+Django>=6.0,<6.1
+scikit-learn
+pandas
+numpy
+joblib
