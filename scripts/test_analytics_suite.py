@@ -10,6 +10,11 @@ import time
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
+demo_password = os.environ.get("DEMO_USER_PASSWORD")
+if not demo_password:
+    print("ERROR: DEMO_USER_PASSWORD environment variable is required.", file=sys.stderr)
+    sys.exit(1)
+
 # Add app directory to sys.path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 APP_DIR = os.path.join(BASE_DIR, "app")
@@ -110,7 +115,7 @@ def run_tests():
         if not u:
             # Fallback to creating a test user if none exists
             u, _ = User.objects.get_or_create(username=f"test_{role.lower()}", role=role)
-            u.set_password("pass1234")
+            u.set_password(demo_password)
             u.save()
 
         client.force_login(u)

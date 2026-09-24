@@ -1,26 +1,21 @@
 """
-Milestone 4 + 5 — seed REAL academic data with enough variety to SEE the
-hierarchy work (different roles see different slices).
-
-Run with:  python manage.py shell -c "exec(open('seed_academics.py').read())"
-
-Creates:
-  School of Engineering
-    - CSE dept: B.Tech course, several students with results
-    - ECE dept: B.Tech course, a student with results
-  Assigns scope to staff:
-    - hod_cse  -> HOD of CSE department
-    - dean_engg-> Dean of School of Engineering
-    - teacher_cse -> teaches in CSE
-Safe to re-run.
+Seed academic hierarchy and sample student data for development.
 """
+import os
 import random
+import sys
+
+demo_password = os.environ.get("DEMO_USER_PASSWORD")
+if not demo_password:
+    print("ERROR: DEMO_USER_PASSWORD environment variable is required.", file=sys.stderr)
+    sys.exit(1)
+
 from accounts.models import User
 from academics.models import (School, Department, Course, Batch, Subject,
                               TeacherProfile, StudentProfile, Result)
 
 random.seed(42)
-print("\nSeeding academic data (Milestone 4+5)...")
+print("\nSeeding academic data...")
 
 # ---------------- Structure ----------------
 school, _ = School.objects.get_or_create(code="ENGG", defaults={"name": "School of Engineering"})
@@ -59,7 +54,7 @@ ece_teacher_user, created = User.objects.get_or_create(username="teacher_ece",
             defaults={"role": User.Role.TEACHER, "first_name": "Anika", "last_name": "Menon",
                       "email": "teacher_ece@adu.edu.in", "is_staff": True})
 if created:
-    ece_teacher_user.set_password("Pass@123")
+    ece_teacher_user.set_password(demo_password)
 ece_teacher_user.department = ece; ece_teacher_user.school = school; ece_teacher_user.save()
 ece_teacher, _ = TeacherProfile.objects.get_or_create(user=ece_teacher_user,
             defaults={"staff_id": "ADU-FAC-002", "department": ece,
@@ -124,7 +119,7 @@ for uname, fn, ln, ab in extra_cse:
     u, c = User.objects.get_or_create(username=uname,
             defaults={"role": User.Role.STUDENT, "first_name": fn, "last_name": ln,
                       "email": f"{uname}@student.adu.edu.in"})
-    if c: u.set_password("Pass@123"); u.save()
+    if c: u.set_password(demo_password); u.save()
     sp, _ = StudentProfile.objects.get_or_create(user=u,
             defaults={"roll_no": f"23-ENGG-CSE-UG-{random.randint(2,49):03d}",
                       "batch": cse_batch, "course": cse_course,
@@ -135,7 +130,7 @@ for uname, fn, ln, ab in extra_cse:
 u, c = User.objects.get_or_create(username="arjun_ec",
         defaults={"role": User.Role.STUDENT, "first_name": "Arjun", "last_name": "Rao",
                   "email": "arjun_ec@student.adu.edu.in"})
-if c: u.set_password("Pass@123"); u.save()
+if c: u.set_password(demo_password); u.save()
 arjun = StudentProfile.objects.get_or_create(user=u,
         defaults={"roll_no": "23-ENGG-ECE-UG-001", "batch": ece_batch,
                   "course": ece_course, "admission_year": 2023, "current_semester": 4})[0]
