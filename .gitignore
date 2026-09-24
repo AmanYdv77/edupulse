@@ -35,6 +35,7 @@ Thumbs.db
 *.pkl
 *.joblib
 model_artifacts/
+artifacts/
 
 # Raw data and datasets (except test fixtures)
 data/
