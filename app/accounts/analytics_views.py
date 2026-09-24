@@ -1,25 +1,28 @@
 """
 Role-Specific Analytics View Controllers and JSON Query API.
 Dispatches to tailored Monolith Dark analytics templates for Student, Teacher, HOD, Dean, and Executive.
+Default-deny access control is enforced via role and scope guards.
 """
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_GET
 
 from academics.models import (
-    StudentProfile, TeacherProfile, Department, School, Course, Batch
+    StudentProfile, TeacherProfile, Department, School, Course, Batch, TeachingAssignment
 )
 from academics.analytics_engine import (
     compute_cohort_deep_dive, get_student_analytics, get_teacher_analytics,
     get_hod_analytics, get_dean_analytics, get_executive_analytics
 )
+from .permissions import role_required, scope_for, is_in_scope
 
 
-@login_required
+@role_required("STUDENT", "TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN")
 def analytics_hub(request):
     """
     Central dispatcher routing each user to their specific analytical cockpit.
+    Enforces strict role scoping without insecure fallback expansion.
     """
     user = request.user
     role = user.role
@@ -53,7 +56,22 @@ def analytics_hub(request):
 
     # 3. HOD
     elif role == "HOD":
-        dept = user.department or (user.teacher_profile.department if hasattr(user, "teacher_profile") else None) or Department.objects.first()
+        dept = user.department or (user.teacher_profile.department if hasattr(user, "teacher_profile") else None)
+        if not dept:
+            # Safe unassigned state: HTTP 200 with zero leaked data from other departments
+            return render(request, "analytics/hod_analytics.html", {
+                "department": None,
+                "department_name": "No Department Assigned",
+                "stats": {"total_students": 0, "pass_rate": 0, "avg_sgpa": 0, "at_risk": 0},
+                "role": role,
+                "role_label": user.get_role_display(),
+                "unassigned": True,
+                "courses": [],
+                "batches": [],
+                "distribution_labels": [],
+                "distribution_data": [],
+            })
+
         course_id = request.GET.get("course")
         batch_id = request.GET.get("batch")
         semester = request.GET.get("semester")
@@ -73,7 +91,23 @@ def analytics_hub(request):
 
     # 4. DEAN
     elif role == "DEAN":
-        school = user.school or School.objects.first()
+        school = user.school
+        if not school:
+            # Safe unassigned state: HTTP 200 with zero leaked data from other schools
+            return render(request, "analytics/dean_analytics.html", {
+                "school": None,
+                "school_name": "No School Assigned",
+                "stats": {"total_students": 0, "pass_rate": 0, "avg_sgpa": 0, "at_risk": 0},
+                "role": role,
+                "role_label": user.get_role_display(),
+                "unassigned": True,
+                "departments": [],
+                "courses": [],
+                "batches": [],
+                "chart_labels": [],
+                "chart_data": [],
+            })
+
         dept_id = request.GET.get("dept")
         try:
             dept_id = int(dept_id) if dept_id else None
@@ -103,13 +137,15 @@ def analytics_hub(request):
         })
 
 
-@login_required
+@role_required("TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN")
 @require_GET
 def api_cohort_query(request):
     """
-    JSON API for dynamic statistical drill-downs:
-    Answers: Topper, Failures count & list, 5-number summary (Min, Max, Avg, Median, Q1, Q3),
-    Pass %, Most Improved, Steepest Drop, and distribution bins.
+    JSON API for dynamic statistical drill-downs.
+    Enforces strict role and scope authorization:
+    - Students are denied access (HTTP 403).
+    - Requests for out-of-scope academic entities return HTTP 403.
+    - Teachers only see named students for batches they teach.
     """
     batch_id = request.GET.get("batch_id")
     course_id = request.GET.get("course_id")
@@ -121,7 +157,29 @@ def api_cohort_query(request):
     course = Course.objects.filter(id=course_id).first() if course_id else None
     department = Department.objects.filter(id=department_id).first() if department_id else None
     school = School.objects.filter(id=school_id).first() if school_id else None
-    
+
+    # Verify requested entities fall within the caller's authorized scope
+    scope = scope_for(request.user)
+    if not scope["is_university_wide"]:
+        if school and not scope["allowed_schools"].filter(id=school.id).exists():
+            raise PermissionDenied("Requested school is outside your authorized academic scope.")
+        if department and not scope["allowed_departments"].filter(id=department.id).exists():
+            raise PermissionDenied("Requested department is outside your authorized academic scope.")
+        if course and not scope["allowed_courses"].filter(id=course.id).exists():
+            raise PermissionDenied("Requested course is outside your authorized academic scope.")
+        if batch and not scope["allowed_batches"].filter(id=batch.id).exists():
+            raise PermissionDenied("Requested batch is outside your authorized academic scope.")
+
+        # Bind to authorized scope if entity filters were omitted
+        if not school and scope["role"] == "DEAN":
+            school = scope["school"]
+            if not school:
+                raise PermissionDenied("No school assigned to this account.")
+        elif not department and scope["role"] == "HOD":
+            department = scope["department"]
+            if not department:
+                raise PermissionDenied("No department assigned to this account.")
+
     try:
         semester_num = int(semester) if semester else None
     except ValueError:
@@ -129,15 +187,26 @@ def api_cohort_query(request):
 
     stats = compute_cohort_deep_dive(
         batch=batch, course=course, semester=semester_num,
-        department=department, school=school
+        department=department, school=school, user=request.user
     )
 
-    # Clean student objects for JSON serialization
+    # Privacy filtering for TEACHER: only students in taught batches are named
+    is_teacher = request.user.role == "TEACHER"
+    taught_batch_ids = set()
+    if is_teacher:
+        teacher = getattr(request.user, "teacher_profile", None)
+        if teacher:
+            taught_batch_ids = set(
+                TeachingAssignment.objects.filter(teacher=teacher).values_list("batch_id", flat=True)
+            )
+
     clean_topper = None
     if stats["topper"]:
+        t_student = stats["topper"].get("student")
+        is_named = not is_teacher or (t_student and t_student.batch_id in taught_batch_ids)
         clean_topper = {
-            "name": stats["topper"]["name"],
-            "roll_no": stats["topper"]["roll_no"],
+            "name": stats["topper"]["name"] if is_named else "Student (Outside Teaching Scope)",
+            "roll_no": stats["topper"]["roll_no"] if is_named else "REDACTED",
             "sgpa": stats["topper"]["sgpa"],
             "percentage": stats["topper"]["percentage"],
             "semester": stats["topper"]["semester"],
@@ -146,9 +215,11 @@ def api_cohort_query(request):
 
     clean_failed = []
     for f in stats["failed_students"][:15]:
+        f_student = f.get("student")
+        is_named = not is_teacher or (f_student and f_student.batch_id in taught_batch_ids)
         clean_failed.append({
-            "name": f["name"],
-            "roll_no": f["roll_no"],
+            "name": f["name"] if is_named else "Student (Outside Teaching Scope)",
+            "roll_no": f["roll_no"] if is_named else "REDACTED",
             "sgpa": f["sgpa"],
             "percentage": f["percentage"],
             "semester": f["semester"],
