@@ -14,8 +14,9 @@ from .permissions import role_required, scope_for, is_in_scope
 from academics.models import (
     Result, StudentProfile, SemesterResult, Subject, Course, Department,
     School, University, TeacherProfile, TeachingAssignment, InternalAssessment,
-    StudentHabitPreference, HabitCheckInLog, sync_habits_to_semester_result
+    StudentHabitPreference, HabitCheckInLog
 )
+from academics.services.habits import habit_summary
 from academics.forms import HabitCheckInForm, HabitPreferenceForm
 
 from academics.predictor import predict_current_subjects
@@ -387,11 +388,8 @@ def habit_checkin(request):
                 
             habit_pref.last_checkin_date = today
             habit_pref.save()
-            
-            # Sync habits into SemesterResult to update live ML inputs
-            sync_habits_to_semester_result(student)
-            
-            messages.success(request, "🎉 Check-in saved! Your AI performance predictions have been refreshed.")
+
+            messages.success(request, "🎉 Check-in saved! Your telemetry log has been recorded.")
             return redirect("habit_checkin")
     else:
         # Pre-fill log type based on preference
@@ -403,6 +401,7 @@ def habit_checkin(request):
     
     # Current behavioral stats
     sem_result = SemesterResult.objects.filter(student=student, semester=student.current_semester).first()
+    summary = habit_summary(student)
 
     return render(request, "habit_checkin.html", {
         "student": student,
@@ -412,6 +411,7 @@ def habit_checkin(request):
         "logs": logs,
         "today_log": today_log,
         "sem_result": sem_result,
+        "habit_summary": summary,
         "today": today,
     })
 
@@ -644,12 +644,15 @@ def my_predictions(request):
     if not behavior:
         behavior = SemesterResult.objects.filter(student=student).order_by("-semester").first()
 
+    habits = habit_summary(student)
+
     return render(request, "my_predictions.html", {
         "student": student,
         "predictions": predictions,
         "at_risk_count": at_risk_count,
         "avg_predicted": round(avg_predicted, 1),
-        "behavior": behavior
+        "behavior": behavior,
+        "habits": habits,
     })
 
 
@@ -670,10 +673,13 @@ def at_risk_students(request):
             if not behavior:
                 behavior = SemesterResult.objects.filter(student=student).order_by("-semester").first()
                 
+            habits = habit_summary(student)
+
             at_risk_list.append({
                 "student": student,
                 "failing_subjects": failing_subjects,
                 "behavior": behavior,
+                "habits": habits,
                 "avg_risk_score": round(sum(p["predicted_percentage"] for p in failing_subjects) / len(failing_subjects), 1)
             })
             

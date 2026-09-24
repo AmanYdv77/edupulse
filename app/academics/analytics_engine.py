@@ -308,14 +308,15 @@ def get_teacher_analytics(teacher, assignment_id=None):
     students = batch.students.select_related('user').all() if batch else []
     scatter_points = []
     for st in students[:40]:
-        att = SemesterResult.objects.filter(student=st, semester=semester).values_list('attendance_percentage', flat=True).first() or 75.0
-        int_score = st.internal_assessments.filter(subject=subject).aggregate(avg=Avg('marks_obtained'))['avg'] or 16.0
-        scatter_points.append({
-            "x": round(att, 1),
-            "y": round(int_score, 1),
-            "name": st.user.get_full_name() or st.user.username,
-            "roll_no": st.roll_no
-        })
+        att = SemesterResult.objects.filter(student=st, semester=semester).values_list('attendance_percentage', flat=True).first()
+        int_score = st.internal_assessments.filter(subject=subject).aggregate(avg=Avg('marks_obtained'))['avg']
+        if att is not None and int_score is not None:
+            scatter_points.append({
+                "x": round(att, 1),
+                "y": round(int_score, 1),
+                "name": st.user.get_full_name() or st.user.username,
+                "roll_no": st.roll_no
+            })
 
     return {
         "assignments": assignments,

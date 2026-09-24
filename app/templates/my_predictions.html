@@ -37,7 +37,7 @@
         <div class="kpi-label">Model 2 Multiplier</div>
         <div class="kpi-value mono">ACTIVE</div>
         <div class="kpi-footer">
-            <span class="mono">Study: {{ behavior.hours_studied_per_week|default:"0" }}h | Sleep: {{ behavior.sleep_hours_per_night|default:"7" }}h</span>
+            <span class="mono">Study: {% if habits.hours_studied_per_week is not None %}{{ habits.hours_studied_per_week }}h{% elif behavior.hours_studied_per_week is not None %}{{ behavior.hours_studied_per_week }}h{% else %}--{% endif %} | Sleep: {% if habits.sleep_hours_per_night is not None %}{{ habits.sleep_hours_per_night }}h{% elif behavior.sleep_hours_per_night is not None %}{{ behavior.sleep_hours_per_night }}h{% else %}--{% endif %}</span>
         </div>
     </div>
 </div>

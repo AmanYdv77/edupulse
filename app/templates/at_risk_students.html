@@ -68,8 +68,8 @@
                         <span class="tag tag-high-risk">{{ item.avg_risk_score }}%</span>
                     </td>
                     <td class="mono" style="font-size: 12px; color: var(--text-secondary);">
-                        <div>Study: {{ item.behavior.hours_studied_per_week|default:"0" }}h/wk</div>
-                        <div>Attd: {{ item.behavior.attendance_percentage|default:"85" }}%</div>
+                        <div>Study: {% if item.habits.hours_studied_per_week is not None %}{{ item.habits.hours_studied_per_week }}h/wk{% elif item.behavior.hours_studied_per_week is not None %}{{ item.behavior.hours_studied_per_week }}h/wk{% else %}--{% endif %}</div>
+                        <div>Attd: {% if item.behavior.attendance_percentage is not None %}{{ item.behavior.attendance_percentage }}%{% else %}--{% endif %}</div>
                     </td>
                     <td>
                         <button class="btn btn-secondary btn-sm" onclick="alert('Intervention logged for student {{ item.student.roll_no }}')">Intervene</button>
