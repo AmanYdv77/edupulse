@@ -676,63 +676,6 @@
         </main>
     </div>
 
-    
-    <script>
-        // Automatic CSRF Token Synchronizer (Prevents 403 CSRF token mismatch from back-button/bfcache/rotation)
-        (function() {
-            function getActiveCsrfCookie() {
-                const name = 'csrftoken=';
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    let c = cookies[i].trim();
-                    if (c.indexOf(name) === 0) {
-                        return decodeURIComponent(c.substring(name.length, c.length));
-                    }
-                }
-                return null;
-            }
-
-            function syncCsrfInputs() {
-                const activeToken = getActiveCsrfCookie();
-                if (activeToken) {
-                    const inputs = document.querySelectorAll('input[name="csrfmiddlewaretoken"]');
-                    inputs.forEach(function(input) {
-                        input.value = activeToken;
-                    });
-                }
-            }
-
-            // Sync immediately on DOM ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', syncCsrfInputs);
-            } else {
-                syncCsrfInputs();
-            }
-
-            // Sync on pageshow (e.g. when restored from browser bfcache / Back button)
-            window.addEventListener('pageshow', function(event) {
-                syncCsrfInputs();
-            });
-
-            // Intercept form submissions and guarantee matching token
-            document.addEventListener('submit', function(event) {
-                const activeToken = getActiveCsrfCookie();
-                if (activeToken && event.target && event.target.tagName === 'FORM') {
-                    let input = event.target.querySelector('input[name="csrfmiddlewaretoken"]');
-                    if (input) {
-                        input.value = activeToken;
-                    } else {
-                        input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'csrfmiddlewaretoken';
-                        input.value = activeToken;
-                        event.target.appendChild(input);
-                    }
-                }
-            }, true);
-        })();
-    </script>
-
     <!-- Chart.js Engine with Monolith Dark Palette Configuration -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
