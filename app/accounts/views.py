@@ -3,10 +3,13 @@ Account views: Home dashboard, results views, ML prediction panels, and Habit Ch
 """
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Avg, Count
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from datetime import timedelta, date
+
+from .permissions import role_required, scope_for, is_in_scope
 
 from academics.models import (
     Result, StudentProfile, SemesterResult, Subject, Course, Department,
@@ -79,28 +82,10 @@ ROLE_DASHBOARDS = {
 def scoped_results_for(user):
     """
     Return (results_queryset, scope_label) for what THIS user is allowed to see.
-    Encodes the academic organizational hierarchy.
+    Encodes the academic organizational hierarchy via permissions.scope_for.
     """
-    role = user.role
-
-    if role in ("VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN"):
-        return Result.objects.all(), "Entire University"
-
-    if role == "DEAN":
-        return (Result.objects.filter(subject__course__department__school=user.school),
-                f"School: {user.school}" if user.school else "Your School")
-
-    if role == "HOD":
-        return (Result.objects.filter(subject__course__department=user.department),
-                f"Department: {user.department}" if user.department else "Your Department")
-
-    if role == "TEACHER":
-        teacher = getattr(user, "teacher_profile", None)
-        if teacher:
-            return Result.objects.filter(teacher=teacher), "Students you teach"
-        return Result.objects.none(), "Students you teach"
-
-    return Result.objects.none(), "No access"
+    scope = scope_for(user)
+    return scope["results"], scope["scope_label"]
 
 
 def index(request):
@@ -368,7 +353,7 @@ def home(request):
 
 
 
-@login_required
+@role_required("STUDENT")
 def habit_checkin(request):
     """
     Dedicated view for students to log habits, view history, and update frequency preferences.
@@ -431,7 +416,7 @@ def habit_checkin(request):
     })
 
 
-@login_required
+@role_required("STUDENT")
 def update_habit_preference(request):
     """
     Endpoint to update Daily vs. Weekly logging frequency preference.
@@ -452,7 +437,7 @@ def update_habit_preference(request):
     return redirect(next_url)
 
 
-@login_required
+@role_required("TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN")
 def scoped_results(request):
     """
     A results overview filtered to the logged-in user's scope.
@@ -479,24 +464,26 @@ def scoped_results(request):
     })
 
 
-@login_required
+@role_required("TEACHER", "SYSTEM_ADMIN")
 def teacher_internal_marks(request):
     """
     Allows faculty to enter continuous evaluation / internal marks for assigned batches.
     Once submitted, marks are instantly live across the hierarchy.
     """
     teacher = getattr(request.user, "teacher_profile", None)
-    if not teacher and not request.user.is_staff:
-        messages.error(request, "Access restricted to active faculty members and staff.")
-        return redirect("home")
+    if not teacher:
+        raise PermissionDenied("Access restricted to active faculty members with a teacher profile.")
 
-    assignments = TeachingAssignment.objects.filter(teacher=teacher).select_related("subject", "batch", "batch__course") if teacher else TeachingAssignment.objects.all().select_related("subject", "batch", "batch__course")[:10]
+    assignments = TeachingAssignment.objects.filter(teacher=teacher).select_related("subject", "batch", "batch__course")
 
     assignment_id = request.GET.get("assignment")
     selected_assignment = None
     if assignment_id:
-        selected_assignment = assignments.filter(id=assignment_id).first()
-    if not selected_assignment and assignments.exists():
+        requested_assignment = TeachingAssignment.objects.filter(id=assignment_id).first()
+        if not requested_assignment or requested_assignment.teacher != teacher:
+            raise PermissionDenied("You do not have permission to view or manage this teaching assignment.")
+        selected_assignment = requested_assignment
+    elif assignments.exists():
         selected_assignment = assignments.first()
 
     students = []
@@ -507,6 +494,9 @@ def teacher_internal_marks(request):
         if not selected_assignment:
             messages.error(request, "Please select an active teaching assignment first.")
             return redirect("teacher_internal_marks")
+
+        if selected_assignment.teacher != teacher:
+            raise PermissionDenied("You can only submit marks for your own assigned classes.")
 
         title = request.POST.get("title", "").strip() or "Continuous Assessment"
         assessment_type = request.POST.get("assessment_type", "ASSIGNMENT")
@@ -598,7 +588,7 @@ def teacher_internal_marks(request):
     })
 
 
-@login_required
+@role_required("STUDENT")
 def my_results(request):
     """The logged-in STUDENT's own results, grouped by semester (restricted to published semesters)."""
     student = getattr(request.user, "student_profile", None)
@@ -638,7 +628,7 @@ def my_results(request):
     })
 
 
-@login_required
+@role_required("STUDENT")
 def my_predictions(request):
     """View to show the logged-in student their current semester predictions."""
     student = getattr(request.user, "student_profile", None)
@@ -663,7 +653,7 @@ def my_predictions(request):
     })
 
 
-@login_required
+@role_required("TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN")
 def at_risk_students(request):
     """View for staff to identify students at risk of failing in current subjects."""
     results, scope_label = scoped_results_for(request.user)

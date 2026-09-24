@@ -14,7 +14,7 @@ from academics.models import (
 )
 
 
-def compute_cohort_deep_dive(batch=None, course=None, semester=None, department=None, school=None):
+def compute_cohort_deep_dive(batch=None, course=None, semester=None, department=None, school=None, user=None):
     """
     Computes statistical distribution and cohort highlights:
     - Min, Max, Average, Standard Deviation

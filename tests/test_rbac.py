@@ -53,7 +53,7 @@ def test_unauthenticated_requests_redirect_to_login(client, route_name):
 # 2. PARAMETRIZED RBAC MATRIX (CURRENT STATUS CODES)
 # ---------------------------------------------------------------------------
 
-# Baseline HTTP status code matrix for each role across all 11 routes:
+# Task A10 Enforced HTTP status code matrix for each role across all 11 routes:
 # Format: (role, route_name, expected_status)
 RBAC_MATRIX = []
 
@@ -67,22 +67,31 @@ ROLES = [
     "CONTROLLER_OF_EXAMS",
 ]
 
+STUDENT_ONLY_ROUTES = {"my_results", "my_predictions", "habit_checkin", "update_habit_preference"}
+FACULTY_STAFF_ROUTES = {"scoped_results", "at_risk_students", "api_cohort_query"}
+
 for role in ROLES:
     for route in ALL_ACCOUNT_ROUTES:
         if route == "index":
             # index always redirects to login
             expected = 302
-        elif route == "update_habit_preference":
-            # update_habit_preference is POST-only; GET redirects
-            expected = 302
+        elif route in ("home", "analytics_hub"):
+            expected = 200
+        elif route in STUDENT_ONLY_ROUTES:
+            if role == "STUDENT":
+                # update_habit_preference is POST-only; GET redirects for student
+                expected = 302 if route == "update_habit_preference" else 200
+            else:
+                expected = 403
+        elif route in FACULTY_STAFF_ROUTES:
+            if role == "STUDENT":
+                expected = 403
+            else:
+                expected = 200
         elif route == "teacher_internal_marks":
-            # Only teachers with a profile can GET teacher_internal_marks (others redirect to home)
-            expected = 200 if role == "TEACHER" else 302
-        elif route == "habit_checkin":
-            # Only students have a student_profile to check in; others redirect to home
-            expected = 200 if role == "STUDENT" else 302
+            # Only teachers with a profile can access teacher_internal_marks (others 403)
+            expected = 200 if role == "TEACHER" else 403
         else:
-            # All other routes currently return 200 for authenticated roles
             expected = 200
         RBAC_MATRIX.append((role, route, expected))
 
