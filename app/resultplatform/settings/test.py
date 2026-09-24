@@ -29,6 +29,9 @@ if "DATABASE_URL" not in os.environ:
 
 from .base import *
 
+if not MODEL_ARTIFACT_DIR:
+    MODEL_ARTIFACT_DIR = str(BASE_DIR.parent / "artifacts" / "models")
+
 # Ensure test clients (testserver) and local test hosts are allowed
 ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ["localhost", "127.0.0.1", "testserver"]))
 
