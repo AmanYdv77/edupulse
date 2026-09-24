@@ -1,29 +1,37 @@
-# Python cache
+# Python cache & checkpoints
 __pycache__/
 *.py[cod]
+.ipynb_checkpoints/
 
 # Virtual environment
 venv/
 env/
 .venv/
 
-# Database (data, not code)
+# Database
 app/db.sqlite3
 *.sqlite3
 
-# Backup files from update scripts
+# Secrets
+.env
+
+# Backup files
 *.backup
 
-# Editor & OS junk
+# Editor & OS artifacts
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 .gemini/
 
-# Secrets
-.env
+# Machine Learning model artifacts
+*.pkl
+*.joblib
+model_artifacts/
 
-# Project Docs & Raw Data
-docs/
+# Raw data and datasets (except test fixtures)
 data/
+docs/
+*.csv
+!tests/fixtures/**

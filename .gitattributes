@@ -1,0 +1,2 @@
+# Strip notebook outputs before committing
+*.ipynb filter=nbstripout
