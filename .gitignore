@@ -15,7 +15,6 @@ htmlcov/
 
 
 # Database
-app/db.sqlite3
 *.sqlite3
 
 # Secrets

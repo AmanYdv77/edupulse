@@ -15,7 +15,7 @@ DEFAULT_PROD_DB = "postgres://postgres:edupulse_dev_secret_pw@localhost:55432/ed
 
 def run_django_code(
     code: str,
-    settings_module: str = "resultplatform.settings.dev",
+    settings_module: str = "config.settings.dev",
     env_vars: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
     """Run a Python snippet with a controlled environment from REPO_ROOT."""
@@ -39,7 +39,7 @@ def run_django_code(
         PYTHON,
         "-c",
         (
-            "import sys; sys.path.insert(0, 'app'); "
+            "import sys; sys.path.insert(0, 'backend'); "
             + code
         ),
     ]
@@ -65,7 +65,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         cmd = [
             PYTHON,
             "-c",
-            "import sys; sys.path.insert(0, 'app'); from django.conf import settings; print('SECRET:', settings.SECRET_KEY)",
+            "import sys; sys.path.insert(0, 'backend'); from django.conf import settings; print('SECRET:', settings.SECRET_KEY)",
         ]
         result = subprocess.run(
             cmd,
@@ -117,7 +117,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         """dev.py must refuse to start if DATABASE_URL does not end with _dev."""
         result = run_django_code(
             "from django.conf import settings; print('DB:', settings.DATABASES['default']['NAME'])",
-            settings_module="resultplatform.settings.dev",
+            settings_module="config.settings.dev",
             env_vars={"DATABASE_URL": DEFAULT_TEST_DB},
         )
         self.assertNotEqual(result.returncode, 0)
@@ -127,7 +127,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         """test.py must refuse to start if DATABASE_URL does not end with _test."""
         result = run_django_code(
             "from django.conf import settings; print('DB:', settings.DATABASES['default']['NAME'])",
-            settings_module="resultplatform.settings.test",
+            settings_module="config.settings.test",
             env_vars={"DATABASE_URL": DEFAULT_DEV_DB},
         )
         self.assertNotEqual(result.returncode, 0)
@@ -137,7 +137,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         """test.py succeeds when pointed at an _test database."""
         result = run_django_code(
             "from django.conf import settings; print('DB:', settings.DATABASES['default']['NAME'])",
-            settings_module="resultplatform.settings.test",
+            settings_module="config.settings.test",
             env_vars={"DATABASE_URL": DEFAULT_TEST_DB},
         )
         self.assertEqual(result.returncode, 0, f"Failed with: {result.stderr}")
@@ -148,7 +148,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         for disallowed_db in (DEFAULT_DEV_DB, DEFAULT_TEST_DB, DEFAULT_E2E_DB):
             result = run_django_code(
                 "from django.conf import settings; print('DB:', settings.DATABASES['default']['NAME'])",
-                settings_module="resultplatform.settings.prod",
+                settings_module="config.settings.prod",
                 env_vars={
                     "DJANGO_DEBUG": "False",
                     "DATABASE_URL": disallowed_db,
@@ -161,7 +161,7 @@ class TestSettingsEnvironment(unittest.TestCase):
         """prod.py must refuse to start if DJANGO_DEBUG is True."""
         result = run_django_code(
             "from django.conf import settings; print('DB:', settings.DATABASES['default']['NAME'])",
-            settings_module="resultplatform.settings.prod",
+            settings_module="config.settings.prod",
             env_vars={
                 "DJANGO_DEBUG": "True",
                 "DATABASE_URL": DEFAULT_PROD_DB,
