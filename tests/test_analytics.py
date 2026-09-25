@@ -105,17 +105,14 @@ def test_analytics_hub_endpoint_status_across_roles(client):
 
 
 @pytest.mark.django_db
-def test_cohort_query_api_json_response(client):
+def test_legacy_cohort_query_api_retired_returns_404(client):
     """
-    Verify /analytics/api/cohort-query/ endpoint returns valid JSON with status 'success'.
+    Verify legacy /analytics/api/cohort-query/ endpoint has been retired and returns HTTP 404.
     """
     tree = make_university(students_per_batch=4)
     staff_user = tree["executives"]["vc"]
     client.force_login(staff_user)
 
-    url = reverse("api_cohort_query")
-    response = client.get(url)
-    assert response.status_code == 200
-    json_data = response.json()
-    assert json_data["status"] == "success"
-    assert "total_count" in json_data["data"]
+    response = client.get("/analytics/api/cohort-query/")
+    assert response.status_code == 404
+

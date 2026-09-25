@@ -37,3 +37,11 @@ class LoginRateThrottle(SimpleRateThrottle):
         ident = self.get_ident(request)
         username = request.data.get("username", "") if hasattr(request, "data") else ""
         return f"throttle_login_{ident}_{username.strip().lower()}"
+
+
+class ExportRateThrottle(UserRateThrottle):
+    """
+    Limits authenticated user data export requests (e.g. at-risk CSV) to 5/hour per user.
+    """
+    scope = "export"
+

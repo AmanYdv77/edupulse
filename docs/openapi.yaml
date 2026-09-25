@@ -5,6 +5,246 @@ info:
   description: Versioned core JSON API for student results, predictions, habit check-ins,
     teaching assignments, and model registry.
 paths:
+  /api/v1/analytics/at-risk/:
+    get:
+      operationId: v1_analytics_at_risk_list
+      description: Returns paginated at-risk student records from latest prediction
+        snapshots. Requires view_at_risk_roster capability (Faculty only; Executives
+        receive 403).
+      summary: Get paginated roster of at-risk students
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Course ID filter
+      - in: query
+        name: page
+        schema:
+          type: integer
+        description: Page number
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Semester number filter
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AtRiskStudentRoster'
+          description: ''
+  /api/v1/analytics/breakdown/:
+    get:
+      operationId: v1_analytics_breakdown_retrieve
+      description: Aggregates performance by level strictly below user's academic
+        scope with differential privacy (groups < 10 merged into 'Other (hidden)').
+      summary: Get scoped performance breakdown
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: by
+        schema:
+          type: string
+        description: Breakdown level (school, department, course, batch, subject,
+          teacher)
+        required: true
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Course ID filter
+      - in: query
+        name: department
+        schema:
+          type: integer
+        description: Department ID filter
+      - in: query
+        name: school
+        schema:
+          type: integer
+        description: School ID filter
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Semester number filter
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsBreakdownResponse'
+          description: ''
+  /api/v1/analytics/distribution/:
+    get:
+      operationId: v1_analytics_distribution_retrieve
+      description: Computes fixed-bin percentage score histogram for a subject within
+        user's scope.
+      summary: Get score histogram distribution for a subject
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Semester number filter
+      - in: query
+        name: subject
+        schema:
+          type: integer
+        description: Subject ID
+        required: true
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsDistributionResponse'
+          description: ''
+  /api/v1/analytics/export/at-risk.csv:
+    get:
+      operationId: v1_analytics_export_at_risk.csv_retrieve
+      description: Downloads CSV export of at-risk students. Throttled to 5 exports/hour
+        per user. Creates an audit log record.
+      summary: Export at-risk student roster as CSV
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Course ID filter
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Semester number filter
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          description: CSV file download
+  /api/v1/analytics/overview/:
+    get:
+      operationId: v1_analytics_overview_retrieve
+      description: Returns top-level KPIs scoped to caller's academic role. Database-aggregated,
+        zero student-by-student loops.
+      summary: Get institutional analytics overview KPIs
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Course ID filter
+      - in: query
+        name: department
+        schema:
+          type: integer
+        description: Department ID filter
+      - in: query
+        name: school
+        schema:
+          type: integer
+        description: School ID filter
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Semester number filter
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+          description: ''
+  /api/v1/analytics/trend/:
+    get:
+      operationId: v1_analytics_trend_retrieve
+      description: Returns metrics per semester across academic history.
+      summary: Get longitudinal performance trend
+      parameters:
+      - in: query
+        name: batch
+        schema:
+          type: integer
+        description: Batch ID filter
+      - in: query
+        name: course
+        schema:
+          type: integer
+        description: Course ID filter
+      - in: query
+        name: department
+        schema:
+          type: integer
+        description: Department ID filter
+      - in: query
+        name: metric
+        schema:
+          type: string
+        description: 'Metric: pass_rate, avg_percentage, at_risk_rate'
+        required: true
+      - in: query
+        name: school
+        schema:
+          type: integer
+        description: School ID filter
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsTrendResponse'
+          description: ''
   /api/v1/auth/login/:
     post:
       operationId: v1_auth_login_create
@@ -280,6 +520,206 @@ paths:
           description: ''
 components:
   schemas:
+    ActiveModelInfo:
+      type: object
+      properties:
+        slot:
+          type: string
+        version:
+          type: integer
+        algorithm:
+          type: string
+        metrics:
+          type: object
+          additionalProperties: {}
+        is_active:
+          type: boolean
+      required:
+      - algorithm
+      - is_active
+      - metrics
+      - slot
+      - version
+    AnalyticsBreakdownGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        code:
+          type: string
+        student_count:
+          type: integer
+        pass_rate:
+          type: number
+          format: double
+        average_percentage:
+          type: number
+          format: double
+      required:
+      - average_percentage
+      - code
+      - id
+      - name
+      - pass_rate
+      - student_count
+    AnalyticsBreakdownResponse:
+      type: object
+      properties:
+        by:
+          type: string
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsBreakdownGroup'
+      required:
+      - by
+      - groups
+    AnalyticsDistributionBin:
+      type: object
+      properties:
+        label:
+          type: string
+        min:
+          type: integer
+        max:
+          type: integer
+        count:
+          type: integer
+      required:
+      - count
+      - label
+      - max
+      - min
+    AnalyticsDistributionResponse:
+      type: object
+      properties:
+        subject:
+          $ref: '#/components/schemas/AnalyticsDistributionSubject'
+        total_records:
+          type: integer
+        bins:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsDistributionBin'
+      required:
+      - bins
+      - subject
+      - total_records
+    AnalyticsDistributionSubject:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        title:
+          type: string
+      required:
+      - code
+      - id
+      - title
+    AnalyticsOverview:
+      type: object
+      properties:
+        total_students:
+          type: integer
+        pass_rate:
+          type: number
+          format: double
+        average_percentage:
+          type: number
+          format: double
+        at_risk_count:
+          type: integer
+        at_risk_rate:
+          type: number
+          format: double
+        published_share:
+          type: number
+          format: double
+        model:
+          allOf:
+          - $ref: '#/components/schemas/ActiveModelInfo'
+          nullable: true
+      required:
+      - at_risk_count
+      - at_risk_rate
+      - average_percentage
+      - model
+      - pass_rate
+      - published_share
+      - total_students
+    AnalyticsTrendPoint:
+      type: object
+      properties:
+        semester:
+          type: integer
+        value:
+          type: number
+          format: double
+        sample_size:
+          type: integer
+      required:
+      - sample_size
+      - semester
+      - value
+    AnalyticsTrendResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalyticsTrendPoint'
+      required:
+      - metric
+      - points
+    AtRiskStudentRoster:
+      type: object
+      properties:
+        student_id:
+          type: integer
+        roll_no:
+          type: string
+        name:
+          type: string
+        batch_code:
+          type: string
+        course_code:
+          type: string
+        subject_code:
+          type: string
+        semester:
+          type: integer
+        predicted_percentage:
+          type: number
+          format: double
+          nullable: true
+        risk_band:
+          type: string
+        reasons:
+          type: array
+          items:
+            type: string
+        taken_at:
+          type: string
+          format: date-time
+      required:
+      - batch_code
+      - course_code
+      - name
+      - predicted_percentage
+      - reasons
+      - risk_band
+      - roll_no
+      - semester
+      - student_id
+      - subject_code
+      - taken_at
     BulkInternalMarksRequestRequest:
       type: object
       properties:
@@ -352,7 +792,10 @@ components:
           format: double
           description: Hours slept (last night if daily, avg/night if weekly)
         motivation_level:
-          $ref: '#/components/schemas/MotivationLevelEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MotivationLevelEnum'
+          - $ref: '#/components/schemas/NullEnum'
         tutoring_sessions:
           type: integer
           maximum: 2147483647
@@ -390,7 +833,10 @@ components:
           format: double
           description: Hours slept (last night if daily, avg/night if weekly)
         motivation_level:
-          $ref: '#/components/schemas/MotivationLevelEnum'
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/MotivationLevelEnum'
+          - $ref: '#/components/schemas/NullEnum'
         tutoring_sessions:
           type: integer
           maximum: 2147483647
@@ -503,6 +949,9 @@ components:
         * `Low` - Low
         * `Medium` - Medium
         * `High` - High
+    NullEnum:
+      enum:
+      - null
     PaginatedHabitCheckInLogList:
       type: object
       required:

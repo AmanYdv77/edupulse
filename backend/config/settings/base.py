@@ -160,8 +160,9 @@ LOGIN_URL = "login"
 # Machine Learning model artifact storage directory
 MODEL_ARTIFACT_DIR = env("MODEL_ARTIFACT_DIR", default=None)
 
-# Academic performance standards
+# Academic performance & analytics governance standards
 PASS_MARK_PERCENT = 40.0
+ANALYTICS_MIN_GROUP_SIZE = 10
 
 # Model B (Institutional Custom Model) Training & Promotion Thresholds
 MODEL_B_MIN_STUDENTS = 200
@@ -191,6 +192,7 @@ REST_FRAMEWORK = {
         'user_read': '120/minute',
         'user_write': '30/minute',
         'auth': '5/minute',
+        'export': '5/hour',
     },
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',

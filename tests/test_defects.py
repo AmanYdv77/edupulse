@@ -21,16 +21,17 @@ from academics.models import Department, School, Batch
 @pytest.mark.django_db
 def test_student_cohort_api_access_forbidden(client):
     """
-    Defect 1 (Fixed in A10): A student calling /analytics/api/cohort-query/ must receive HTTP 403 Forbidden.
+    Defect 1: A student calling faculty analytics endpoints must receive HTTP 403 Forbidden.
     """
     tree = make_university(students_per_batch=2)
     student_user = tree["students"][0].user
     client.force_login(student_user)
 
-    url = reverse("api_cohort_query")
+    url = reverse("api_v1:analytics-overview")
     response = client.get(url)
 
     assert response.status_code == 403, f"Expected HTTP 403 Forbidden, got {response.status_code}"
+
 
 
 @pytest.mark.django_db
@@ -99,10 +100,11 @@ def test_api_cohort_query_out_of_scope_returns_403(client):
 
     other_dept = DepartmentFactory.create(school=tree["school"])
 
-    url = reverse("api_cohort_query") + f"?department_id={other_dept.id}"
+    url = reverse("api_v1:analytics-overview") + f"?department={other_dept.id}"
     response = client.get(url)
 
     assert response.status_code == 403, f"Expected HTTP 403 for out-of-scope department query, got {response.status_code}"
+
 
 
 @pytest.mark.django_db
@@ -139,7 +141,7 @@ def test_denied_request_logs_warning_without_pii(client, caplog):
     client.force_login(student_user)
 
     with caplog.at_level(logging.WARNING, logger="accounts.security"):
-        url = reverse("api_cohort_query")
+        url = reverse("scoped_results")
         client.get(url)
 
     # Check log message
@@ -148,7 +150,7 @@ def test_denied_request_logs_warning_without_pii(client, caplog):
     log_msg = warning_records[0].getMessage()
     assert f"user_id={student_user.id}" in log_msg
     assert "role=STUDENT" in log_msg
-    assert "path=/analytics/api/cohort-query/" in log_msg
+    assert f"path={url}" in log_msg
 
     # Confirm absence of PII
     assert student_user.username not in log_msg or student_user.username == str(student_user.id)

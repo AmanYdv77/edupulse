@@ -15,6 +15,14 @@ from .views import (
     BulkInternalMarksView,
     ModelVersionListView,
 )
+from analytics.api_views import (
+    AnalyticsOverviewAPIView,
+    AnalyticsBreakdownAPIView,
+    AnalyticsTrendAPIView,
+    AnalyticsDistributionAPIView,
+    AtRiskRosterAPIView,
+    AtRiskExportCSVAPIView,
+)
 
 app_name = "api_v1"
 
@@ -38,4 +46,13 @@ urlpatterns = [
 
     # Model Registry
     path("models/", ModelVersionListView.as_view(), name="models"),
+
+    # Analytics API Family
+    path("analytics/overview/", AnalyticsOverviewAPIView.as_view(), name="analytics-overview"),
+    path("analytics/breakdown/", AnalyticsBreakdownAPIView.as_view(), name="analytics-breakdown"),
+    path("analytics/trend/", AnalyticsTrendAPIView.as_view(), name="analytics-trend"),
+    path("analytics/distribution/", AnalyticsDistributionAPIView.as_view(), name="analytics-distribution"),
+    path("analytics/at-risk/", AtRiskRosterAPIView.as_view(), name="analytics-at-risk"),
+    path("analytics/export/at-risk.csv", AtRiskExportCSVAPIView.as_view(), name="analytics-export-at-risk"),
 ]
+
