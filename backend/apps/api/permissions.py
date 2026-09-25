@@ -154,3 +154,50 @@ class StaffOrDevOnly(permissions.BasePermission):
                 in ("SYSTEM_ADMIN", "TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS")
             )
         )
+
+
+class CanViewAnalytics(permissions.BasePermission):
+    """
+    Requires any of the analytical viewing capabilities:
+    view_class_analytics, view_department_analytics, view_school_analytics, view_executive_analytics.
+    Denies Students and System Admins.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        user_caps = set(capabilities_for(request.user))
+        allowed_caps = {
+            "view_class_analytics",
+            "view_department_analytics",
+            "view_school_analytics",
+            "view_executive_analytics",
+        }
+        return bool(user_caps.intersection(allowed_caps))
+
+
+class CanViewAtRiskRoster(permissions.BasePermission):
+    """
+    Requires view_at_risk_roster capability (Faculty only: HOD, Dean).
+    Executives, Teachers, Students, and System Admins receive HTTP 403.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        return has_capability(request.user, "view_at_risk_roster")
+
+
+class CanExportAtRiskRoster(permissions.BasePermission):
+    """
+    Requires view_at_risk_roster AND either export_department_roster or export_school_roster.
+    """
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        user_caps = set(capabilities_for(request.user))
+        if "view_at_risk_roster" not in user_caps:
+            return False
+        return bool(user_caps.intersection({"export_department_roster", "export_school_roster"}))
+

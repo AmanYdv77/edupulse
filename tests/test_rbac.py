@@ -19,12 +19,11 @@ from tests.factories import (
 )
 
 
-# List of all 11 routes in accounts/urls.py
+# List of all routes in legacy accounts/academics/analytics web views
 ALL_ACCOUNT_ROUTES = [
     "index",
     "home",
     "analytics_hub",
-    "api_cohort_query",
     "my_results",
     "scoped_results",
     "my_predictions",
@@ -33,6 +32,7 @@ ALL_ACCOUNT_ROUTES = [
     "habit_checkin",
     "update_habit_preference",
 ]
+
 
 
 # ---------------------------------------------------------------------------
@@ -68,7 +68,8 @@ ROLES = [
 ]
 
 STUDENT_ONLY_ROUTES = {"my_results", "my_predictions", "habit_checkin", "update_habit_preference"}
-FACULTY_STAFF_ROUTES = {"scoped_results", "at_risk_students", "api_cohort_query"}
+FACULTY_STAFF_ROUTES = {"scoped_results", "at_risk_students"}
+
 
 for role in ROLES:
     for route in ALL_ACCOUNT_ROUTES:

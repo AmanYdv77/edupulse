@@ -5,5 +5,5 @@ from . import views
 
 urlpatterns = [
     path("analytics/", views.analytics_hub, name="analytics_hub"),
-    path("analytics/api/cohort-query/", views.api_cohort_query, name="api_cohort_query"),
 ]
+
