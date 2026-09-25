@@ -256,3 +256,56 @@ def is_in_scope(user, *, school=None, department=None, course=None, batch=None):
         return True
 
     return False
+
+
+ROLE_CAPABILITIES: dict[str, list[str]] = {
+    "STUDENT": [
+        "view_own_results",
+        "view_own_predictions",
+        "submit_habit_checkin",
+        "view_own_habits",
+    ],
+    "TEACHER": [
+        "view_class_analytics",
+        "enter_internal_marks",
+        "export_class_roster",
+        "view_teaching_assignments",
+    ],
+    "HOD": [
+        "view_department_analytics",
+        "view_at_risk_roster",
+        "export_department_roster",
+    ],
+    "DEAN": [
+        "view_school_analytics",
+        "view_at_risk_roster",
+        "export_school_roster",
+    ],
+    "VC": [
+        "view_executive_analytics",
+    ],
+    "REGISTRAR": [
+        "view_executive_analytics",
+    ],
+    "CONTROLLER_OF_EXAMS": [
+        "view_executive_analytics",
+    ],
+    "SYSTEM_ADMIN": [
+        "manage_models",
+        "view_system_health",
+        "access_admin",
+    ],
+}
+
+
+def capabilities_for(user) -> list[str]:
+    """
+    Returns the exact list of capability token strings for the given user,
+    governed strictly by docs/ROLES_AND_FEATURES.md.
+    Unauthenticated or inactive users receive an empty list.
+    """
+    if not user or not user.is_authenticated or not getattr(user, "is_active", False):
+        return []
+
+    role = getattr(user, "role", None)
+    return list(ROLE_CAPABILITIES.get(role, []))

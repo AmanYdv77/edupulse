@@ -1,0 +1,781 @@
+openapi: 3.0.3
+info:
+  title: EduPulse Core API
+  version: 1.0.0
+  description: Versioned core JSON API for student results, predictions, habit check-ins,
+    teaching assignments, and model registry.
+paths:
+  /api/v1/auth/login/:
+    post:
+      operationId: v1_auth_login_create
+      description: Authenticates the user and initiates an HTTP-only session cookie.
+      summary: Session Login
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMe'
+          description: ''
+        '400':
+          description: Invalid username or password / inactive account
+  /api/v1/auth/logout/:
+    post:
+      operationId: v1_auth_logout_create
+      description: Terminates the current user session.
+      summary: Session Logout
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutResponse'
+          description: ''
+  /api/v1/csrf/:
+    get:
+      operationId: v1_csrf_retrieve
+      description: Returns a valid CSRF token to be included in the X-CSRFToken header
+        for unsafe requests.
+      summary: Retrieve CSRF Token
+      tags:
+      - Authentication
+      security:
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CSRFResponse'
+          description: ''
+  /api/v1/habits/check-ins/:
+    get:
+      operationId: v1_habits_check_ins_list
+      description: Returns paginated history of habit check-ins for the currently
+        authenticated student.
+      summary: List Habit Check-Ins
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Habits
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedHabitCheckInLogList'
+          description: ''
+    post:
+      operationId: v1_habits_check_ins_create
+      description: Submits a daily or weekly habit check-in, validated against contract
+        boundary ranges.
+      summary: Record Habit Check-In
+      tags:
+      - Habits
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitCheckInLogRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HabitCheckInLogRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/HabitCheckInLogRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HabitCheckInLog'
+          description: ''
+        '400':
+          description: Input range validation failed
+  /api/v1/internal-marks/:
+    post:
+      operationId: v1_internal_marks_create
+      description: Atomically updates internal marks for students in an assigned subject
+        and batch.
+      summary: Bulk Internal Marks Entry
+      tags:
+      - Faculty
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkInternalMarksRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BulkInternalMarksRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BulkInternalMarksRequestRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkInternalMarksResponse'
+          description: ''
+        '400':
+          description: Per-row validation error report
+        '403':
+          description: Teacher is not assigned to this subject and batch
+  /api/v1/me/:
+    get:
+      operationId: v1_me_retrieve
+      description: Returns active session details, server-derived scope, and granular
+        UI capabilities.
+      summary: Current User Context
+      tags:
+      - Identity
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserMe'
+          description: ''
+  /api/v1/models/:
+    get:
+      operationId: v1_models_list
+      description: Inspects registered baseline and institutional models, evaluation
+        metrics, and active states.
+      summary: List Model Registry Versions
+      tags:
+      - Admin
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelVersion'
+          description: ''
+  /api/v1/students/{id}/predictions/:
+    get:
+      operationId: v1_students_predictions_retrieve
+      description: Generates real-time score forecasts and advisory explanations for
+        the specified student ID.
+      summary: Student Performance Predictions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Student ID
+        required: true
+      - in: query
+        name: semester
+        schema:
+          type: integer
+        description: Target semester (defaults to current)
+      tags:
+      - Predictions
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentPredictionsResponse'
+          description: ''
+        '403':
+          description: 'Access denied: outside user scope'
+        '404':
+          description: Student not found
+  /api/v1/students/{id}/results/:
+    get:
+      operationId: v1_students_results_retrieve
+      description: Retrieves official semester and subject results for the specified
+        student ID.
+      summary: Student Academic Results
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Student ID
+        required: true
+      tags:
+      - Academics
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentResults'
+          description: ''
+        '403':
+          description: 'Access denied: outside user scope'
+        '404':
+          description: Student not found
+  /api/v1/teaching-assignments/:
+    get:
+      operationId: v1_teaching_assignments_list
+      description: Lists all courses, batches, and subjects currently assigned to
+        the authenticated teacher.
+      summary: Faculty Teaching Assignments
+      tags:
+      - Faculty
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeachingAssignment'
+          description: ''
+components:
+  schemas:
+    BulkInternalMarksRequestRequest:
+      type: object
+      properties:
+        subject_id:
+          type: integer
+        batch_id:
+          type: integer
+        marks:
+          type: array
+          items:
+            $ref: '#/components/schemas/SingleMarkEntryRequest'
+      required:
+      - batch_id
+      - marks
+      - subject_id
+    BulkInternalMarksResponse:
+      type: object
+      properties:
+        updated_count:
+          type: integer
+        detail:
+          type: string
+      required:
+      - detail
+      - updated_count
+    CSRFResponse:
+      type: object
+      properties:
+        csrfToken:
+          type: string
+          description: CSRF token for unsafe state-mutating requests
+      required:
+      - csrfToken
+    FactorDetail:
+      type: object
+      properties:
+        feature:
+          type: string
+        name:
+          type: string
+        impact:
+          type: string
+        direction:
+          type: string
+        description:
+          type: string
+          default: ''
+      required:
+      - direction
+      - feature
+      - impact
+      - name
+    HabitCheckInLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        log_date:
+          type: string
+          format: date
+        log_type:
+          $ref: '#/components/schemas/LogTypeEnum'
+        hours_studied:
+          type: number
+          format: double
+          description: Hours studied (today if daily, total for week if weekly)
+        sleep_hours:
+          type: number
+          format: double
+          description: Hours slept (last night if daily, avg/night if weekly)
+        motivation_level:
+          $ref: '#/components/schemas/MotivationLevelEnum'
+        tutoring_sessions:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Tutoring sessions attended
+        physical_activity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Hours/days of physical activity or exercise
+        notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+    HabitCheckInLogRequest:
+      type: object
+      properties:
+        log_date:
+          type: string
+          format: date
+        log_type:
+          $ref: '#/components/schemas/LogTypeEnum'
+        hours_studied:
+          type: number
+          format: double
+          description: Hours studied (today if daily, total for week if weekly)
+        sleep_hours:
+          type: number
+          format: double
+          description: Hours slept (last night if daily, avg/night if weekly)
+        motivation_level:
+          $ref: '#/components/schemas/MotivationLevelEnum'
+        tutoring_sessions:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Tutoring sessions attended
+        physical_activity:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Hours/days of physical activity or exercise
+        notes:
+          type: string
+          nullable: true
+    LogTypeEnum:
+      enum:
+      - DAILY
+      - WEEKLY
+      type: string
+      description: |-
+        * `DAILY` - Daily Log
+        * `WEEKLY` - Weekly Log
+    LoginRequestRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    LogoutResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Logout status message
+      required:
+      - detail
+    ModelVersion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slot:
+          allOf:
+          - $ref: '#/components/schemas/SlotEnum'
+          description: |-
+            Deployment slot ('baseline' or 'institute')
+
+            * `baseline` - Baseline (Model A)
+            * `institute` - Institute (Model B)
+        version:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Sequential version integer within the slot
+        is_active:
+          type: boolean
+          description: Designates whether this version actively serves predictions
+            for its slot
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Timestamp when this version was registered
+        trained_on:
+          type: string
+          description: Short description of dataset/cohort used for training
+          maxLength: 255
+        n_train_rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Number of samples in training split
+        n_test_rows:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Number of samples in evaluation/holdout split
+        metrics:
+          description: 'Evaluation metrics dictionary (e.g. {''rmse'': 4.12, ''r2'':
+            0.74})'
+        feature_names:
+          description: List of input feature names in exact column order
+        artifact_file:
+          type: string
+          description: Filename of serialized joblib model (must reside in MODEL_ARTIFACT_DIR)
+          maxLength: 255
+      required:
+      - artifact_file
+      - created_at
+      - id
+      - n_test_rows
+      - n_train_rows
+      - slot
+      - trained_on
+      - version
+    MotivationLevelEnum:
+      enum:
+      - Low
+      - Medium
+      - High
+      type: string
+      description: |-
+        * `Low` - Low
+        * `Medium` - Medium
+        * `High` - High
+    PaginatedHabitCheckInLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HabitCheckInLog'
+    SemesterResultItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        semester:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        sgpa:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+        attendance_percentage:
+          type: number
+          format: double
+          nullable: true
+          description: Official attendance percentage recorded by the institution
+            (0-100). None if unrecorded.
+        total_credits:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        is_published:
+          type: boolean
+          description: Final official result published by Admin. When False, held
+            as draft until bulk release.
+      required:
+      - id
+      - semester
+    SingleMarkEntryRequest:
+      type: object
+      properties:
+        student_id:
+          type: integer
+        internal_marks:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+      required:
+      - internal_marks
+      - student_id
+    SlotEnum:
+      enum:
+      - baseline
+      - institute
+      type: string
+      description: |-
+        * `baseline` - Baseline (Model A)
+        * `institute` - Institute (Model B)
+    StudentPredictionsResponse:
+      type: object
+      properties:
+        student_id:
+          type: integer
+        target_semester:
+          type: integer
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubjectPrediction'
+      required:
+      - predictions
+      - student_id
+      - target_semester
+    StudentResults:
+      type: object
+      properties:
+        student_id:
+          type: integer
+        roll_number:
+          type: string
+        semester_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SemesterResultItem'
+        subject_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubjectResultItem'
+      required:
+      - roll_number
+      - semester_results
+      - student_id
+      - subject_results
+    SubjectPrediction:
+      type: object
+      properties:
+        subject_code:
+          type: string
+        subject_name:
+          type: string
+        semester:
+          type: integer
+        predicted_score:
+          type: number
+          format: double
+          nullable: true
+        confidence_score:
+          type: number
+          format: double
+          nullable: true
+        risk_band:
+          type: string
+          nullable: true
+        model_label:
+          type: string
+        model_version:
+          type: integer
+          nullable: true
+        factors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FactorDetail'
+        disclaimer:
+          type: string
+        insufficient_data:
+          type: boolean
+        insufficient_data_reasons:
+          type: array
+          items:
+            type: string
+      required:
+      - confidence_score
+      - disclaimer
+      - factors
+      - insufficient_data
+      - insufficient_data_reasons
+      - model_label
+      - model_version
+      - predicted_score
+      - risk_band
+      - semester
+      - subject_code
+      - subject_name
+    SubjectResultItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject_code:
+          type: string
+          readOnly: true
+        subject_name:
+          type: string
+          readOnly: true
+        subject_credits:
+          type: integer
+          readOnly: true
+        semester:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        internal_marks:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        total_secured:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        max_marks:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+        grade:
+          type: string
+          readOnly: true
+      required:
+      - grade
+      - id
+      - semester
+      - subject_code
+      - subject_credits
+      - subject_name
+    TeachingAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        subject_id:
+          type: integer
+          readOnly: true
+        subject_code:
+          type: string
+          readOnly: true
+        subject_name:
+          type: string
+          readOnly: true
+        internal_max:
+          type: integer
+          readOnly: true
+        batch_id:
+          type: integer
+          readOnly: true
+        batch_name:
+          type: string
+          readOnly: true
+        course_name:
+          type: string
+          readOnly: true
+        semester:
+          type: integer
+          readOnly: true
+      required:
+      - batch_id
+      - batch_name
+      - course_name
+      - id
+      - internal_max
+      - semester
+      - subject_code
+      - subject_id
+      - subject_name
+    UserMe:
+      type: object
+      description: |-
+        Public representation of the authenticated user's session.
+        Strictly excludes email, phone number, and protected demographics.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          readOnly: true
+        scope_label:
+          type: string
+          readOnly: true
+        capabilities:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - capabilities
+      - display_name
+      - id
+      - role
+      - scope_label
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
