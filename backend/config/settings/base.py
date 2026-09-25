@@ -53,11 +53,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # --- third party ---
+    'rest_framework',
+    'drf_spectacular',
+
     # --- our domain apps ---
     'accounts',
     'academics',
     'predictions',
     'analytics',
+    'api',
 ]
 
 # Custom User model with institutional role hierarchy
@@ -165,3 +170,37 @@ MODEL_B_MIN_SEMESTERS = 3
 MODEL_B_PROMOTION_MARGIN_RMSE = 2.0
 MODEL_B_USE_HABITS = False
 MODEL_B_MIN_SNAPSHOT_SEMESTERS = 1
+
+# REST Framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardResultsSetPagination',
+    'PAGE_SIZE': 25,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'api.throttling.UserReadRateThrottle',
+        'api.throttling.UserWriteRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '5/minute',
+        'user_read': '120/minute',
+        'user_write': '30/minute',
+        'auth': '5/minute',
+    },
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular OpenAPI 3.0 documentation settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'EduPulse Core API',
+    'DESCRIPTION': 'Versioned core JSON API for student results, predictions, habit check-ins, teaching assignments, and model registry.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}

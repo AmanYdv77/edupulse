@@ -9,3 +9,5 @@ scikit-learn
 pandas
 numpy
 joblib
+djangorestframework
+drf-spectacular
