@@ -1,43 +1,60 @@
 {% extends "base.html" %}
 
-{% block title %}AI Predictive Diagnostics{% endblock %}
+{% block title %}Academic Risk Forecast{% endblock %}
 {% block header_title %}Performance Forecast Diagnostics{% endblock %}
 
 {% block content %}
+<!-- Advisory Disclaimer Banner -->
+<div class="card" style="margin-bottom: 20px; padding: 14px 18px; border-left: 4px solid #6366f1; background: rgba(99, 102, 241, 0.06);">
+    <div style="font-size: 13px; color: var(--text-primary); line-height: 1.5;">
+        <strong>Advisory Notice:</strong> Estimates are indicative forecasts based on historical patterns to guide early mentoring. They are not grades or academic judgements and cannot guarantee final results.
+    </div>
+</div>
+
 <div class="grid-kpi">
     <div class="kpi-card">
         <div class="kpi-label">Aggregated Forecast</div>
-        <div class="kpi-value mono">{{ avg_predicted }}%</div>
+        <div class="kpi-value mono">{% if avg_predicted %}{{ avg_predicted }}%{% else %}N/A{% endif %}</div>
         <div class="kpi-footer">
             <span class="mono">Semester {{ student.current_semester }} Projection</span>
         </div>
     </div>
 
     <div class="kpi-card">
-        <div class="kpi-label">Risk Flagged Subjects</div>
+        <div class="kpi-label">Flagged At-Risk Subjects</div>
         <div class="kpi-value mono" style="color: var(--text-primary);">{{ at_risk_count }}</div>
         <div class="kpi-footer">
             {% if at_risk_count > 0 %}
-            <span class="tag tag-high-risk">Attention Required</span>
+            <span class="tag tag-high-risk">Estimated Risk Flag</span>
             {% else %}
-            <span class="tag tag-low-risk">Safe Status</span>
+            <span class="tag tag-low-risk">Optimal Trajectory</span>
             {% endif %}
         </div>
     </div>
 
     <div class="kpi-card">
-        <div class="kpi-label">Model 1 Baseline</div>
-        <div class="kpi-value mono">{{ behavior.percentage|default:"72.0" }}%</div>
+        <div class="kpi-label">Model Provenance</div>
+        <div class="kpi-value mono" style="font-size: 14px; padding-top: 6px;">
+            {% if predictions.0.model_slot == "institute" %}
+            INSTITUTE v{{ predictions.0.model_version }}
+            {% elif predictions.0.model_slot == "baseline" %}
+            BASELINE v{{ predictions.0.model_version }}
+            {% else %}
+            UNASSIGNED
+            {% endif %}
+        </div>
         <div class="kpi-footer">
-            <span class="mono">Historical Academic Prior</span>
+            <span class="mono" style="font-size: 11px;">{{ predictions.0.model_label|default:"No active model" }}</span>
         </div>
     </div>
 
     <div class="kpi-card">
-        <div class="kpi-label">Model 2 Multiplier</div>
-        <div class="kpi-value mono">ACTIVE</div>
+        <div class="kpi-label">Recorded Telemetry</div>
+        <div class="kpi-value mono" style="font-size: 15px; padding-top: 6px;">
+            {% if behavior.attendance_percentage is not None %}{{ behavior.attendance_percentage }}% Attd{% else %}-- Attd{% endif %}
+        </div>
         <div class="kpi-footer">
-            <span class="mono">Study: {% if habits.hours_studied_per_week is not None %}{{ habits.hours_studied_per_week }}h{% elif behavior.hours_studied_per_week is not None %}{{ behavior.hours_studied_per_week }}h{% else %}--{% endif %} | Sleep: {% if habits.sleep_hours_per_night is not None %}{{ habits.sleep_hours_per_night }}h{% elif behavior.sleep_hours_per_night is not None %}{{ behavior.sleep_hours_per_night }}h{% else %}--{% endif %}</span>
+            <span class="mono">Study: {% if habits.hours_studied_per_week is not None %}{{ habits.hours_studied_per_week }}h/wk{% elif behavior.hours_studied_per_week is not None %}{{ behavior.hours_studied_per_week }}h/wk{% else %}--{% endif %} | Sleep: {% if habits.sleep_hours_per_night is not None %}{{ habits.sleep_hours_per_night }}h{% elif behavior.sleep_hours_per_night is not None %}{{ behavior.sleep_hours_per_night }}h{% else %}--{% endif %}</span>
         </div>
     </div>
 </div>
@@ -48,19 +65,19 @@
         No active prediction model
     </div>
     <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-        The machine learning prediction service is currently awaiting model registration under the new ML Feature Contract. Validated predictions will be displayed here once an approved model version is activated.
+        The machine learning prediction service is currently awaiting model registration under the ML Feature Contract. Validated predictions will be displayed here once an approved model version is activated.
     </div>
 </div>
 {% endif %}
 
-<!-- Prescriptive Recommendations Matrix -->
+<!-- Subject Level Risk Matrix -->
 <div class="card" style="margin-bottom: 28px;">
     <div class="card-header">
         <div>
-            <div class="card-title">Dual-Model Subject Level Risk Matrix</div>
-            <div class="card-subtitle">Predictions calibrated using Ridge Regression + Behavioral Gradient Vector</div>
+            <div class="card-title">Subject-Level Estimated Risk Matrix</div>
+            <div class="card-subtitle">{{ predictions.0.model_label|default:"Advisory academic trajectory estimates" }}</div>
         </div>
-        <a href="{% url 'habit_checkin' %}" class="btn btn-secondary btn-sm">Calibrate Telemetry</a>
+        <a href="{% url 'habit_checkin' %}" class="btn btn-secondary btn-sm">Update Check-In</a>
     </div>
 
     <div class="table-wrapper">
@@ -70,9 +87,9 @@
                     <th>Code</th>
                     <th>Subject Name</th>
                     <th>Credits</th>
-                    <th>Predicted Total</th>
-                    <th>Risk Status</th>
-                    <th>Prescriptive Guidance</th>
+                    <th>Forecast</th>
+                    <th>Estimated Risk</th>
+                    <th>Top Contributing Factors</th>
                 </tr>
             </thead>
             <tbody>
@@ -81,19 +98,44 @@
                     <td class="mono" style="font-weight: 700;">{{ pred.subject_code }}</td>
                     <td style="font-weight: 500;">{{ pred.subject_title }}</td>
                     <td class="mono">{{ pred.subject_credits }}</td>
-                    <td class="mono" style="font-size: 15px; font-weight: 700;">{{ pred.predicted_percentage }}%</td>
-                    <td>
-                        {% if pred.is_at_risk %}
-                        <span class="tag tag-high-risk">High Risk (&lt;40%)</span>
+                    <td class="mono" style="font-size: 15px; font-weight: 700;">
+                        {% if pred.predicted_percentage is not None %}
+                        {{ pred.predicted_percentage }}%
                         {% else %}
-                        <span class="tag tag-low-risk">Safe Trajectory</span>
+                        <span style="color: var(--text-muted); font-size: 13px;">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if pred.status == "insufficient_data" %}
+                        <span class="tag" style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3);">Insufficient Data</span>
+                        {% elif pred.risk_band == "high" %}
+                        <span class="tag tag-high-risk">High Risk (&lt;40%)</span>
+                        {% elif pred.risk_band == "medium" %}
+                        <span class="tag" style="background: rgba(249, 115, 22, 0.15); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3);">Medium Risk (40-60%)</span>
+                        {% else %}
+                        <span class="tag tag-low-risk">Low Risk (Safe)</span>
                         {% endif %}
                     </td>
                     <td style="font-size: 12.5px; color: var(--text-secondary);">
-                        {% if pred.is_at_risk %}
-                        <strong style="color: var(--text-primary);">Prescription:</strong> Increase focused subject study by 4 hrs/wk and complete internal revision assignments.
+                        {% if pred.status == "insufficient_data" %}
+                        <div style="color: #eab308;">
+                            {% for reason in pred.reasons %}
+                            <div>• {{ reason }}</div>
+                            {% empty %}
+                            <div>• Missing essential academic history or attendance records.</div>
+                            {% endfor %}
+                        </div>
                         {% else %}
-                        <strong style="color: var(--text-primary);">Maintenance:</strong> Consistent 2.5 hrs/wk pace maintains current A/B grade trajectory.
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            {% for factor in pred.factors %}
+                            <div>
+                                <span style="font-weight: 600; color: var(--text-primary);">{{ factor.name }}:</span>
+                                <span>{{ factor.description }}</span>
+                            </div>
+                            {% empty %}
+                            <div>• Standard institutional curricular expectations apply.</div>
+                            {% endfor %}
+                        </div>
                         {% endif %}
                     </td>
                 </tr>
@@ -107,18 +149,16 @@
     </div>
 </div>
 
-<!-- Architecture Blueprint for Dual ML -->
+<!-- Model Provenance & Governance Card -->
 <div class="card">
-    <div class="card-title" style="margin-bottom: 12px;">Underlying Inference Pipeline</div>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
-        <div style="background: var(--bg-input); padding: 16px; border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;" class="mono">[MODEL 1: ACADEMIC BASELINE]</div>
-            Trained on multi-semester internal test scores, attendance logs, and historical course difficulty weights to compute the initial Bayesian prior.
-        </div>
-        <div style="background: var(--bg-input); padding: 16px; border: 1px solid var(--border-subtle); border-radius: 8px;">
-            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 6px;" class="mono">[MODEL 2: BEHAVIORAL MULTIPLIER]</div>
-            Ingests continuous telemetry (weekly study volume, sleep consistency, motivation indices) to dynamically scale and calibrate final expected marks.
-        </div>
+    <div class="card-title" style="margin-bottom: 8px;">Active Model Governance & Provenance</div>
+    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+        <p style="margin-bottom: 6px;">
+            <strong>Active Model:</strong> {{ predictions.0.model_label|default:"No active model currently loaded." }}
+        </p>
+        <p style="margin-bottom: 0;">
+            Predictions adhere strictly to the EduPulse ML Feature Contract. Demographic attributes (gender, category, address) are strictly prohibited from model inputs. All predictions are advisory and intended solely to guide supportive academic intervention.
+        </p>
     </div>
 </div>
 {% endblock %}
