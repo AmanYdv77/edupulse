@@ -189,6 +189,20 @@ class Result(models.Model):
 
     class Meta:
         unique_together = ("student", "subject", "semester")
+        indexes = [
+            models.Index(fields=["student", "semester"], name="idx_result_student_sem"),
+            models.Index(fields=["subject", "semester"], name="idx_result_subject_sem"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(total_secured__gte=0)
+                    & models.Q(total_secured__lte=models.F("max_marks"))
+                    & models.Q(max_marks__gt=0)
+                ),
+                name="check_result_total_secured_range",
+            ),
+        ]
 
     @property
     def percentage(self):
@@ -260,6 +274,36 @@ class SemesterResult(models.Model):
 
     class Meta:
         unique_together = ("student", "semester")
+        indexes = [
+            models.Index(fields=["is_published", "semester"], name="idx_semresult_pub_sem"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(percentage__gte=0.0) & models.Q(percentage__lte=100.0),
+                name="check_semester_result_percentage_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(attendance_percentage__isnull=True)
+                    | (models.Q(attendance_percentage__gte=0.0) & models.Q(attendance_percentage__lte=100.0))
+                ),
+                name="check_semester_result_attendance_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(sleep_hours_per_night__isnull=True)
+                    | (models.Q(sleep_hours_per_night__gte=0.0) & models.Q(sleep_hours_per_night__lte=24.0))
+                ),
+                name="check_semester_result_sleep_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(hours_studied_per_week__isnull=True)
+                    | (models.Q(hours_studied_per_week__gte=0.0) & models.Q(hours_studied_per_week__lte=168.0))
+                ),
+                name="check_semester_result_study_hours_range",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student.roll_no} | Sem {self.semester} | SGPA {self.sgpa} | {'Published' if self.is_published else 'Draft'}"
@@ -346,6 +390,22 @@ class HabitCheckInLog(models.Model):
 
     class Meta:
         ordering = ["-log_date", "-created_at"]
+        indexes = [
+            models.Index(fields=["student", "log_date"], name="idx_habitlog_student_date"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(sleep_hours__gte=0.0) & models.Q(sleep_hours__lte=24.0),
+                name="check_habit_log_sleep_hours_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    (models.Q(log_type="DAILY") & models.Q(hours_studied__gte=0.0) & models.Q(hours_studied__lte=24.0))
+                    | (models.Q(log_type="WEEKLY") & models.Q(hours_studied__gte=0.0) & models.Q(hours_studied__lte=168.0))
+                ),
+                name="check_habit_log_hours_studied_range",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.student.roll_no} | {self.log_type} on {self.log_date} | Study: {self.hours_studied}h, Sleep: {self.sleep_hours}h"
