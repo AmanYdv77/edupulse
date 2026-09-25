@@ -120,7 +120,7 @@ class TestCsrfAndCookieHardening:
 
         manage_py = Path(settings.BASE_DIR) / "manage.py"
         res = subprocess.run(
-            [sys.executable, str(manage_py), "check", "--deploy", "--settings=resultplatform.settings.prod"],
+            [sys.executable, str(manage_py), "check", "--deploy", "--settings=config.settings.prod"],
             capture_output=True,
             text=True,
             env=env,

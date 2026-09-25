@@ -4,7 +4,7 @@ Ported from legacy scripts/test_analytics_suite.py to pytest using model factori
 """
 import pytest
 from django.urls import reverse
-from academics.analytics_engine import (
+from analytics.engine import (
     compute_cohort_deep_dive,
     get_student_analytics,
     get_teacher_analytics,

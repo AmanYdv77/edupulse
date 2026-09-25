@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "resultplatform.settings.test"
-pythonpath = [".", "app"]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = [".", "backend", "backend/apps"]
 testpaths = ["tests"]
 markers = [
     "integration: marks tests requiring integration services (e.g. Redis)",
