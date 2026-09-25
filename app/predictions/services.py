@@ -4,7 +4,7 @@ Enforces artifact path sandboxing, runtime library compatibility, and strict dat
 Provides true batch inference (services.predict_for_students) for constant query counts.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 import logging
 from pathlib import Path
@@ -17,8 +17,25 @@ from django.utils import timezone
 from edupulse_ml.contract import validate_feature_list, validate_row
 from .models import ModelVersion
 from .grades import PASS_MARK_PERCENT, RISK_BAND_INSUFFICIENT_DATA, risk_band_for, is_at_risk
+from .explain import explain_prediction
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_DISCLAIMER: str = (
+    "Advisory Notice: Estimates are indicative forecasts based on historical patterns "
+    "to guide early mentoring. They are not grades or academic judgements and cannot guarantee final results."
+)
+
+
+def get_model_label(model_version: Optional[ModelVersion]) -> str:
+    """Returns honest, standardized provenance label for model predictions."""
+    if model_version is None:
+        return "No calibrated model available"
+    if model_version.slot == "institute":
+        return f"Institute-calibrated estimate (model v{model_version.version}, trained on {model_version.n_train_rows} records)"
+    if model_version.slot == "baseline":
+        return "Baseline estimate (public sample data)"
+    return f"{model_version.slot.title()} estimate (model v{model_version.version})"
 
 
 class IncompatibleEnvironmentError(Exception):
@@ -64,6 +81,7 @@ def resolve_artifact_path(artifact_file: str) -> Path:
 class PredictionResult:
     """
     Structured outcome of a machine learning forecast for a single student-subject pair.
+    Carries provenance information, human-friendly factor explanations, and advisory disclaimers.
     Implements key-based dictionary access for backwards compatibility with legacy templates.
     """
     student_id: int
@@ -79,6 +97,11 @@ class PredictionResult:
     reasons: list[str]
     features: dict[str, Any]
     model_version_id: Optional[int]
+    model_slot: Optional[str] = None
+    model_version: Optional[int] = None
+    model_label: str = "Baseline estimate (public sample data)"
+    factors: list[dict[str, Any]] = field(default_factory=list)
+    disclaimer: str = DEFAULT_DISCLAIMER
 
     @property
     def status(self) -> str:
@@ -93,7 +116,8 @@ class PredictionResult:
 
 class PredictorService:
     """
-    Inference service managing cached model lifecycles and strictly validated predictions.
+    Inference service managing cached model lifecycles, dynamic model routing,
+    and strictly validated predictions.
     """
 
     _cache: dict[int, Any] = {}
@@ -107,6 +131,97 @@ class PredictorService:
     def get_active_model_version(cls, slot: str) -> Optional[ModelVersion]:
         """Returns the currently active ModelVersion for the given slot, or None."""
         return ModelVersion.objects.filter(slot=slot, is_active=True).first()
+
+    @classmethod
+    def get_active_models(cls) -> dict[str, ModelVersion]:
+        """Returns active ModelVersion objects keyed by slot in a single query."""
+        return {
+            mv.slot: mv
+            for mv in ModelVersion.objects.filter(is_active=True, slot__in=["institute", "baseline"])
+        }
+
+    @classmethod
+    def get_available_features_for_student(cls, student: Any) -> set[str]:
+        """
+        Inspects existing academic and telemetry records to identify which features
+        are non-null and available for this student.
+        """
+        from academics.models import SemesterResult, HabitCheckInLog, Result
+        from academics.services.habits import compute_habit_summary_from_logs
+
+        available: set[str] = set()
+
+        # Check latest SemesterResult
+        sr = SemesterResult.objects.filter(student=student).order_by("-semester").first()
+        if sr:
+            if sr.attendance_percentage is not None:
+                available.add("attendance_percentage")
+            if sr.percentage is not None or sr.sgpa is not None:
+                available.add("previous_score")
+            if sr.hours_studied_per_week is not None:
+                available.add("hours_studied")
+            if sr.sleep_hours_per_night is not None:
+                available.add("sleep_hours")
+            if sr.tutoring_sessions is not None:
+                available.add("tutoring_sessions")
+            if sr.physical_activity is not None:
+                available.add("physical_activity")
+
+        # Check recent habit logs (last 28 days)
+        today = timezone.now().date()
+        cutoff = today - timedelta(days=28)
+        recent_logs = list(HabitCheckInLog.objects.filter(student=student, log_date__gte=cutoff))
+        if recent_logs:
+            habits = compute_habit_summary_from_logs(recent_logs)
+            if habits and habits.hours_studied_per_week is not None:
+                available.add("hours_studied")
+            if habits and habits.sleep_hours_per_night is not None:
+                available.add("sleep_hours")
+            if habits and habits.tutoring_sessions is not None:
+                available.add("tutoring_sessions")
+            if habits and habits.physical_activity is not None:
+                available.add("physical_activity")
+
+        # Check internal assessment marks
+        if Result.objects.filter(student=student, internal_marks__isnull=False).exists():
+            available.add("internal_assessment_score")
+
+        return available
+
+    @classmethod
+    def active_for(
+        cls,
+        student: Any,
+        available_features: Optional[set[str]] = None,
+        active_models: Optional[dict[str, ModelVersion]] = None,
+    ) -> Optional[ModelVersion]:
+        """
+        Model Router: selects the most authoritative active model applicable to the given student.
+        1. Checks 'institute' slot: returned if active AND all required features are available.
+        2. Else checks 'baseline' slot: returned if active AND all required features are available.
+        3. Else returns None.
+        """
+        if active_models is None:
+            active_models = cls.get_active_models()
+
+        mv_institute = active_models.get("institute")
+        mv_baseline = active_models.get("baseline")
+
+        if not mv_institute and not mv_baseline:
+            return None
+
+        if available_features is None:
+            available_features = cls.get_available_features_for_student(student)
+
+        # 1. Check Institute Slot
+        if mv_institute and set(mv_institute.feature_names).issubset(available_features):
+            return mv_institute
+
+        # 2. Check Baseline Slot
+        if mv_baseline and set(mv_baseline.feature_names).issubset(available_features):
+            return mv_baseline
+
+        return None
 
     @classmethod
     def load(cls, slot: str) -> Any:
@@ -202,25 +317,37 @@ def predict_for_students(
     students: Sequence[Any],
     semester: Optional[int] = None,
     model_version: Optional[ModelVersion] = None,
-    slot: str = "baseline",
+    slot: Optional[str] = "baseline",
 ) -> list[PredictionResult]:
     """
     Executes true batch machine learning inference across multiple students and subjects.
     Builds ONE single unified feature matrix DataFrame and invokes model.predict() EXACTLY ONCE.
     Never invents or substitutes default numbers for missing telemetry.
+    Attaches model provenance labels, plain-language factor explanations, and advisory disclaimers.
     """
     student_list = list(students)
     if not student_list:
         return []
 
     if model_version is None:
-        model_version = PredictorService.get_active_model_version(slot)
+        if slot:
+            model_version = PredictorService.get_active_model_version(slot)
+        else:
+            if len(student_list) == 1:
+                model_version = PredictorService.active_for(student_list[0])
+            if not model_version:
+                model_version = (
+                    PredictorService.get_active_model_version("institute")
+                    or PredictorService.get_active_model_version("baseline")
+                )
 
     # Return empty list when no prediction model is active (displays "No active model" in UI)
     if not model_version:
         return []
 
-    from academics.models import Subject, SemesterResult, HabitCheckInLog
+    model_label = get_model_label(model_version)
+
+    from academics.models import Subject, SemesterResult, HabitCheckInLog, Result
     from academics.services.habits import compute_habit_summary_from_logs
 
     # 1. Bulk prefetch subjects for all relevant courses and target semesters
@@ -260,6 +387,13 @@ def predict_for_students(
     for log in logs_qs:
         logs_by_student.setdefault(log.student_id, []).append(log)
 
+    # 4. Bulk prefetch existing results for internal assessment marks
+    existing_results = Result.objects.filter(
+        student_id__in=student_ids,
+        semester__in=target_semesters,
+    )
+    result_map = {(r.student_id, r.subject_id): r for r in existing_results}
+
     results: list[PredictionResult] = []
     batch_queue = []
     batch_rows = []
@@ -272,26 +406,41 @@ def predict_for_students(
 
         # Build feature vector without fabricating defaults
         attendance = sr.attendance_percentage if sr and sr.attendance_percentage is not None else None
-        prev_score = sr.percentage if sr and sr.percentage is not None else None
+        prev_score = sr.percentage if sr and sr.percentage is not None else (float(sr.sgpa * 10.0) if sr and sr.sgpa is not None else None)
         hours_studied = habits.hours_studied_per_week if habits and habits.hours_studied_per_week is not None else (sr.hours_studied_per_week if sr else None)
         sleep_hours = habits.sleep_hours_per_night if habits and habits.sleep_hours_per_night is not None else (sr.sleep_hours_per_night if sr else None)
         tutoring = habits.tutoring_sessions if habits and habits.tutoring_sessions is not None else (sr.tutoring_sessions if sr else None)
         physical = habits.physical_activity if habits and habits.physical_activity is not None else (sr.physical_activity if sr else None)
 
-        feature_row = {
-            "attendance_percentage": attendance,
-            "hours_studied": hours_studied,
-            "sleep_hours": sleep_hours,
-            "previous_score": prev_score,
-            "tutoring_sessions": tutoring,
-            "physical_activity": physical,
-        }
-
-        # Check for missing required features
-        missing_features = [f for f in model_version.feature_names if f not in feature_row or feature_row[f] is None]
-
         for subj in subjs:
+            res = result_map.get((s.id, subj.id))
+            internal_score = None
+            if res and res.internal_marks is not None and getattr(subj, "internal_max", 0):
+                internal_score = (float(res.internal_marks) / float(subj.internal_max)) * 100.0
+
+            feature_row = {
+                "attendance_percentage": attendance,
+                "hours_studied": hours_studied,
+                "sleep_hours": sleep_hours,
+                "previous_score": prev_score,
+                "tutoring_sessions": tutoring,
+                "physical_activity": physical,
+                "internal_assessment_score": internal_score,
+            }
+
+            # Check for missing required features
+            missing_features = [f for f in model_version.feature_names if f not in feature_row or feature_row[f] is None]
+
             if missing_features:
+                factors = [
+                    {
+                        "feature": "missing_data",
+                        "name": "Insufficient Data",
+                        "impact": "N/A",
+                        "direction": "neutral",
+                        "description": f"Missing required telemetry: {', '.join(missing_features)}.",
+                    }
+                ]
                 results.append(
                     PredictionResult(
                         student_id=s.id,
@@ -307,13 +456,18 @@ def predict_for_students(
                         reasons=[f"Missing required telemetry: {', '.join(missing_features)}"],
                         features=feature_row,
                         model_version_id=model_version.id,
+                        model_slot=model_version.slot,
+                        model_version=model_version.version,
+                        model_label=model_label,
+                        factors=factors,
+                        disclaimer=DEFAULT_DISCLAIMER,
                     )
                 )
             else:
                 batch_queue.append((s, subj, target_sem, feature_row))
                 batch_rows.append(feature_row)
 
-    # 4. SINGLE MATRIX PREDICTION CALL
+    # 5. SINGLE MATRIX PREDICTION CALL
     if batch_rows:
         model = PredictorService.load(model_version.slot)
         input_df = pd.DataFrame(batch_rows)[model_version.feature_names]
@@ -328,6 +482,13 @@ def predict_for_students(
                 reasons.append(
                     f"Predicted score {score}% is below academic pass threshold ({PASS_MARK_PERCENT}%)"
                 )
+
+            factors = explain_prediction(
+                model,
+                model_version.feature_names,
+                feats,
+                model_version=model_version,
+            )
 
             results.append(
                 PredictionResult(
@@ -344,6 +505,11 @@ def predict_for_students(
                     reasons=reasons,
                     features=feats,
                     model_version_id=model_version.id,
+                    model_slot=model_version.slot,
+                    model_version=model_version.version,
+                    model_label=model_label,
+                    factors=factors,
+                    disclaimer=DEFAULT_DISCLAIMER,
                 )
             )
 
@@ -353,6 +519,14 @@ def predict_for_students(
 def predict_current_subjects(student: Any) -> list[PredictionResult]:
     """
     Convenience backward-compatible adapter predicting current semester subjects for a single student.
-    Delegates to the batch engine with a one-element list.
+    Routes dynamically to the best applicable active model for this student.
     """
-    return predict_for_students([student])
+    active_models = PredictorService.get_active_models()
+    if not active_models:
+        return []
+
+    mv = PredictorService.active_for(student, active_models=active_models)
+    if not mv:
+        mv = active_models.get("baseline") or active_models.get("institute")
+
+    return predict_for_students([student], model_version=mv)
