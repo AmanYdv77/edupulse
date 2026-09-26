@@ -18,7 +18,11 @@ export const DashboardPage: React.FC = () => {
     return <TeacherClassesView />;
   }
 
-  if (['HOD', 'DEAN', 'VICE_CHANCELLOR', 'REGISTRAR', 'CONTROLLER_OF_EXAMINATIONS'].includes(role || '')) {
+  if (
+    ['HOD', 'DEAN', 'VICE_CHANCELLOR', 'REGISTRAR', 'CONTROLLER_OF_EXAMINATIONS'].includes(
+      role || ''
+    )
+  ) {
     return <ScopeAnalyticsView />;
   }
 
@@ -28,7 +32,10 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <Card>
-      <CardHeader title="Academic Intelligence Platform" subtitle={`Welcome, ${user?.display_name || 'User'}`} />
+      <CardHeader
+        title="Academic Intelligence Platform"
+        subtitle={`Welcome, ${user?.display_name || 'User'}`}
+      />
       <CardBody>
         <p style={{ color: 'var(--color-text-muted)' }}>
           Active academic scope: <strong>{user?.scope_label || 'Default'}</strong>

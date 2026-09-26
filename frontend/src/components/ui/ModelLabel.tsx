@@ -20,7 +20,11 @@ export const ModelLabel: React.FC<ModelLabelProps> = ({
   const slotName = slot === 'baseline' ? 'Model A (Baseline)' : 'Model B (Institute)';
 
   return (
-    <span className={clsx('model-label', className)} title={`Serving Model: ${slotName} v${version} (${algorithm})`} {...props}>
+    <span
+      className={clsx('model-label', className)}
+      title={`Serving Model: ${slotName} v${version} (${algorithm})`}
+      {...props}
+    >
       <span className={clsx('model-label-dot', !isActive && 'inactive')} aria-hidden="true" />
       <span className="model-label-slot">{slotName}</span>
       <span className="model-label-version">v{version}</span>

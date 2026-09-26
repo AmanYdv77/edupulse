@@ -3,7 +3,9 @@ Grading criteria and risk-band classification logic.
 Uses settings.PASS_MARK_PERCENT (40.0%) as the authoritative source of truth.
 """
 
-from typing import Any, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
+
 from django.conf import settings
 
 PASS_MARK_PERCENT = getattr(settings, "PASS_MARK_PERCENT", 40.0)
@@ -22,8 +24,8 @@ RISK_BANDS = (
 
 
 def risk_band_for(
-    predicted_percentage: Optional[float],
-    missing_features: Optional[Sequence[str]] = None,
+    predicted_percentage: float | None,
+    missing_features: Sequence[str] | None = None,
 ) -> str:
     """
     Computes categorical risk band from a predicted score and input completeness:
@@ -47,7 +49,7 @@ def risk_band_for(
 
 def is_at_risk(
     predicted_percentage_or_band: Any,
-    missing_features: Optional[Sequence[str]] = None,
+    missing_features: Sequence[str] | None = None,
 ) -> bool:
     """
     Returns True if the student/subject requires intervention.
@@ -60,7 +62,7 @@ def is_at_risk(
     return band in (RISK_BAND_HIGH, RISK_BAND_INSUFFICIENT_DATA)
 
 
-def letter_grade_for(percentage: Optional[float]) -> str:
+def letter_grade_for(percentage: float | None) -> str:
     """
     Translates percentage score to standard UGC 10-point grade letter.
     """

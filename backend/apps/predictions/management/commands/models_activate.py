@@ -2,6 +2,8 @@
 Management command to activate a model version and deactivate existing active versions in that slot.
 """
 
+from typing import Any
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from predictions.models import ModelVersion
@@ -11,16 +13,18 @@ from predictions.services import PredictorService
 class Command(BaseCommand):
     help = "Activates a model version by ID and deactivates any existing active version in the same slot."
 
-    def add_arguments(self, parser):
-        parser.add_argument("version_id", type=int, help="Database ID of the ModelVersion to activate")
+    def add_arguments(self, parser: Any) -> None:
+        parser.add_argument(
+            "version_id", type=int, help="Database ID of the ModelVersion to activate"
+        )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         version_id = options["version_id"]
 
         try:
             target = ModelVersion.objects.get(pk=version_id)
         except ModelVersion.DoesNotExist:
-            raise CommandError(f"ModelVersion with ID {version_id} does not exist.")
+            raise CommandError(f"ModelVersion with ID {version_id} does not exist.") from None
 
         with transaction.atomic():
             # Deactivate currently active models in the target slot

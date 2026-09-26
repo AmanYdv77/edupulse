@@ -1,7 +1,8 @@
 import subprocess
+
 import pytest
-from django.db.models import QuerySet
 from academics.models import Result, StudentProfile
+
 from tests.factories import make_university
 
 
@@ -46,7 +47,9 @@ class TestTrainingSelectors:
         """training_rows() must immediately raise RuntimeError if allow_demo=True is attempted."""
         from predictions.selectors import training_rows
 
-        with pytest.raises(RuntimeError, match="Training data selector strictly prohibits demo data"):
+        with pytest.raises(
+            RuntimeError, match="Training data selector strictly prohibits demo data"
+        ):
             training_rows(allow_demo=True)
 
     def test_assert_real_training_data_guard(self):

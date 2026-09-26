@@ -15,47 +15,32 @@ Verifies:
 """
 
 from unittest.mock import patch
-import pytest
-from django.core.cache import cache
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APIClient
 
+import pytest
 from academics.models import (
     HabitCheckInLog,
     Result,
     SemesterResult,
-    StudentHabitPreference,
 )
 from api.caching import (
     get_analytics_cache_version,
     get_model_cache_version,
     get_student_prediction_version,
-    invalidate_analytics_cache,
-    invalidate_model_cache,
-    invalidate_student_prediction_cache,
     make_analytics_cache_key,
     make_prediction_cache_key,
     safe_cache_get,
     safe_cache_set,
 )
+from django.core.cache import cache
+from django.urls import reverse
 from predictions.models import ModelVersion, PredictionSnapshot
+from rest_framework import status
+from rest_framework.test import APIClient
+
 from tests.factories import (
-    BatchFactory,
-    CourseFactory,
-    DepartmentFactory,
-    HabitCheckInLogFactory,
-    HODUserFactory,
     ResultFactory,
-    SchoolFactory,
     SemesterResultFactory,
-    StudentProfileFactory,
-    StudentUserFactory,
-    SubjectFactory,
-    TeacherProfileFactory,
-    TeacherUserFactory,
     TeachingAssignmentFactory,
-    VCUserFactory,
     make_university,
 )
 
@@ -100,9 +85,9 @@ def active_model_fixture():
 # 1. Analytics Endpoints Caching Tests (Cache Hit = 0 DB Queries)
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAnalyticsCaching:
-
     def test_overview_caching_and_zero_db_queries_on_repeat(
         self, api_client, django_assert_num_queries, active_model_fixture
     ):
@@ -181,9 +166,9 @@ class TestAnalyticsCaching:
 # 2. Student Predictions Caching Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestStudentPredictionsCaching:
-
     def test_student_predictions_cached_and_zero_queries(
         self, api_client, django_assert_num_queries, active_model_fixture
     ):
@@ -208,9 +193,9 @@ class TestStudentPredictionsCaching:
 # 3. Event-Driven Invalidation Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestCacheInvalidation:
-
     def test_result_mutation_invalidates_analytics_and_student_prediction(
         self, api_client, django_assert_num_queries, active_model_fixture
     ):
@@ -250,9 +235,7 @@ class TestCacheInvalidation:
         resp_after_pred = api_client.get(url_pred)
         assert resp_after_pred.status_code == status.HTTP_200_OK
 
-    def test_bulk_internal_marks_busts_cache(
-        self, api_client, active_model_fixture
-    ):
+    def test_bulk_internal_marks_busts_cache(self, api_client, active_model_fixture):
         uni = make_university()
         vc = uni["executives"]["vc"]
         teacher = uni["teachers"][0]
@@ -310,9 +293,7 @@ class TestCacheInvalidation:
         v_after = get_analytics_cache_version()
         assert v_after >= 2
 
-    def test_prediction_snapshot_busts_analytics_cache(
-        self, api_client, active_model_fixture
-    ):
+    def test_prediction_snapshot_busts_analytics_cache(self, api_client, active_model_fixture):
         uni = make_university()
         student = uni["students"][0]
         v_before = get_analytics_cache_version()
@@ -370,12 +351,10 @@ class TestCacheInvalidation:
 # 4. Fault Tolerance & Graceful Degradation Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestCacheFaultTolerance:
-
-    def test_overview_survives_cache_get_and_set_failures(
-        self, api_client, active_model_fixture
-    ):
+    def test_overview_survives_cache_get_and_set_failures(self, api_client, active_model_fixture):
         uni = make_university()
         vc = uni["executives"]["vc"]
         api_client.force_authenticate(user=vc)
@@ -401,9 +380,9 @@ class TestCacheFaultTolerance:
 # 5. Cache Key Isolation Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestCacheKeyIsolation:
-
     def test_different_scopes_and_parameters_produce_distinct_keys(self):
         k1 = make_analytics_cache_key("overview", "INSTITUTION", None, {})
         k2 = make_analytics_cache_key("overview", "DEPARTMENT", 10, {})

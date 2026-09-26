@@ -3,131 +3,130 @@
  * Do not make direct changes to the file.
  */
 
-
 export interface paths {
-  "/api/v1/analytics/at-risk/": {
+  '/api/v1/analytics/at-risk/': {
     /**
      * Get paginated roster of at-risk students
      * @description Returns paginated at-risk student records from latest prediction snapshots. Requires view_at_risk_roster capability (Faculty only; Executives receive 403).
      */
-    get: operations["v1_analytics_at_risk_list"];
+    get: operations['v1_analytics_at_risk_list'];
   };
-  "/api/v1/analytics/breakdown/": {
+  '/api/v1/analytics/breakdown/': {
     /**
      * Get scoped performance breakdown
      * @description Aggregates performance by level strictly below user's academic scope with differential privacy (groups < 10 merged into 'Other (hidden)').
      */
-    get: operations["v1_analytics_breakdown_retrieve"];
+    get: operations['v1_analytics_breakdown_retrieve'];
   };
-  "/api/v1/analytics/distribution/": {
+  '/api/v1/analytics/distribution/': {
     /**
      * Get score histogram distribution for a subject
      * @description Computes fixed-bin percentage score histogram for a subject within user's scope.
      */
-    get: operations["v1_analytics_distribution_retrieve"];
+    get: operations['v1_analytics_distribution_retrieve'];
   };
-  "/api/v1/analytics/export/at-risk.csv": {
+  '/api/v1/analytics/export/at-risk.csv': {
     /**
      * Export at-risk student roster as CSV
      * @description Downloads CSV export of at-risk students. Throttled to 5 exports/hour per user. Creates an audit log record.
      */
-    get: operations["v1_analytics_export_at_risk.csv_retrieve"];
+    get: operations['v1_analytics_export_at_risk.csv_retrieve'];
   };
-  "/api/v1/analytics/overview/": {
+  '/api/v1/analytics/overview/': {
     /**
      * Get institutional analytics overview KPIs
      * @description Returns top-level KPIs scoped to caller's academic role. Database-aggregated, zero student-by-student loops.
      */
-    get: operations["v1_analytics_overview_retrieve"];
+    get: operations['v1_analytics_overview_retrieve'];
   };
-  "/api/v1/analytics/trend/": {
+  '/api/v1/analytics/trend/': {
     /**
      * Get longitudinal performance trend
      * @description Returns metrics per semester across academic history.
      */
-    get: operations["v1_analytics_trend_retrieve"];
+    get: operations['v1_analytics_trend_retrieve'];
   };
-  "/api/v1/auth/login/": {
+  '/api/v1/auth/login/': {
     /**
      * Session Login
      * @description Authenticates the user and initiates an HTTP-only session cookie.
      */
-    post: operations["v1_auth_login_create"];
+    post: operations['v1_auth_login_create'];
   };
-  "/api/v1/auth/logout/": {
+  '/api/v1/auth/logout/': {
     /**
      * Session Logout
      * @description Terminates the current user session.
      */
-    post: operations["v1_auth_logout_create"];
+    post: operations['v1_auth_logout_create'];
   };
-  "/api/v1/csrf/": {
+  '/api/v1/csrf/': {
     /**
      * Retrieve CSRF Token
      * @description Returns a valid CSRF token to be included in the X-CSRFToken header for unsafe requests.
      */
-    get: operations["v1_csrf_retrieve"];
+    get: operations['v1_csrf_retrieve'];
   };
-  "/api/v1/habits/check-ins/": {
+  '/api/v1/habits/check-ins/': {
     /**
      * List Habit Check-Ins
      * @description Returns paginated history of habit check-ins for the currently authenticated student.
      */
-    get: operations["v1_habits_check_ins_list"];
+    get: operations['v1_habits_check_ins_list'];
     /**
      * Record Habit Check-In
      * @description Submits a daily or weekly habit check-in, validated against contract boundary ranges.
      */
-    post: operations["v1_habits_check_ins_create"];
+    post: operations['v1_habits_check_ins_create'];
   };
-  "/api/v1/internal-marks/": {
+  '/api/v1/internal-marks/': {
     /**
      * Bulk Internal Marks Entry
      * @description Atomically updates internal marks for students in an assigned subject and batch.
      */
-    post: operations["v1_internal_marks_create"];
+    post: operations['v1_internal_marks_create'];
   };
-  "/api/v1/me/": {
+  '/api/v1/me/': {
     /**
      * Current User Context
      * @description Returns active session details, server-derived scope, and granular UI capabilities.
      */
-    get: operations["v1_me_retrieve"];
+    get: operations['v1_me_retrieve'];
   };
-  "/api/v1/models/": {
+  '/api/v1/models/': {
     /**
      * List Model Registry Versions
      * @description Inspects registered baseline and institutional models, evaluation metrics, and active states.
      */
-    get: operations["v1_models_list"];
+    get: operations['v1_models_list'];
   };
-  "/api/v1/models/{id}/activate/": {
+  '/api/v1/models/{id}/activate/': {
     /**
      * Activate Model Version
      * @description Promotes a model version to active serving in its slot.
      */
-    post: operations["v1_models_activate_create"];
+    post: operations['v1_models_activate_create'];
   };
-  "/api/v1/students/{id}/predictions/": {
+  '/api/v1/students/{id}/predictions/': {
     /**
      * Student Performance Predictions
      * @description Generates real-time score forecasts and advisory explanations for the specified student ID.
      */
-    get: operations["v1_students_predictions_retrieve"];
+    get: operations['v1_students_predictions_retrieve'];
   };
-  "/api/v1/students/{id}/results/": {
+  '/api/v1/students/{id}/results/': {
     /**
      * Student Academic Results
      * @description Retrieves official semester and subject results for the specified student ID.
      */
-    get: operations["v1_students_results_retrieve"];
+    get: operations['v1_students_results_retrieve'];
   };
-  "/api/v1/teaching-assignments/": {
+  '/api/v1/teaching-assignments/': {
     /**
      * Faculty Teaching Assignments
      * @description Lists all courses, batches, and subjects currently assigned to the authenticated teacher.
      */
-    get: operations["v1_teaching_assignments_list"];
+    get: operations['v1_teaching_assignments_list'];
   };
 }
 
@@ -156,7 +155,7 @@ export interface components {
     };
     AnalyticsBreakdownResponse: {
       by: string;
-      groups: components["schemas"]["AnalyticsBreakdownGroup"][];
+      groups: components['schemas']['AnalyticsBreakdownGroup'][];
     };
     AnalyticsDistributionBin: {
       label: string;
@@ -165,9 +164,9 @@ export interface components {
       count: number;
     };
     AnalyticsDistributionResponse: {
-      subject: components["schemas"]["AnalyticsDistributionSubject"];
+      subject: components['schemas']['AnalyticsDistributionSubject'];
       total_records: number;
-      bins: components["schemas"]["AnalyticsDistributionBin"][];
+      bins: components['schemas']['AnalyticsDistributionBin'][];
     };
     AnalyticsDistributionSubject: {
       id: number;
@@ -185,7 +184,7 @@ export interface components {
       at_risk_rate: number;
       /** Format: double */
       published_share: number;
-      model: components["schemas"]["ActiveModelInfo"] | null;
+      model: components['schemas']['ActiveModelInfo'] | null;
     };
     AnalyticsTrendPoint: {
       semester: number;
@@ -195,7 +194,7 @@ export interface components {
     };
     AnalyticsTrendResponse: {
       metric: string;
-      points: components["schemas"]["AnalyticsTrendPoint"][];
+      points: components['schemas']['AnalyticsTrendPoint'][];
     };
     AtRiskStudentRoster: {
       student_id: number;
@@ -215,7 +214,7 @@ export interface components {
     BulkInternalMarksRequestRequest: {
       subject_id: number;
       batch_id: number;
-      marks: components["schemas"]["SingleMarkEntryRequest"][];
+      marks: components['schemas']['SingleMarkEntryRequest'][];
     };
     BulkInternalMarksResponse: {
       updated_count: number;
@@ -237,7 +236,7 @@ export interface components {
       id: number;
       /** Format: date */
       log_date?: string;
-      log_type?: components["schemas"]["LogTypeEnum"];
+      log_type?: components['schemas']['LogTypeEnum'];
       /**
        * Format: double
        * @description Hours studied (today if daily, total for week if weekly)
@@ -248,7 +247,8 @@ export interface components {
        * @description Hours slept (last night if daily, avg/night if weekly)
        */
       sleep_hours?: number;
-      motivation_level?: components["schemas"]["MotivationLevelEnum"] | components["schemas"]["NullEnum"] | null;
+      motivation_level?:
+        components['schemas']['MotivationLevelEnum'] | components['schemas']['NullEnum'] | null;
       /** @description Tutoring sessions attended */
       tutoring_sessions?: number;
       /** @description Hours/days of physical activity or exercise */
@@ -260,7 +260,7 @@ export interface components {
     HabitCheckInLogRequest: {
       /** Format: date */
       log_date?: string;
-      log_type?: components["schemas"]["LogTypeEnum"];
+      log_type?: components['schemas']['LogTypeEnum'];
       /**
        * Format: double
        * @description Hours studied (today if daily, total for week if weekly)
@@ -271,7 +271,8 @@ export interface components {
        * @description Hours slept (last night if daily, avg/night if weekly)
        */
       sleep_hours?: number;
-      motivation_level?: components["schemas"]["MotivationLevelEnum"] | components["schemas"]["NullEnum"] | null;
+      motivation_level?:
+        components['schemas']['MotivationLevelEnum'] | components['schemas']['NullEnum'] | null;
       /** @description Tutoring sessions attended */
       tutoring_sessions?: number;
       /** @description Hours/days of physical activity or exercise */
@@ -283,7 +284,7 @@ export interface components {
      * * `WEEKLY` - Weekly Log
      * @enum {string}
      */
-    LogTypeEnum: "DAILY" | "WEEKLY";
+    LogTypeEnum: 'DAILY' | 'WEEKLY';
     LoginRequestRequest: {
       username: string;
       password: string;
@@ -300,7 +301,7 @@ export interface components {
        * * `baseline` - Baseline (Model A)
        * * `institute` - Institute (Model B)
        */
-      slot: components["schemas"]["SlotEnum"];
+      slot: components['schemas']['SlotEnum'];
       /** @description Sequential version integer within the slot */
       version: number;
       /** @description Designates whether this version actively serves predictions for its slot */
@@ -329,9 +330,9 @@ export interface components {
      * * `High` - High
      * @enum {string}
      */
-    MotivationLevelEnum: "Low" | "Medium" | "High";
+    MotivationLevelEnum: 'Low' | 'Medium' | 'High';
     /** @enum {unknown} */
-    NullEnum: "";
+    NullEnum: '';
     PaginatedHabitCheckInLogList: {
       /** @example 123 */
       count: number;
@@ -345,7 +346,7 @@ export interface components {
        * @example http://api.example.org/accounts/?page=2
        */
       previous?: string | null;
-      results: components["schemas"]["HabitCheckInLog"][];
+      results: components['schemas']['HabitCheckInLog'][];
     };
     SemesterResultItem: {
       id: number;
@@ -373,17 +374,17 @@ export interface components {
      * * `institute` - Institute (Model B)
      * @enum {string}
      */
-    SlotEnum: "baseline" | "institute";
+    SlotEnum: 'baseline' | 'institute';
     StudentPredictionsResponse: {
       student_id: number;
       target_semester: number;
-      predictions: components["schemas"]["SubjectPrediction"][];
+      predictions: components['schemas']['SubjectPrediction'][];
     };
     StudentResults: {
       student_id: number;
       roll_number: string;
-      semester_results: components["schemas"]["SemesterResultItem"][];
-      subject_results: components["schemas"]["SubjectResultItem"][];
+      semester_results: components['schemas']['SemesterResultItem'][];
+      subject_results: components['schemas']['SubjectResultItem'][];
     };
     SubjectPrediction: {
       subject_code: string;
@@ -396,7 +397,7 @@ export interface components {
       risk_band: string | null;
       model_label: string;
       model_version: number | null;
-      factors: components["schemas"]["FactorDetail"][];
+      factors: components['schemas']['FactorDetail'][];
       disclaimer: string;
       insufficient_data: boolean;
       insufficient_data_reasons: string[];
@@ -447,7 +448,6 @@ export type $defs = Record<string, never>;
 export type external = Record<string, never>;
 
 export interface operations {
-
   /**
    * Get paginated roster of at-risk students
    * @description Returns paginated at-risk student records from latest prediction snapshots. Requires view_at_risk_roster capability (Faculty only; Executives receive 403).
@@ -468,7 +468,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["AtRiskStudentRoster"][];
+          'application/json': components['schemas']['AtRiskStudentRoster'][];
         };
       };
     };
@@ -497,7 +497,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["AnalyticsBreakdownResponse"];
+          'application/json': components['schemas']['AnalyticsBreakdownResponse'];
         };
       };
     };
@@ -520,7 +520,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["AnalyticsDistributionResponse"];
+          'application/json': components['schemas']['AnalyticsDistributionResponse'];
         };
       };
     };
@@ -529,7 +529,7 @@ export interface operations {
    * Export at-risk student roster as CSV
    * @description Downloads CSV export of at-risk students. Throttled to 5 exports/hour per user. Creates an audit log record.
    */
-  "v1_analytics_export_at_risk.csv_retrieve": {
+  'v1_analytics_export_at_risk.csv_retrieve': {
     parameters: {
       query?: {
         /** @description Batch ID filter */
@@ -569,7 +569,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["AnalyticsOverview"];
+          'application/json': components['schemas']['AnalyticsOverview'];
         };
       };
     };
@@ -596,7 +596,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["AnalyticsTrendResponse"];
+          'application/json': components['schemas']['AnalyticsTrendResponse'];
         };
       };
     };
@@ -608,15 +608,15 @@ export interface operations {
   v1_auth_login_create: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["LoginRequestRequest"];
-        "application/x-www-form-urlencoded": components["schemas"]["LoginRequestRequest"];
-        "multipart/form-data": components["schemas"]["LoginRequestRequest"];
+        'application/json': components['schemas']['LoginRequestRequest'];
+        'application/x-www-form-urlencoded': components['schemas']['LoginRequestRequest'];
+        'multipart/form-data': components['schemas']['LoginRequestRequest'];
       };
     };
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["UserMe"];
+          'application/json': components['schemas']['UserMe'];
         };
       };
       /** @description Invalid username or password / inactive account */
@@ -633,7 +633,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["LogoutResponse"];
+          'application/json': components['schemas']['LogoutResponse'];
         };
       };
     };
@@ -646,7 +646,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["CSRFResponse"];
+          'application/json': components['schemas']['CSRFResponse'];
         };
       };
     };
@@ -667,7 +667,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["PaginatedHabitCheckInLogList"];
+          'application/json': components['schemas']['PaginatedHabitCheckInLogList'];
         };
       };
     };
@@ -679,15 +679,15 @@ export interface operations {
   v1_habits_check_ins_create: {
     requestBody?: {
       content: {
-        "application/json": components["schemas"]["HabitCheckInLogRequest"];
-        "application/x-www-form-urlencoded": components["schemas"]["HabitCheckInLogRequest"];
-        "multipart/form-data": components["schemas"]["HabitCheckInLogRequest"];
+        'application/json': components['schemas']['HabitCheckInLogRequest'];
+        'application/x-www-form-urlencoded': components['schemas']['HabitCheckInLogRequest'];
+        'multipart/form-data': components['schemas']['HabitCheckInLogRequest'];
       };
     };
     responses: {
       201: {
         content: {
-          "application/json": components["schemas"]["HabitCheckInLog"];
+          'application/json': components['schemas']['HabitCheckInLog'];
         };
       };
       /** @description Input range validation failed */
@@ -703,15 +703,15 @@ export interface operations {
   v1_internal_marks_create: {
     requestBody: {
       content: {
-        "application/json": components["schemas"]["BulkInternalMarksRequestRequest"];
-        "application/x-www-form-urlencoded": components["schemas"]["BulkInternalMarksRequestRequest"];
-        "multipart/form-data": components["schemas"]["BulkInternalMarksRequestRequest"];
+        'application/json': components['schemas']['BulkInternalMarksRequestRequest'];
+        'application/x-www-form-urlencoded': components['schemas']['BulkInternalMarksRequestRequest'];
+        'multipart/form-data': components['schemas']['BulkInternalMarksRequestRequest'];
       };
     };
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["BulkInternalMarksResponse"];
+          'application/json': components['schemas']['BulkInternalMarksResponse'];
         };
       };
       /** @description Per-row validation error report */
@@ -732,7 +732,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["UserMe"];
+          'application/json': components['schemas']['UserMe'];
         };
       };
     };
@@ -745,7 +745,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["ModelVersion"][];
+          'application/json': components['schemas']['ModelVersion'][];
         };
       };
     };
@@ -763,7 +763,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["ModelVersion"];
+          'application/json': components['schemas']['ModelVersion'];
         };
       };
     };
@@ -786,7 +786,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["StudentPredictionsResponse"];
+          'application/json': components['schemas']['StudentPredictionsResponse'];
         };
       };
       /** @description Access denied: outside user scope */
@@ -813,7 +813,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["StudentResults"];
+          'application/json': components['schemas']['StudentResults'];
         };
       };
       /** @description Access denied: outside user scope */
@@ -834,7 +834,7 @@ export interface operations {
     responses: {
       200: {
         content: {
-          "application/json": components["schemas"]["TeachingAssignment"][];
+          'application/json': components['schemas']['TeachingAssignment'][];
         };
       };
     };

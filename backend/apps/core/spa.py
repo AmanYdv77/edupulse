@@ -1,8 +1,8 @@
 import logging
 import mimetypes
-from pathlib import Path
+
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, FileResponse
+from django.http import FileResponse, HttpResponse, HttpResponseServerError
 from django.views import View
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class SPAIndexView(View):
                     elif not mime_type:
                         mime_type = "application/octet-stream"
 
-                    response = FileResponse(open(target_file, "rb"), content_type=mime_type)
+                    response = FileResponse(target_file.open("rb"), content_type=mime_type)
                     # Cache hashed assets indefinitely
                     response["Cache-Control"] = "public, max-age=31536000, immutable"
                     return response
@@ -52,7 +52,9 @@ class SPAIndexView(View):
                 "<p style='color:#9ca3af;'>Frontend distribution build not found. Please run <code>npm run build</code> inside the <code>frontend/</code> directory.</p>"
                 "</body></html>"
             )
-            response = HttpResponse(fallback_html, content_type="text/html; charset=utf-8", status=200)
+            response = HttpResponse(
+                fallback_html, content_type="text/html; charset=utf-8", status=200
+            )
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             return response
 
@@ -65,4 +67,3 @@ class SPAIndexView(View):
         except Exception as e:
             logger.error("Error reading SPA index.html: %s", e)
             return HttpResponseServerError("Failed to load SPA index file.")
-

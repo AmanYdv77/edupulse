@@ -10,3 +10,7 @@ factory-boy
 Faker
 pytest-playwright
 playwright
+ruff
+mypy
+pre-commit
+nbstripout

@@ -3,6 +3,7 @@ Celery background worker and scheduler configuration for EduPulse.
 """
 
 import os
+
 from celery import Celery
 
 # Default to dev settings if not explicitly provided

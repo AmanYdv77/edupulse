@@ -62,7 +62,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Ensure fresh CSRF token before post
         await refreshCsrf();
-        const { data, error: loginError, response } = await apiClient.POST('/api/v1/auth/login/', {
+        const {
+          data,
+          error: loginError,
+          response,
+        } = await apiClient.POST('/api/v1/auth/login/', {
           body: { username, password },
         });
 
@@ -72,10 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true };
         } else {
           const errObj = loginError as unknown as { detail?: string; error?: string } | undefined;
-          const errMsg =
-            errObj?.detail ||
-            errObj?.error ||
-            'Invalid credentials or login failed.';
+          const errMsg = errObj?.detail || errObj?.error || 'Invalid credentials or login failed.';
           setError(errMsg);
           return { success: false, error: errMsg };
         }

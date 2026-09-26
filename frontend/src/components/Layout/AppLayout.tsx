@@ -14,17 +14,43 @@ interface NavItem {
 const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: '📊' },
   { label: 'My Results', to: '/student/results', capability: 'view_own_results', icon: '📝' },
-  { label: 'Habit Check-In', to: '/student/habits', capability: ['submit_habit_checkin', 'view_own_habits', 'log_habits'], icon: '⏱️' },
-  { label: 'My Classes', to: '/classes', capability: ['view_teaching_assignments', 'enter_internal_marks'], icon: '🏫' },
+  {
+    label: 'Habit Check-In',
+    to: '/student/habits',
+    capability: ['submit_habit_checkin', 'view_own_habits', 'log_habits'],
+    icon: '⏱️',
+  },
+  {
+    label: 'My Classes',
+    to: '/classes',
+    capability: ['view_teaching_assignments', 'enter_internal_marks'],
+    icon: '🏫',
+  },
   {
     label: 'Institutional Analytics',
     to: '/analytics',
-    capability: ['view_analytics', 'view_department_analytics', 'view_school_analytics', 'view_executive_analytics', 'view_class_analytics'],
+    capability: [
+      'view_analytics',
+      'view_department_analytics',
+      'view_school_analytics',
+      'view_executive_analytics',
+      'view_class_analytics',
+    ],
     icon: '📈',
   },
-  { label: 'At-Risk Roster', to: '/roster', capability: ['view_at_risk_roster', 'view_class_analytics'], icon: '⚠️' },
+  {
+    label: 'At-Risk Roster',
+    to: '/roster',
+    capability: ['view_at_risk_roster', 'view_class_analytics'],
+    icon: '⚠️',
+  },
   { label: 'Internal Marks Entry', to: '/marks', capability: 'enter_internal_marks', icon: '✏️' },
-  { label: 'Model Registry', to: '/models', capability: ['manage_models', 'manage_model_registry'], icon: '🤖' },
+  {
+    label: 'Model Registry',
+    to: '/models',
+    capability: ['manage_models', 'manage_model_registry'],
+    icon: '🤖',
+  },
 ];
 
 export const AppLayout: React.FC = () => {
@@ -48,11 +74,7 @@ export const AppLayout: React.FC = () => {
     <div className="app-shell">
       {/* Mobile Drawer Backdrop */}
       {mobileOpen && (
-        <div
-          className="sidebar-backdrop"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="sidebar-backdrop" onClick={() => setMobileOpen(false)} aria-hidden="true" />
       )}
 
       {/* Sidebar */}

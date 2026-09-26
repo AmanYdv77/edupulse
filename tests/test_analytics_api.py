@@ -14,44 +14,22 @@ Verifies:
 """
 
 import pytest
+from analytics.models import ExportAuditLog
 from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
+from predictions.models import ModelVersion, PredictionSnapshot
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from academics.models import (
-    Batch,
-    Course,
-    Department,
-    Result,
-    School,
-    SemesterResult,
-    StudentProfile,
-    Subject,
-    TeachingAssignment,
-)
-from analytics.models import ExportAuditLog
-from predictions.models import ModelVersion, PredictionSnapshot
 from tests.factories import (
-    AdminUserFactory,
     BatchFactory,
-    ControllerUserFactory,
     CourseFactory,
-    DeanUserFactory,
     DepartmentFactory,
-    HODUserFactory,
-    RegistrarUserFactory,
-    ResultFactory,
     SchoolFactory,
     SemesterResultFactory,
     StudentProfileFactory,
-    StudentUserFactory,
     SubjectFactory,
-    TeacherProfileFactory,
-    TeacherUserFactory,
-    TeachingAssignmentFactory,
-    VCUserFactory,
     make_university,
 )
 
@@ -96,6 +74,7 @@ def active_model_fixture():
 # 1. Authentication & Capability Access Matrix Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAnalyticsAuthAndCapabilities:
     """Verifies default-deny security and capabilities enforcement across all analytics endpoints."""
@@ -131,9 +110,9 @@ class TestAnalyticsAuthAndCapabilities:
         ]
         for url in endpoints:
             response = api_client.get(url)
-            assert (
-                response.status_code == status.HTTP_403_FORBIDDEN
-            ), f"Student should receive 403 on {url}, got {response.status_code}"
+            assert response.status_code == status.HTTP_403_FORBIDDEN, (
+                f"Student should receive 403 on {url}, got {response.status_code}"
+            )
 
     def test_system_admin_forbidden_on_student_analytics(self, api_client):
         tree = make_university(students_per_batch=2)
@@ -148,11 +127,13 @@ class TestAnalyticsAuthAndCapabilities:
         ]
         for url in endpoints:
             response = api_client.get(url)
-            assert (
-                response.status_code == status.HTTP_403_FORBIDDEN
-            ), f"System Admin should receive 403 on {url}, got {response.status_code}"
+            assert response.status_code == status.HTTP_403_FORBIDDEN, (
+                f"System Admin should receive 403 on {url}, got {response.status_code}"
+            )
 
-    def test_teacher_allowed_overview_but_forbidden_at_risk_and_export(self, api_client, active_model_fixture):
+    def test_teacher_allowed_overview_but_forbidden_at_risk_and_export(
+        self, api_client, active_model_fixture
+    ):
         tree = make_university(students_per_batch=2)
         teacher_user = tree["teachers"][0].user
         api_client.force_login(teacher_user)
@@ -196,17 +177,24 @@ class TestAnalyticsAuthAndCapabilities:
         # HOD
         api_client.force_login(hod_user)
         assert api_client.get(reverse("api_v1:analytics-at-risk")).status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-export-at-risk")).status_code == status.HTTP_200_OK
+        assert (
+            api_client.get(reverse("api_v1:analytics-export-at-risk")).status_code
+            == status.HTTP_200_OK
+        )
 
         # Dean
         api_client.force_login(dean_user)
         assert api_client.get(reverse("api_v1:analytics-at-risk")).status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-export-at-risk")).status_code == status.HTTP_200_OK
+        assert (
+            api_client.get(reverse("api_v1:analytics-export-at-risk")).status_code
+            == status.HTTP_200_OK
+        )
 
 
 # ============================================================================
 # 2. Scope Enforcement & Out-of-Scope Filter Protection
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestAnalyticsScopeEnforcement:
@@ -255,33 +243,73 @@ class TestAnalyticsScopeEnforcement:
 
         # 1. Teacher can only breakdown by batch, subject
         api_client.force_login(teacher)
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=batch").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=subject").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code == status.HTTP_403_FORBIDDEN
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code == status.HTTP_403_FORBIDDEN
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=course").status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=batch").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=subject").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=course").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
 
         # 2. HOD can breakdown by course, batch, subject, teacher; NOT school or department
         api_client.force_login(hod)
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=course").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=batch").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code == status.HTTP_403_FORBIDDEN
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=course").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=batch").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
 
         # 3. Dean can breakdown by department, course, batch, subject, teacher; NOT school
         api_client.force_login(dean)
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code == status.HTTP_403_FORBIDDEN
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code
+            == status.HTTP_403_FORBIDDEN
+        )
 
         # 4. Executive can breakdown by any level
         api_client.force_login(vc)
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code == status.HTTP_200_OK
-        assert api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code == status.HTTP_200_OK
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=school").status_code
+            == status.HTTP_200_OK
+        )
+        assert (
+            api_client.get(reverse("api_v1:analytics-breakdown") + "?by=department").status_code
+            == status.HTTP_200_OK
+        )
 
 
 # ============================================================================
 # 3. Overview Endpoint & Bounded Query Budget
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestAnalyticsOverview:
@@ -310,7 +338,9 @@ class TestAnalyticsOverview:
         assert data["model"]["version"] == 1
         assert data["model"]["is_active"] is True
 
-    def test_overview_query_budget(self, api_client, active_model_fixture, django_assert_max_num_queries):
+    def test_overview_query_budget(
+        self, api_client, active_model_fixture, django_assert_max_num_queries
+    ):
         tree = make_university(students_per_batch=8)
         vc_user = tree["executives"]["vc"]
         api_client.force_login(vc_user)
@@ -326,11 +356,14 @@ class TestAnalyticsOverview:
 # 4. Breakdown & Differential Privacy (ANALYTICS_MIN_GROUP_SIZE = 10)
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAnalyticsBreakdownAndPrivacy:
     """Verifies differential privacy aggregation and Executive aggregate-only guarantee."""
 
-    def test_differential_privacy_masks_groups_under_min_size(self, api_client, active_model_fixture):
+    def test_differential_privacy_masks_groups_under_min_size(
+        self, api_client, active_model_fixture
+    ):
         tree = make_university(students_per_batch=12)
         dean_user = tree["dean"]
         dept = tree["department"]
@@ -341,14 +374,14 @@ class TestAnalyticsBreakdownAndPrivacy:
         # Create Course B with 3 students (< 10: masked)
         course_b = CourseFactory.create(name="Course Small 1", code="CS1", department=dept)
         batch_b = BatchFactory.create(course=course_b, strength=3)
-        for i in range(3):
+        for _ in range(3):
             st = StudentProfileFactory.create(course=course_b, batch=batch_b)
             SemesterResultFactory.create(student=st, semester=1, percentage=60.0, is_published=True)
 
         # Create Course C with 4 students (< 10: masked)
         course_c = CourseFactory.create(name="Course Small 2", code="CS2", department=dept)
         batch_c = BatchFactory.create(course=course_c, strength=4)
-        for i in range(4):
+        for _ in range(4):
             st = StudentProfileFactory.create(course=course_c, batch=batch_c)
             SemesterResultFactory.create(student=st, semester=1, percentage=70.0, is_published=True)
 
@@ -396,6 +429,7 @@ class TestAnalyticsBreakdownAndPrivacy:
 # 5. Longitudinal Trend & Distribution Endpoints
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAnalyticsTrendAndDistribution:
     """Verifies trend points per semester and fixed-bin histogram distribution."""
@@ -407,7 +441,9 @@ class TestAnalyticsTrendAndDistribution:
 
         # Add semester 2 results
         for st in tree["students"]:
-            SemesterResultFactory.create(student=st, semester=2, percentage=75.0, sgpa=7.5, is_published=True)
+            SemesterResultFactory.create(
+                student=st, semester=2, percentage=75.0, sgpa=7.5, is_published=True
+            )
 
         url = reverse("api_v1:analytics-trend") + "?metric=pass_rate"
         response = api_client.get(url)
@@ -466,11 +502,14 @@ class TestAnalyticsTrendAndDistribution:
 # 6. At-Risk Roster & Audit Log CSV Export
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAtRiskRosterAndExport:
     """Verifies at-risk student pagination, CSV download, audit logging, and rate limiting."""
 
-    def test_at_risk_roster_paginated_and_scoped_to_department(self, api_client, active_model_fixture):
+    def test_at_risk_roster_paginated_and_scoped_to_department(
+        self, api_client, active_model_fixture
+    ):
         tree = make_university(students_per_batch=4)
         hod_user = tree["hod"]
         students = tree["students"]
@@ -527,10 +566,13 @@ class TestAtRiskRosterAndExport:
         response = api_client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert response["Content-Type"] == "text/csv"
-        assert "attachment; filename=\"at_risk_roster.csv\"" in response["Content-Disposition"]
+        assert 'attachment; filename="at_risk_roster.csv"' in response["Content-Disposition"]
 
         content = response.content.decode("utf-8")
-        assert "Roll No,Name,Batch,Course,Subject,Semester,Risk Band,Predicted Percentage,Reasons,Taken At" in content
+        assert (
+            "Roll No,Name,Batch,Course,Subject,Semester,Risk Band,Predicted Percentage,Reasons,Taken At"
+            in content
+        )
         assert student.roll_no in content
 
         # Verify ExportAuditLog was created
@@ -549,7 +591,7 @@ class TestAtRiskRosterAndExport:
         # 5 exports per hour allowed
         for i in range(5):
             res = api_client.get(url)
-            assert res.status_code == status.HTTP_200_OK, f"Request {i+1} should be 200 OK"
+            assert res.status_code == status.HTTP_200_OK, f"Request {i + 1} should be 200 OK"
 
         # 6th export within the same hour must be throttled
         res_throttled = api_client.get(url)
@@ -559,6 +601,7 @@ class TestAtRiskRosterAndExport:
 # ============================================================================
 # 7. Legacy Endpoint Retirement Test
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestLegacyCohortQueryRetirement:

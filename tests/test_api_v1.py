@@ -12,41 +12,32 @@ Verifies:
 """
 
 import pytest
-from decimal import Decimal
+from academics.models import (
+    HabitCheckInLog,
+    Result,
+    StudentHabitPreference,
+)
 from django.urls import reverse
+from predictions.models import ModelVersion
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from accounts.models import User
-from accounts.permissions import ROLE_CAPABILITIES, capabilities_for
-from academics.models import (
-    Result,
-    SemesterResult,
-    HabitCheckInLog,
-    StudentHabitPreference,
-    TeachingAssignment,
-)
-from predictions.models import ModelVersion
-
 from .factories import (
-    StudentUserFactory,
-    TeacherUserFactory,
-    HODUserFactory,
-    DeanUserFactory,
-    VCUserFactory,
-    RegistrarUserFactory,
-    ControllerUserFactory,
     AdminUserFactory,
-    SchoolFactory,
-    DepartmentFactory,
-    CourseFactory,
     BatchFactory,
-    SubjectFactory,
-    StudentProfileFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
-    SemesterResultFactory,
+    ControllerUserFactory,
+    DeanUserFactory,
+    HODUserFactory,
+    RegistrarUserFactory,
     ResultFactory,
+    SemesterResultFactory,
+    StudentProfileFactory,
+    StudentUserFactory,
+    SubjectFactory,
+    TeacherProfileFactory,
+    TeacherUserFactory,
+    TeachingAssignmentFactory,
+    VCUserFactory,
 )
 
 
@@ -58,6 +49,7 @@ def api_client():
 # ============================================================================
 # 1. CSRF & Authentication Tests
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestAuthAndCSRF:
@@ -156,6 +148,7 @@ class TestAuthAndCSRF:
 # 2. Table-Driven Capabilities per Role Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestCapabilitiesPerRole:
     @pytest.mark.parametrize(
@@ -229,6 +222,7 @@ class TestCapabilitiesPerRole:
 # ============================================================================
 # 3. Scope Isolation on Academic Results & Predictions
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestScopeIsolation:
@@ -313,6 +307,7 @@ class TestScopeIsolation:
 # 4. Habit Check-In Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestHabitCheckIns:
     def test_valid_daily_checkin(self, api_client):
@@ -378,6 +373,7 @@ class TestHabitCheckIns:
 # ============================================================================
 # 5. Bulk Internal Marks Tests
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestBulkInternalMarks:
@@ -469,6 +465,7 @@ class TestBulkInternalMarks:
 # 6. Model Registry RBAC Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestModelRegistryAPI:
     def test_system_admin_can_access_models(self, api_client):
@@ -506,6 +503,7 @@ class TestModelRegistryAPI:
 # ============================================================================
 # 7. Pagination, Query Budgets & OpenAPI Schema Tests
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestPaginationAndQueryBudgets:
@@ -555,6 +553,7 @@ class TestOpenAPISchema:
     def test_openapi_yaml_exists_and_valid(self):
         """Validates that docs/openapi.yaml exists and schema command completes with 0 warnings."""
         from pathlib import Path
+
         from django.conf import settings
         from django.core.management import call_command
 

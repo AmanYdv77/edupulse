@@ -15,14 +15,10 @@ Verifies:
 """
 
 from unittest.mock import patch
+
 import joblib
 import pytest
 import sklearn
-from sklearn.linear_model import Ridge
-from django.conf import settings
-from django.core.cache import cache
-
-from academics.models import Department, School
 from analytics.selectors import ScopeContext
 from analytics.tasks import warm_analytics_cache
 from api.caching import (
@@ -31,16 +27,15 @@ from api.caching import (
     safe_cache_get,
 )
 from config.celery import app as celery_app
+from django.conf import settings
+from django.core.cache import cache
 from predictions.models import ModelVersion, PredictionSnapshot
 from predictions.services import PredictorService
 from predictions.tasks import take_prediction_snapshots
+from sklearn.linear_model import Ridge
+
 from tests.factories import (
-    DepartmentFactory,
-    ResultFactory,
-    SchoolFactory,
-    SemesterResultFactory,
     StudentProfileFactory,
-    SubjectFactory,
     make_university,
 )
 

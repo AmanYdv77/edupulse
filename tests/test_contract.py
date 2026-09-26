@@ -1,8 +1,10 @@
 import ast
 from pathlib import Path
+
 import pytest
 from django.conf import settings
 from django.test import Client
+
 from tests.factories import make_university
 
 
@@ -15,11 +17,15 @@ class TestMLFeatureContract:
 
         # Zero overlap with protected attributes
         overlap_protected = set(FEATURES.keys()) & PROTECTED_ATTRIBUTES
-        assert not overlap_protected, f"Protected attributes found in contract FEATURES: {overlap_protected}"
+        assert not overlap_protected, (
+            f"Protected attributes found in contract FEATURES: {overlap_protected}"
+        )
 
         # Zero overlap with review-required attributes (since none are approved in docs/ML_CONTRACT.md)
         overlap_review = set(FEATURES.keys()) & REVIEW_REQUIRED
-        assert not overlap_review, f"Review-required attributes found in contract FEATURES: {overlap_review}"
+        assert not overlap_review, (
+            f"Review-required attributes found in contract FEATURES: {overlap_review}"
+        )
 
     def test_validate_feature_list_bans_protected_attributes(self):
         """validate_feature_list must raise ValueError for protected attributes."""
@@ -33,7 +39,13 @@ class TestMLFeatureContract:
         """validate_feature_list must raise ValueError for review-required attributes."""
         from edupulse_ml.contract import validate_feature_list
 
-        for attr in ["family_income", "parental_education_level", "distance_from_home", "internet_access", "access_to_resources"]:
+        for attr in [
+            "family_income",
+            "parental_education_level",
+            "distance_from_home",
+            "internet_access",
+            "access_to_resources",
+        ]:
             with pytest.raises(ValueError, match="not approved"):
                 validate_feature_list([attr])
 
@@ -97,7 +109,11 @@ class TestMLFeatureContract:
 
         for py_file in app_dir.rglob("*.py"):
             # Skip migrations, virtualenv, and test files
-            if "migrations" in py_file.parts or ".venv" in py_file.parts or "tests" in py_file.parts:
+            if (
+                "migrations" in py_file.parts
+                or ".venv" in py_file.parts
+                or "tests" in py_file.parts
+            ):
                 continue
 
             try:
@@ -121,7 +137,7 @@ class TestMLFeatureContract:
                     if "feature" in lower_name or "column" in lower_name or "input" in lower_name:
                         # Inspect the value being assigned
                         val_node = node.value if hasattr(node, "value") else None
-                        if isinstance(val_node, (ast.List, ast.Set, ast.Tuple)):
+                        if isinstance(val_node, ast.List | ast.Set | ast.Tuple):
                             for elt in val_node.elts:
                                 if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
                                     if elt.value in banned_strings:
@@ -129,7 +145,9 @@ class TestMLFeatureContract:
                                             f"{py_file.name}:{node.lineno} variable '{name}' contains banned '{elt.value}'"
                                         )
 
-        assert not violations, f"Protected attributes found in feature/column lists:\n" + "\n".join(violations)
+        assert not violations, "Protected attributes found in feature/column lists:\n" + "\n".join(
+            violations
+        )
 
     @pytest.mark.django_db
     def test_my_predictions_ui_shows_no_active_model(self, client: Client):

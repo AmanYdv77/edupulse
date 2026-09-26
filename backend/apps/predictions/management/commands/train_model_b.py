@@ -5,23 +5,24 @@ Enforces real-data checks, environment constraints, and minimum dataset threshol
 
 import os
 import sys
+from typing import Any
+
 import sklearn
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-
-from edupulse_ml.datasets.institute import load_institute_dataset, InsufficientDataError
-from edupulse_ml.train_b import train_and_evaluate_model_b, split_temporal_holdout
+from edupulse_ml.datasets.institute import InsufficientDataError, load_institute_dataset
 from edupulse_ml.evaluate import evaluate_regression
+from edupulse_ml.train_b import split_temporal_holdout, train_and_evaluate_model_b
 from predictions.models import ModelVersion
-from predictions.services import PredictorService
 from predictions.promotion import should_promote
+from predictions.services import PredictorService
 
 
 class Command(BaseCommand):
     help = "Trains, evaluates, and registers Model B (Institutional Custom Model) on verified real institutional records."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
             "--confirm-real-data",
             action="store_true",
@@ -35,7 +36,7 @@ class Command(BaseCommand):
             help="Enable habit telemetry features (v2). Default is False (academic signals only).",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         # 1. Flag Confirmation Guard
         if not options.get("confirm_real_data"):
             raise CommandError(
@@ -54,11 +55,13 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE("Loading verified real-world institutional records..."))
 
         # 3. Load Dataset & Enforce Thresholds
-        use_habits = options.get("use_habits", False) or getattr(settings, "MODEL_B_USE_HABITS", False)
+        use_habits = options.get("use_habits", False) or getattr(
+            settings, "MODEL_B_USE_HABITS", False
+        )
         try:
             df = load_institute_dataset(enforce_thresholds=True, use_habits=use_habits)
         except (InsufficientDataError, RuntimeError) as exc:
-            raise CommandError(str(exc))
+            raise CommandError(str(exc)) from exc
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -83,11 +86,15 @@ class Command(BaseCommand):
             try:
                 _, test_df = split_temporal_holdout(df)
                 # Check if test_df has features required by Model A
-                missing_feats = [f for f in active_model_a.feature_names if f not in test_df.columns]
+                missing_feats = [
+                    f for f in active_model_a.feature_names if f not in test_df.columns
+                ]
                 if not missing_feats:
                     model_a_loaded = PredictorService.load("baseline")
                     preds_a = model_a_loaded.predict(test_df[active_model_a.feature_names])
-                    incumbent_metrics = evaluate_regression(test_df["target_percentage"].values, preds_a)
+                    incumbent_metrics = evaluate_regression(
+                        test_df["target_percentage"].values, preds_a
+                    )
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"Could not score holdout with Model A: {e}"))
 
@@ -100,7 +107,10 @@ class Command(BaseCommand):
 
         # 7. Register Candidate in Model Registry
         latest_version = (
-            ModelVersion.objects.filter(slot="institute").order_by("-version").values_list("version", flat=True).first()
+            ModelVersion.objects.filter(slot="institute")
+            .order_by("-version")
+            .values_list("version", flat=True)
+            .first()
             or 0
         )
         new_version = latest_version + 1
@@ -135,7 +145,11 @@ class Command(BaseCommand):
 
         # 8. Output Results & Decision
         self.stdout.write("\n" + "=" * 60)
-        self.stdout.write(self.style.SUCCESS(f"Registered Model B Candidate (id={mv.id}, institute v{new_version})"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Registered Model B Candidate (id={mv.id}, institute v{new_version})"
+            )
+        )
         self.stdout.write(f"Algorithm:       {candidate_name}")
         self.stdout.write(f"Features:        {', '.join(train_results['feature_names'])}")
         self.stdout.write(f"Holdout Sem:     Semester {holdout_semester}")
@@ -163,5 +177,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("PROMOTION STATUS: NOT RECOMMENDED"))
             for r in reasons:
                 self.stdout.write(f"  [-] {r}")
-            self.stdout.write("\nCandidate registered for audit records but not recommended for activation.\n")
+            self.stdout.write(
+                "\nCandidate registered for audit records but not recommended for activation.\n"
+            )
         self.stdout.write("=" * 60 + "\n")

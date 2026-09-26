@@ -8,34 +8,35 @@ Independent telemetry: Behavioral metrics and academic marks are generated indep
 
 import os
 import random
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from typing import Any
 
-from accounts.models import User
-from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
-    Batch,
-    Subject,
-    TeacherProfile,
-    StudentProfile,
-    TeachingAssignment,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-    StudentHabitPreference,
-    HabitCheckInLog,
-)
 from academics.demo_data import (
-    UNIVERSITY_DATA,
-    SCHOOL_DATA,
     ADMIN_USERS,
     DEPARTMENTS_DATA,
     LAST_NAMES,
+    SCHOOL_DATA,
+    UNIVERSITY_DATA,
 )
+from academics.models import (
+    Batch,
+    Course,
+    Department,
+    HabitCheckInLog,
+    InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
+    StudentHabitPreference,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+    TeachingAssignment,
+    University,
+)
+from accounts.models import User
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 BANNER = """
 ======================================================================
@@ -118,11 +119,12 @@ class Command(BaseCommand):
             )
 
             # 6. Seed Admin / Leadership Users
-            for admin_info in ADMIN_USERS:
+            for admin_info_raw in ADMIN_USERS:
+                admin_info: dict[str, Any] = admin_info_raw
                 user, created = User.objects.get_or_create(
                     username=admin_info["username"],
                     defaults={
-                        "role": getattr(User.Role, admin_info["role"]),
+                        "role": getattr(User.Role, str(admin_info["role"])),
                         "first_name": admin_info["first_name"],
                         "last_name": admin_info["last_name"],
                         "email": admin_info["email"],
@@ -131,7 +133,7 @@ class Command(BaseCommand):
                     },
                 )
                 user.set_password(demo_password)
-                user.role = getattr(User.Role, admin_info["role"])
+                user.role = getattr(User.Role, str(admin_info["role"]))
                 user.is_staff = admin_info["is_staff"]
                 user.is_superuser = admin_info["is_superuser"]
                 if admin_info["username"] == "dean_engg":
@@ -142,9 +144,10 @@ class Command(BaseCommand):
 
             # 7. Seed Departments, Teachers, Courses, Batches, Subjects, and Students
             total_students_created = 0
-            random_gen = random.Random(42)  # Deterministic seed for repeatable test verification
+            random_gen = random.Random(42)  # noqa: S311 - Deterministic seed for repeatable test verification
 
-            for dept_info in DEPARTMENTS_DATA:
+            for dept_info_raw in DEPARTMENTS_DATA:
+                dept_info: dict[str, Any] = dept_info_raw
                 dept, _ = Department.objects.get_or_create(
                     code=dept_info["code"],
                     defaults={
@@ -293,11 +296,15 @@ class Command(BaseCommand):
                             "guardian_relation": "Parent",
                             "guardian_phone": f"98{random_gen.randint(10000000, 99999999)}",
                             "distance_from_home": random_gen.choice(["Near", "Moderate", "Far"]),
-                            "parental_education_level": random_gen.choice(["High School", "College", "Postgraduate"]),
+                            "parental_education_level": random_gen.choice(
+                                ["High School", "College", "Postgraduate"]
+                            ),
                             "family_income": random_gen.choice(["Low", "Medium", "High"]),
                             "internet_access": random_gen.choice([True, True, True, False]),
                             "access_to_resources": random_gen.choice(["Low", "Medium", "High"]),
-                            "learning_disabilities": random_gen.choice([False, False, False, False, True]),
+                            "learning_disabilities": random_gen.choice(
+                                [False, False, False, False, True]
+                            ),
                             "data_origin": "demo",
                         },
                     )
@@ -341,7 +348,9 @@ class Command(BaseCommand):
                                 "credits": subj.credits,
                                 "grade_points": grade_point,
                                 "credit_points": credit_point,
-                                "letter_grade": "A" if sub_total >= 80 else ("B" if sub_total >= 60 else "C"),
+                                "letter_grade": "A"
+                                if sub_total >= 80
+                                else ("B" if sub_total >= 60 else "C"),
                                 "exam_session": "Winter 2024",
                             },
                         )
@@ -352,7 +361,11 @@ class Command(BaseCommand):
                         total_credit_points += credit_point
 
                     sgpa = round(total_credit_points / total_credits, 2) if total_credits else 0.0
-                    percentage = round((total_marks_secured / total_max_marks) * 100, 1) if total_max_marks else 0.0
+                    percentage = (
+                        round((total_marks_secured / total_max_marks) * 100, 1)
+                        if total_max_marks
+                        else 0.0
+                    )
 
                     # Semester Result record
                     SemesterResult.objects.update_or_create(
@@ -426,6 +439,8 @@ class Command(BaseCommand):
 
 
 def timezone_date_offset(days_ago):
-    from django.utils import timezone
     from datetime import timedelta
+
+    from django.utils import timezone
+
     return timezone.now().date() - timedelta(days=days_ago)

@@ -6,20 +6,22 @@ Unit and integration tests for Task A17:
 - Idempotent management command take_prediction_snapshots
 - Scoped snapshot selectors for institutional hierarchy
 """
+
+from io import StringIO
+from unittest.mock import patch
+
 import joblib
 import pytest
 import sklearn
-from io import StringIO
-from unittest.mock import patch
-from sklearn.linear_model import Ridge
 from django.conf import settings
 from django.core.management import call_command
 from django.utils import timezone
-
+from predictions.grades import is_at_risk, letter_grade_for, risk_band_for
 from predictions.models import ModelVersion, PredictionSnapshot
-from predictions.grades import risk_band_for, is_at_risk, letter_grade_for
-from predictions.services import PredictorService, predict_for_students
 from predictions.selectors import scoped_snapshots_for
+from predictions.services import PredictorService, predict_for_students
+from sklearn.linear_model import Ridge
+
 from tests.factories import make_university
 
 

@@ -3,8 +3,7 @@ Celery background tasks for EduPulse Analytics Domain.
 """
 
 import logging
-from typing import Any, Dict
-from celery import shared_task
+from typing import Any
 
 from academics.models import Batch, Course, Department, School
 from analytics.selectors import ScopeContext, get_analytics_overview
@@ -14,6 +13,7 @@ from api.caching import (
     make_analytics_cache_key,
     safe_cache_set,
 )
+from celery import shared_task
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
     retry_backoff=True,
     retry_kwargs={"max_retries": 3},
 )
-def warm_analytics_cache(self) -> Dict[str, Any]:
+def warm_analytics_cache(self) -> dict[str, Any]:
     """
     Periodic task to pre-compute and warm analytics caches for common institutional scopes:
     - University-wide overview

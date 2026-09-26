@@ -14,27 +14,22 @@ Verifies:
 10. import_institute_data validation correctly flags corrupt rows and headers.
 """
 
-import os
 import random
-import tempfile
-from pathlib import Path
+
 import pytest
+from academics.models import (
+    InternalAssessment,
+    Result,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+)
+from accounts.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
-from accounts.models import User
-from academics.models import (
-    StudentProfile,
-    Subject,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-)
 from tests.factories import (
     StudentProfileFactory,
-    CourseFactory,
-    BatchFactory,
-    SubjectFactory,
 )
 
 
@@ -57,13 +52,16 @@ def calculate_pearson_r(x, y):
 # SEED_DEMO GUARDS & BEHAVIOR
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.django_db
 def test_seed_demo_refuses_prod(monkeypatch):
     """Verify seed_demo refuses to run if DJANGO_ENV is prod."""
     monkeypatch.setenv("DJANGO_ENV", "prod")
     monkeypatch.setenv("DEMO_USER_PASSWORD", "DemoSecret123!")
 
-    with pytest.raises(CommandError, match="Security Violation: seed_demo command is prohibited in production"):
+    with pytest.raises(
+        CommandError, match="Security Violation: seed_demo command is prohibited in production"
+    ):
         call_command("seed_demo")
 
 
@@ -154,13 +152,18 @@ def test_demo_telemetry_independence():
     r_att_sgpa = calculate_pearson_r(attendance_list, sgpa_list)
     r_study_sgpa = calculate_pearson_r(study_hours_list, sgpa_list)
 
-    assert abs(r_att_sgpa) < 0.3, f"Unexpected high correlation between attendance and SGPA: {r_att_sgpa}"
-    assert abs(r_study_sgpa) < 0.3, f"Unexpected high correlation between study hours and SGPA: {r_study_sgpa}"
+    assert abs(r_att_sgpa) < 0.3, (
+        f"Unexpected high correlation between attendance and SGPA: {r_att_sgpa}"
+    )
+    assert abs(r_study_sgpa) < 0.3, (
+        f"Unexpected high correlation between study hours and SGPA: {r_study_sgpa}"
+    )
 
 
 # ---------------------------------------------------------------------------
 # IMPORT_INSTITUTE_DATA GUARDS & BEHAVIOR
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def sample_csv_dir(tmp_path):
@@ -174,7 +177,7 @@ def sample_csv_dir(tmp_path):
         "code,title,course_code,semester,credits,max_marks,internal_max,external_max,subject_type\n"
         "CS801,Advanced Machine Learning,BTCSE,7,4,100,30,70,Theory\n"
         "CS802,Cloud Computing Architecture,BTCSE,7,4,100,30,70,Theory\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     # students.csv
@@ -183,7 +186,7 @@ def sample_csv_dir(tmp_path):
         "roll_no,first_name,last_name,email,course_code,batch_code,admission_year,current_semester,distance_from_home\n"
         "REAL-CSE-001,Aarav,Nambiar,aarav@institution.edu,BTCSE,2024-BTCSE,2024,7,Near\n"
         "REAL-CSE-002,Meera,Menon,meera@institution.edu,BTCSE,2024-BTCSE,2024,7,Moderate\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     # results.csv
@@ -192,7 +195,7 @@ def sample_csv_dir(tmp_path):
         "roll_no,subject_code,semester,internal_marks,external_marks,total_secured,grade_points,letter_grade\n"
         "REAL-CSE-001,CS801,7,28,62,90,9.0,A+\n"
         "REAL-CSE-002,CS801,7,22,54,76,7.6,B+\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     # assessments.csv
@@ -200,7 +203,7 @@ def sample_csv_dir(tmp_path):
     assessments_csv.write_text(
         "roll_no,subject_code,semester,title,assessment_type,marks_obtained,max_marks\n"
         "REAL-CSE-001,CS801,7,Midterm 1,MIDTERM,22.5,25.0\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     # attendance.csv
@@ -209,7 +212,7 @@ def sample_csv_dir(tmp_path):
         "roll_no,semester,attendance_percentage,hours_studied_per_week\n"
         "REAL-CSE-001,7,88.5,18.0\n"
         "REAL-CSE-002,7,92.0,22.0\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     return d
@@ -230,7 +233,10 @@ def test_import_commit_refuses_dev(sample_csv_dir, monkeypatch):
     """Verify that import with --commit refuses execution when DJANGO_ENV is dev."""
     monkeypatch.setenv("DJANGO_ENV", "dev")
 
-    with pytest.raises(CommandError, match="Security Violation: Real institutional data import with --commit is restricted"):
+    with pytest.raises(
+        CommandError,
+        match="Security Violation: Real institutional data import with --commit is restricted",
+    ):
         call_command("import_institute_data", f"--data-dir={sample_csv_dir}", "--commit")
 
 
@@ -292,7 +298,7 @@ def test_import_validation_flags_corrupt_data(tmp_path):
     bad_students.write_text(
         "roll_no,first_name,last_name,email,course_code,batch_code,admission_year\n"
         "BAD-001,John,Doe,not-an-email,BTCSE,2024-BTCSE,not-a-year\n",
-        encoding="utf-8"
+        encoding="utf-8",
     )
 
     with pytest.raises(CommandError, match="Validation failed with"):

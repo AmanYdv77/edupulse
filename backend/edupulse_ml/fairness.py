@@ -12,8 +12,10 @@ IMPORTANT ETHICAL & GOVERNANCE RULES:
 """
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -57,7 +59,9 @@ def audit_demographic_fairness(
 
     report: dict[str, Any] = {
         "overall": {
-            "total_students": int(eval_df["student_id"].nunique()) if "student_id" in eval_df.columns else len(eval_df),
+            "total_students": int(eval_df["student_id"].nunique())
+            if "student_id" in eval_df.columns
+            else len(eval_df),
             "total_samples": len(eval_df),
             "rmse": round(overall_rmse, 3),
             "mae": round(overall_mae, 3),
@@ -76,7 +80,11 @@ def audit_demographic_fairness(
 
         for group_val, group_data in grouped:
             group_name = str(group_val) if pd.notna(group_val) else "Unrecorded"
-            n_students = int(group_data["student_id"].nunique()) if "student_id" in group_data.columns else len(group_data)
+            n_students = (
+                int(group_data["student_id"].nunique())
+                if "student_id" in group_data.columns
+                else len(group_data)
+            )
             n_samples = len(group_data)
 
             # Suppress small cohorts to prevent re-identification and noisy reporting
@@ -101,11 +109,19 @@ def audit_demographic_fairness(
             pred_pass = g_pred >= pass_mark
             actual_fail = ~actual_pass
 
-            fn = int(np.sum(actual_pass & (~pred_pass))) # False alarm (predicted fail, actually passed)
-            fp = int(np.sum(actual_fail & pred_pass))     # Missed risk (predicted pass, actually failed)
+            fn = int(
+                np.sum(actual_pass & (~pred_pass))
+            )  # False alarm (predicted fail, actually passed)
+            fp = int(
+                np.sum(actual_fail & pred_pass)
+            )  # Missed risk (predicted pass, actually failed)
 
-            false_negative_rate = float(fn / np.sum(actual_pass)) if np.sum(actual_pass) > 0 else 0.0
-            false_positive_rate = float(fp / np.sum(actual_fail)) if np.sum(actual_fail) > 0 else 0.0
+            false_negative_rate = (
+                float(fn / np.sum(actual_pass)) if np.sum(actual_pass) > 0 else 0.0
+            )
+            false_positive_rate = (
+                float(fp / np.sum(actual_fail)) if np.sum(actual_fail) > 0 else 0.0
+            )
 
             report["attributes"][attr][group_name] = {
                 "status": "reported",
@@ -125,7 +141,7 @@ def audit_demographic_fairness(
 def save_fairness_report(
     report: dict[str, Any],
     report_filename: str = "fairness_audit_model_b.json",
-    artifact_dir: Optional[Path | str] = None,
+    artifact_dir: Path | str | None = None,
 ) -> Path:
     """
     Persists audit report exclusively to the offline model artifact directory.
@@ -134,12 +150,14 @@ def save_fairness_report(
         base_dir = Path(artifact_dir).resolve()
     else:
         import os
+
         model_env = os.environ.get("MODEL_ARTIFACT_DIR")
         if model_env:
             base_dir = Path(model_env).resolve()
         else:
             try:
                 from django.conf import settings
+
                 base_dir = Path(settings.MODEL_ARTIFACT_DIR).resolve()
             except Exception:
                 base_dir = Path(__file__).resolve().parent.parent.parent / "artifacts" / "models"

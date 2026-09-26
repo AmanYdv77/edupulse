@@ -47,11 +47,7 @@ export function AccessibleChart<T = Record<string, unknown>>({
         <div className="chart-wrapper">{children}</div>
       ) : (
         <div className="chart-table-fallback">
-          <DataTable
-            columns={tableColumns}
-            data={tableData}
-            keyExtractor={keyExtractor}
-          />
+          <DataTable columns={tableColumns} data={tableData} keyExtractor={keyExtractor} />
         </div>
       )}
     </div>

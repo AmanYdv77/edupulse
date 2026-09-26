@@ -4,9 +4,10 @@ Computes per-prediction directional contributions for linear models and global f
 importance for non-linear models without exposing protected demographic attributes.
 """
 
-from typing import Any, Mapping, Optional, Sequence
-import numpy as np
+from collections.abc import Mapping, Sequence
+from typing import Any
 
+import numpy as np
 from edupulse_ml.contract import PROTECTED_ATTRIBUTES
 
 FEATURE_HUMAN_NAMES: dict[str, str] = {
@@ -24,7 +25,7 @@ def explain_prediction(
     model: Any,
     feature_names: Sequence[str],
     feature_values: Mapping[str, Any],
-    model_version: Optional[Any] = None,
+    model_version: Any | None = None,
 ) -> list[dict[str, Any]]:
     """
     Computes top explanatory factors for a given prediction.
@@ -69,7 +70,7 @@ def explain_prediction(
 
     if hasattr(model, "named_steps"):
         # Scikit-learn Pipeline
-        for step_name, step_obj in model.named_steps.items():
+        for _step_name, step_obj in model.named_steps.items():
             if hasattr(step_obj, "coef_"):
                 regressor = step_obj
             elif hasattr(step_obj, "mean_") and hasattr(step_obj, "scale_"):
@@ -83,8 +84,16 @@ def explain_prediction(
             contributions = []
             for idx, fname in enumerate(safe_features):
                 val = float(feature_values.get(fname, 0.0) or 0.0)
-                mean_val = float(scaler.mean_[idx]) if scaler is not None and hasattr(scaler, "mean_") else 50.0
-                scale_val = float(scaler.scale_[idx]) if scaler is not None and hasattr(scaler, "scale_") and scaler.scale_[idx] != 0 else 1.0
+                mean_val = (
+                    float(scaler.mean_[idx])
+                    if scaler is not None and hasattr(scaler, "mean_")
+                    else 50.0
+                )
+                scale_val = (
+                    float(scaler.scale_[idx])
+                    if scaler is not None and hasattr(scaler, "scale_") and scaler.scale_[idx] != 0
+                    else 1.0
+                )
                 coef = float(raw_coefs[idx])
 
                 # Normalized deviation contribution
@@ -96,19 +105,27 @@ def explain_prediction(
             top_factors = contributions[:3]
 
             factors = []
-            for fname, contrib, val in top_factors:
+            for fname, contrib, _val in top_factors:
                 human_name = FEATURE_HUMAN_NAMES.get(fname, fname.replace("_", " ").title())
-                direction = "positive" if contrib > 0.05 else ("negative" if contrib < -0.05 else "neutral")
+                direction = (
+                    "positive" if contrib > 0.05 else ("negative" if contrib < -0.05 else "neutral")
+                )
                 impact_pct = f"{contrib:+.1f}%"
-                direction_word = "Positive" if direction == "positive" else ("Negative" if direction == "negative" else "Neutral")
+                direction_word = (
+                    "Positive"
+                    if direction == "positive"
+                    else ("Negative" if direction == "negative" else "Neutral")
+                )
 
-                factors.append({
-                    "feature": fname,
-                    "name": human_name,
-                    "impact": impact_pct,
-                    "direction": direction,
-                    "description": f"{direction_word} influence from {human_name} ({impact_pct}).",
-                })
+                factors.append(
+                    {
+                        "feature": fname,
+                        "name": human_name,
+                        "impact": impact_pct,
+                        "direction": direction,
+                        "description": f"{direction_word} influence from {human_name} ({impact_pct}).",
+                    }
+                )
             return factors
 
     # 3. Non-Linear Model Fallback (e.g., HistGradientBoostingRegressor)
@@ -127,12 +144,14 @@ def explain_prediction(
     factors = []
     for fname in ranked_features[:3]:
         human_name = FEATURE_HUMAN_NAMES.get(fname, fname.replace("_", " ").title())
-        factors.append({
-            "feature": fname,
-            "name": human_name,
-            "impact": "Global factor",
-            "direction": "neutral",
-            "description": f"Global influence on model decisions (per-student attribution is unavailable).",
-        })
+        factors.append(
+            {
+                "feature": fname,
+                "name": human_name,
+                "impact": "Global factor",
+                "direction": "neutral",
+                "description": "Global influence on model decisions (per-student attribution is unavailable).",
+            }
+        )
 
     return factors

@@ -12,13 +12,15 @@ and fairness reporting (Task A18). However, they MUST NEVER be fed as features o
 any model training, fine-tuning, or inference workflow.
 """
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any
 
 
 @dataclass(frozen=True)
 class FeatureSpec:
     """Specification of an approved machine learning feature."""
+
     name: str
     dtype: type
     unit: str
@@ -29,21 +31,25 @@ class FeatureSpec:
 
 
 # Protected demographic attributes: STRICTLY PROHIBITED as model inputs.
-PROTECTED_ATTRIBUTES: frozenset[str] = frozenset({
-    "gender",
-    "category",
-    "address_state",
-    "learning_disabilities",
-})
+PROTECTED_ATTRIBUTES: frozenset[str] = frozenset(
+    {
+        "gender",
+        "category",
+        "address_state",
+        "learning_disabilities",
+    }
+)
 
 # Review-required proxy / background attributes: Excluded unless explicitly approved in docs/ML_CONTRACT.md.
-REVIEW_REQUIRED: frozenset[str] = frozenset({
-    "family_income",
-    "parental_education_level",
-    "distance_from_home",
-    "internet_access",
-    "access_to_resources",
-})
+REVIEW_REQUIRED: frozenset[str] = frozenset(
+    {
+        "family_income",
+        "parental_education_level",
+        "distance_from_home",
+        "internet_access",
+        "access_to_resources",
+    }
+)
 
 # Approved features: EXACTLY matching docs/ML_CONTRACT.md Section 3.
 # No other features may be defined here unless approved in docs/ML_CONTRACT.md.
@@ -114,7 +120,7 @@ FEATURES: dict[str, FeatureSpec] = {
 }
 
 
-def validate_feature_list(names: Sequence[str], model_kind: Optional[str] = None) -> bool:
+def validate_feature_list(names: Sequence[str], model_kind: str | None = None) -> bool:
     """
     Validates a list of candidate feature names against the ML contract.
 
@@ -174,11 +180,15 @@ def validate_row(mapping: Mapping[str, Any]) -> list[str]:
         spec = FEATURES[name]
 
         # Type validation (allowing int for float fields, but rejecting string/invalid types)
-        if spec.dtype is float and not isinstance(value, (int, float)):
-            problems.append(f"Feature '{name}' has invalid type {type(value).__name__}; expected float.")
+        if spec.dtype is float and not isinstance(value, int | float):
+            problems.append(
+                f"Feature '{name}' has invalid type {type(value).__name__}; expected float."
+            )
             continue
         elif spec.dtype is int and not (isinstance(value, int) and not isinstance(value, bool)):
-            problems.append(f"Feature '{name}' has invalid type {type(value).__name__}; expected int.")
+            problems.append(
+                f"Feature '{name}' has invalid type {type(value).__name__}; expected int."
+            )
             continue
 
         # Range validation

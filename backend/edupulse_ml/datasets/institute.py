@@ -4,26 +4,26 @@ Extracts verified institutional records strictly from students with data_origin=
 Guarantees zero leakage and validates minimum dataset thresholds before training.
 """
 
-from typing import Any, Optional, Tuple
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
+from academics.models import SemesterResult
 from django.conf import settings
 from django.db.models import QuerySet
-
-from academics.models import Result, SemesterResult
-from predictions.selectors import training_rows, assert_real_training_data
-from edupulse_ml.contract import validate_feature_list
+from predictions.selectors import assert_real_training_data, training_rows
 
 
 class InsufficientDataError(Exception):
     """Raised when institutional records do not meet minimum training thresholds."""
+
     pass
 
 
 def load_institute_dataset(
-    queryset: Optional[QuerySet] = None,
+    queryset: QuerySet | None = None,
     enforce_thresholds: bool = True,
-    use_habits: Optional[bool] = None,
+    use_habits: bool | None = None,
 ) -> pd.DataFrame:
     """
     Extracts and prepares institutional training data from Result records.
@@ -53,7 +53,9 @@ def load_institute_dataset(
 
     if not results:
         if enforce_thresholds:
-            raise InsufficientDataError("No verified real institutional records found for training.")
+            raise InsufficientDataError(
+                "No verified real institutional records found for training."
+            )
         return pd.DataFrame()
 
     # Bulk prefetch previous semester results for previous_score and attendance
@@ -63,7 +65,7 @@ def load_institute_dataset(
         student__data_origin="real",
     )
     # Map (student_id, semester) -> SemesterResult
-    sem_map: dict[Tuple[int, int], SemesterResult] = {
+    sem_map: dict[tuple[int, int], SemesterResult] = {
         (sr.student_id, sr.semester): sr for sr in sem_results
     }
 
@@ -95,10 +97,7 @@ def load_institute_dataset(
         # Internal assessment score percentage
         int_max = float(getattr(r.subject, "internal_max", 0) or 0)
         int_marks = float(r.internal_marks or 0.0)
-        if int_max > 0:
-            internal_pct = (int_marks / int_max) * 100.0
-        else:
-            internal_pct = 0.0
+        internal_pct = (int_marks / int_max) * 100.0 if int_max > 0 else 0.0
 
         row_dict: dict[str, Any] = {
             "student_id": r.student_id,
@@ -118,10 +117,18 @@ def load_institute_dataset(
 
         # Habit telemetry if enabled (v2)
         if use_habits:
-            hours_studied = getattr(current_record, "hours_studied_per_week", None) if current_record else None
-            sleep_hours = getattr(current_record, "sleep_hours_per_night", None) if current_record else None
-            tutoring = getattr(current_record, "tutoring_sessions", None) if current_record else None
-            phys_act = getattr(current_record, "physical_activity", None) if current_record else None
+            hours_studied = (
+                getattr(current_record, "hours_studied_per_week", None) if current_record else None
+            )
+            sleep_hours = (
+                getattr(current_record, "sleep_hours_per_night", None) if current_record else None
+            )
+            tutoring = (
+                getattr(current_record, "tutoring_sessions", None) if current_record else None
+            )
+            phys_act = (
+                getattr(current_record, "physical_activity", None) if current_record else None
+            )
 
             row_dict["hours_studied"] = hours_studied
             row_dict["sleep_hours"] = sleep_hours
@@ -161,9 +168,11 @@ def validate_institute_thresholds(df: pd.DataFrame) -> None:
     if n_rows < min_rows:
         reasons.append(f"Total training rows ({n_rows}) < minimum required ({min_rows})")
     if n_semesters < min_semesters:
-        reasons.append(f"Distinct historical semesters ({n_semesters}) < minimum required ({min_semesters})")
+        reasons.append(
+            f"Distinct historical semesters ({n_semesters}) < minimum required ({min_semesters})"
+        )
 
     if reasons:
         raise InsufficientDataError(
-            f"Insufficient institutional data to train Model B:\n - " + "\n - ".join(reasons)
+            "Insufficient institutional data to train Model B:\n - " + "\n - ".join(reasons)
         )

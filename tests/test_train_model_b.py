@@ -4,21 +4,20 @@ Verifies dataset thresholds, temporal splitting, grouped-CV anti-leakage,
 demographic fairness suppression, promotion decision engine, and CLI command execution.
 """
 
-import os
-import pytest
-import numpy as np
-import pandas as pd
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+import pytest
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
-
 from edupulse_ml.datasets.institute import (
+    InsufficientDataError,
     load_institute_dataset,
     validate_institute_thresholds,
-    InsufficientDataError,
 )
 from edupulse_ml.fairness import audit_demographic_fairness
 from edupulse_ml.train_b import split_temporal_holdout, train_and_evaluate_model_b
@@ -49,18 +48,20 @@ def make_synthetic_institute_df(
             target = 0.45 * prev_score + 0.35 * internal + 0.20 * att + rng.normal(0, 2)
             target = float(np.clip(target, 20.0, 100.0))
 
-            records.append({
-                "student_id": s_idx,
-                "semester": sem,
-                "subject_id": sem * 10 + 1,
-                "subject_code": f"SUB{sem}01",
-                "attendance_percentage": att,
-                "previous_score": prev_score,
-                "internal_assessment_score": internal,
-                "target_percentage": target,
-                "gender": gender,
-                "category": category,
-            })
+            records.append(
+                {
+                    "student_id": s_idx,
+                    "semester": sem,
+                    "subject_id": sem * 10 + 1,
+                    "subject_code": f"SUB{sem}01",
+                    "attendance_percentage": att,
+                    "previous_score": prev_score,
+                    "internal_assessment_score": internal,
+                    "target_percentage": target,
+                    "gender": gender,
+                    "category": category,
+                }
+            )
 
     return pd.DataFrame(records)
 
@@ -91,6 +92,7 @@ class TestDatasetAndThresholds:
     @pytest.mark.django_db
     def test_refuses_demo_records(self):
         from academics.models import Result
+
         from tests.factories import make_university
 
         tree = make_university(students_per_batch=5)
@@ -129,11 +131,13 @@ class TestTemporalSplitAndGroupedCV:
 class TestFairnessAudit:
     def test_fairness_suppresses_small_groups(self):
         # 15 Male students, 30 Female students
-        metadata = pd.DataFrame({
-            "student_id": list(range(1, 16)) + list(range(16, 46)),
-            "gender": ["Male"] * 15 + ["Female"] * 30,
-            "category": ["Gen"] * 45,
-        })
+        metadata = pd.DataFrame(
+            {
+                "student_id": list(range(1, 16)) + list(range(16, 46)),
+                "gender": ["Male"] * 15 + ["Female"] * 30,
+                "category": ["Gen"] * 45,
+            }
+        )
         y_true = np.full(45, 75.0)
         y_pred = np.full(45, 74.0)
 
@@ -203,7 +207,10 @@ class TestTrainModelBCommand:
         synthetic_df = make_synthetic_institute_df(n_students=220, n_semesters=4)
 
         # Mock load_institute_dataset to provide synthetic DataFrame
-        with patch("predictions.management.commands.train_model_b.load_institute_dataset", return_value=synthetic_df):
+        with patch(
+            "predictions.management.commands.train_model_b.load_institute_dataset",
+            return_value=synthetic_df,
+        ):
             out = StringIO()
             call_command("train_model_b", confirm_real_data=True, stdout=out)
             output = out.getvalue()

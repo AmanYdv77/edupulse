@@ -3,6 +3,7 @@ E2E Test: Authentication, Security Headers & Login Hygiene.
 """
 
 import pytest
+
 from tests.e2e.conftest import login_via_ui
 
 pytestmark = [pytest.mark.e2e, pytest.mark.django_db(transaction=True)]

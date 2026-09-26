@@ -70,6 +70,8 @@ describe('HabitCheckIn Component', () => {
     fireEvent.change(sleepInput, { target: { value: '8' } });
     fireEvent.submit(submitBtn.closest('form')!);
 
-    expect(screen.getByText(/Study hours must be between 0.0 and 16.0 hours./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Study hours must be between 0.0 and 16.0 hours./i)
+    ).toBeInTheDocument();
   });
 });

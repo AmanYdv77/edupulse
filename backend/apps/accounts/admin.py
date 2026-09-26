@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+
 from .models import User
 
 
@@ -18,9 +19,7 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ("role", "is_staff", "is_active")
 
     # Add our extra fields into the edit form (appended to Django's default sections)
-    fieldsets = UserAdmin.fieldsets + (
-        ("Result Platform info", {"fields": ("role", "phone")}),
-    )
+    fieldsets = UserAdmin.fieldsets + (("Result Platform info", {"fields": ("role", "phone")}),)
     # And into the "add new user" form
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Result Platform info", {"fields": ("role", "phone")}),

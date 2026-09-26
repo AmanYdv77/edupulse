@@ -4,17 +4,15 @@ Verifies out-of-scope queries, post verification, and security logging without P
 """
 
 import logging
+
 import pytest
 from django.urls import reverse
+
 from tests.factories import (
-    make_university,
-    HODUserFactory,
     DeanUserFactory,
-    TeacherUserFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
+    HODUserFactory,
+    make_university,
 )
-from academics.models import Department, School, Batch
 
 
 @pytest.mark.django_db
@@ -87,6 +85,7 @@ def test_api_cohort_query_out_of_scope_returns_403(client):
     Verify that an HOD querying an out-of-scope department receives HTTP 403.
     """
     from tests.factories import DepartmentFactory
+
     tree = make_university(students_per_batch=2)
     hod_user = tree["hod"]
     client.force_login(hod_user)
@@ -96,7 +95,9 @@ def test_api_cohort_query_out_of_scope_returns_403(client):
     url = reverse("api_v1:analytics-overview") + f"?department={other_dept.id}"
     response = client.get(url)
 
-    assert response.status_code == 403, f"Expected HTTP 403 for out-of-scope department query, got {response.status_code}"
+    assert response.status_code == 403, (
+        f"Expected HTTP 403 for out-of-scope department query, got {response.status_code}"
+    )
 
 
 @pytest.mark.django_db
@@ -118,9 +119,7 @@ def test_teacher_cannot_post_marks_for_unassigned_class(client):
     payload = {
         "subject_id": foreign_assignment.subject.id,
         "batch_id": foreign_assignment.batch.id,
-        "marks": [
-            {"student_id": tree["students"][0].id, "internal_marks": 20.0}
-        ]
+        "marks": [{"student_id": tree["students"][0].id, "internal_marks": 20.0}],
     }
     response = client.post(url, payload, content_type="application/json")
 
@@ -141,7 +140,9 @@ def test_denied_request_logs_warning_without_pii(client, caplog):
         client.get(url)
 
     # Check log message
-    warning_records = [r for r in caplog.records if r.name == "accounts.security" and r.levelname == "WARNING"]
+    warning_records = [
+        r for r in caplog.records if r.name == "accounts.security" and r.levelname == "WARNING"
+    ]
     assert len(warning_records) >= 1
     log_msg = warning_records[0].getMessage()
     assert f"user_id={student_user.id}" in log_msg

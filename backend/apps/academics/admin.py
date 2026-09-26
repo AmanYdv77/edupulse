@@ -1,8 +1,21 @@
 from django.contrib import admin, messages
-from .models import (University, School, Department, Course, Batch, Subject,
-                     TeacherProfile, StudentProfile, TeachingAssignment,
-                     Result, SemesterResult, InternalAssessment,
-                     StudentHabitPreference, HabitCheckInLog)
+
+from .models import (
+    Batch,
+    Course,
+    Department,
+    HabitCheckInLog,
+    InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
+    StudentHabitPreference,
+    StudentProfile,
+    Subject,
+    TeacherProfile,
+    TeachingAssignment,
+    University,
+)
 
 
 @admin.register(University)
@@ -63,7 +76,15 @@ class TeachingAssignmentAdmin(admin.ModelAdmin):
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    list_display = ("student", "subject", "semester", "total_secured", "max_marks", "letter_grade", "teacher")
+    list_display = (
+        "student",
+        "subject",
+        "semester",
+        "total_secured",
+        "max_marks",
+        "letter_grade",
+        "teacher",
+    )
     list_filter = ("semester", "letter_grade", "subject__course")
     search_fields = ("student__roll_no", "subject__code")
 
@@ -81,7 +102,7 @@ class SemesterResultAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Successfully published {updated} semester result record(s). Official results are now LIVE.",
-            messages.SUCCESS
+            messages.SUCCESS,
         )
 
     @admin.action(description="🔒 Revert to Draft (Hide from Students)")
@@ -90,13 +111,24 @@ class SemesterResultAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Reverted {updated} semester result record(s) to draft status.",
-            messages.WARNING
+            messages.WARNING,
         )
 
 
 @admin.register(InternalAssessment)
 class InternalAssessmentAdmin(admin.ModelAdmin):
-    list_display = ("student", "subject", "title", "assessment_type", "marks_obtained", "max_marks", "percentage", "teacher", "is_submitted", "date_conducted")
+    list_display = (
+        "student",
+        "subject",
+        "title",
+        "assessment_type",
+        "marks_obtained",
+        "max_marks",
+        "percentage",
+        "teacher",
+        "is_submitted",
+        "date_conducted",
+    )
     list_filter = ("assessment_type", "is_submitted", "semester")
     search_fields = ("student__roll_no", "subject__code", "title")
     actions = ["mark_as_submitted", "mark_as_draft"]
@@ -104,7 +136,11 @@ class InternalAssessmentAdmin(admin.ModelAdmin):
     @admin.action(description="Publish Selected Assessments to Department")
     def mark_as_submitted(self, request, queryset):
         updated = queryset.update(is_submitted=True)
-        self.message_user(request, f"{updated} assessment(s) marked as submitted and live in department hierarchy.", messages.SUCCESS)
+        self.message_user(
+            request,
+            f"{updated} assessment(s) marked as submitted and live in department hierarchy.",
+            messages.SUCCESS,
+        )
 
     @admin.action(description="Revert Selected Assessments to Draft")
     def mark_as_draft(self, request, queryset):
@@ -120,7 +156,13 @@ class StudentHabitPreferenceAdmin(admin.ModelAdmin):
 
 @admin.register(HabitCheckInLog)
 class HabitCheckInLogAdmin(admin.ModelAdmin):
-    list_display = ("student", "log_type", "log_date", "hours_studied", "sleep_hours", "motivation_level")
+    list_display = (
+        "student",
+        "log_type",
+        "log_date",
+        "hours_studied",
+        "sleep_hours",
+        "motivation_level",
+    )
     list_filter = ("log_type", "motivation_level", "log_date")
     search_fields = ("student__roll_no",)
-

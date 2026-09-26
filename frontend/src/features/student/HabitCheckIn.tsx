@@ -37,7 +37,12 @@ export const HabitCheckIn: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Fetch past habit check-in logs
-  const { data: habitsData, isLoading, error, refetch } = useQuery({
+  const {
+    data: habitsData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['student-habits'],
     queryFn: async () => {
       const { data, error: apiErr } = await apiClient.GET('/api/v1/habits/check-ins/');
@@ -132,92 +137,272 @@ export const HabitCheckIn: React.FC = () => {
 
   const columns = [
     { key: 'log_date', header: 'Date' },
-    { key: 'log_type', header: 'Type', render: (row: HabitLogItem) => <Badge variant="neutral">{row.log_type}</Badge> },
-    { key: 'hours_studied', header: 'Study (hrs)', render: (row: HabitLogItem) => row.hours_studied ?? '-' },
-    { key: 'sleep_hours', header: 'Sleep (hrs)', render: (row: HabitLogItem) => row.sleep_hours ?? '-' },
-    { key: 'motivation_level', header: 'Motivation', render: (row: HabitLogItem) => row.motivation_level || '-' },
-    { key: 'physical_activity', header: 'Exercise (hrs)', render: (row: HabitLogItem) => row.physical_activity ?? '-' },
+    {
+      key: 'log_type',
+      header: 'Type',
+      render: (row: HabitLogItem) => <Badge variant="neutral">{row.log_type}</Badge>,
+    },
+    {
+      key: 'hours_studied',
+      header: 'Study (hrs)',
+      render: (row: HabitLogItem) => row.hours_studied ?? '-',
+    },
+    {
+      key: 'sleep_hours',
+      header: 'Sleep (hrs)',
+      render: (row: HabitLogItem) => row.sleep_hours ?? '-',
+    },
+    {
+      key: 'motivation_level',
+      header: 'Motivation',
+      render: (row: HabitLogItem) => row.motivation_level || '-',
+    },
+    {
+      key: 'physical_activity',
+      header: 'Exercise (hrs)',
+      render: (row: HabitLogItem) => row.physical_activity ?? '-',
+    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>Study Habits & Routine Check-In</h1>
+        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+          Study Habits & Routine Check-In
+        </h1>
         <p style={{ color: 'var(--color-text-muted)' }}>
           Record your daily or weekly study habits to keep your forecast accurate
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-6)' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: 'var(--space-6)',
+        }}
+      >
         {/* Form Card */}
         <Card>
-          <CardHeader title="Record New Check-In" subtitle="Honest habit tracking without invented values" />
+          <CardHeader
+            title="Record New Check-In"
+            subtitle="Honest habit tracking without invented values"
+          />
           <CardBody>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <form
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
+            >
               {formError && (
-                <div style={{ padding: 'var(--space-3)', backgroundColor: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-danger)', fontSize: 'var(--text-sm)' }}>
+                <div
+                  style={{
+                    padding: 'var(--space-3)',
+                    backgroundColor: 'var(--color-danger-bg)',
+                    border: '1px solid var(--color-danger-border)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--color-danger)',
+                    fontSize: 'var(--text-sm)',
+                  }}
+                >
                   {formError}
                 </div>
               )}
               {successMessage && (
-                <div style={{ padding: 'var(--space-3)', backgroundColor: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: 'var(--text-sm)' }}>
+                <div
+                  style={{
+                    padding: 'var(--space-3)',
+                    backgroundColor: 'var(--color-success-bg)',
+                    border: '1px solid var(--color-success-border)',
+                    borderRadius: 'var(--radius-md)',
+                    color: 'var(--color-success)',
+                    fontSize: 'var(--text-sm)',
+                  }}
+                >
                   {successMessage}
                 </div>
               )}
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}
+              >
                 <div>
-                  <label htmlFor="log-type-select" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="log-type-select"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Log Type
                   </label>
-                  <select id="log-type-select" value={logType} onChange={(e) => setLogType(e.target.value as 'DAILY' | 'WEEKLY')}>
+                  <select
+                    id="log-type-select"
+                    value={logType}
+                    onChange={(e) => setLogType(e.target.value as 'DAILY' | 'WEEKLY')}
+                  >
                     <option value="DAILY">Daily Check-In</option>
                     <option value="WEEKLY">Weekly Summary</option>
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="log-date-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="log-date-input"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Log Date
                   </label>
-                  <input id="log-date-input" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required />
+                  <input
+                    id="log-date-input"
+                    type="date"
+                    value={logDate}
+                    onChange={(e) => setLogDate(e.target.value)}
+                    required
+                  />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}
+              >
                 <div>
-                  <label htmlFor="hours-studied-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="hours-studied-input"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Hours Studied (0-16) *
                   </label>
-                  <input id="hours-studied-input" type="number" step="0.5" min="0" max="16" placeholder="e.g. 4.5" value={hoursStudied} onChange={(e) => setHoursStudied(e.target.value === '' ? '' : Number(e.target.value))} required />
+                  <input
+                    id="hours-studied-input"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="16"
+                    placeholder="e.g. 4.5"
+                    value={hoursStudied}
+                    onChange={(e) =>
+                      setHoursStudied(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    required
+                  />
                 </div>
                 <div>
-                  <label htmlFor="sleep-hours-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="sleep-hours-input"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Sleep Hours (0-16) *
                   </label>
-                  <input id="sleep-hours-input" type="number" step="0.5" min="0" max="16" placeholder="e.g. 7.5" value={sleepHours} onChange={(e) => setSleepHours(e.target.value === '' ? '' : Number(e.target.value))} required />
+                  <input
+                    id="sleep-hours-input"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="16"
+                    placeholder="e.g. 7.5"
+                    value={sleepHours}
+                    onChange={(e) =>
+                      setSleepHours(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                    required
+                  />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}
+              >
                 <div>
-                  <label htmlFor="exercise-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="exercise-input"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Exercise (hrs/day)
                   </label>
-                  <input id="exercise-input" type="number" step="0.5" min="0" max="16" placeholder="e.g. 1.0" value={physicalActivity} onChange={(e) => setPhysicalActivity(e.target.value === '' ? '' : Number(e.target.value))} />
+                  <input
+                    id="exercise-input"
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="16"
+                    placeholder="e.g. 1.0"
+                    value={physicalActivity}
+                    onChange={(e) =>
+                      setPhysicalActivity(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                  />
                 </div>
                 <div>
-                  <label htmlFor="tutoring-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                  <label
+                    htmlFor="tutoring-input"
+                    style={{
+                      display: 'block',
+                      fontSize: 'var(--text-xs)',
+                      fontWeight: 600,
+                      color: 'var(--color-text-muted)',
+                      marginBottom: 'var(--space-1)',
+                    }}
+                  >
                     Tutoring Sessions
                   </label>
-                  <input id="tutoring-input" type="number" min="0" max="20" placeholder="e.g. 1" value={tutoringSessions} onChange={(e) => setTutoringSessions(e.target.value === '' ? '' : Number(e.target.value))} />
+                  <input
+                    id="tutoring-input"
+                    type="number"
+                    min="0"
+                    max="20"
+                    placeholder="e.g. 1"
+                    value={tutoringSessions}
+                    onChange={(e) =>
+                      setTutoringSessions(e.target.value === '' ? '' : Number(e.target.value))
+                    }
+                  />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="motivation-select" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                <label
+                  htmlFor="motivation-select"
+                  style={{
+                    display: 'block',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 600,
+                    color: 'var(--color-text-muted)',
+                    marginBottom: 'var(--space-1)',
+                  }}
+                >
                   Motivation Level
                 </label>
-                <select id="motivation-select" value={motivationLevel} onChange={(e) => setMotivationLevel(e.target.value as 'Low' | 'Medium' | 'High')}>
+                <select
+                  id="motivation-select"
+                  value={motivationLevel}
+                  onChange={(e) => setMotivationLevel(e.target.value as 'Low' | 'Medium' | 'High')}
+                >
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
                   <option value="High">High</option>
@@ -225,13 +410,33 @@ export const HabitCheckIn: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="notes-input" style={{ display: 'block', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 'var(--space-1)' }}>
+                <label
+                  htmlFor="notes-input"
+                  style={{
+                    display: 'block',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 600,
+                    color: 'var(--color-text-muted)',
+                    marginBottom: 'var(--space-1)',
+                  }}
+                >
                   Reflections & Notes
                 </label>
-                <textarea id="notes-input" rows={2} placeholder="Optional study topics, exam preparations..." value={notes} onChange={(e) => setNotes(e.target.value)} />
+                <textarea
+                  id="notes-input"
+                  rows={2}
+                  placeholder="Optional study topics, exam preparations..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
               </div>
 
-              <Button type="submit" variant="primary" size="lg" isLoading={checkInMutation.isPending}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                isLoading={checkInMutation.isPending}
+              >
                 Save Check-In
               </Button>
             </form>

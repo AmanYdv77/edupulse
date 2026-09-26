@@ -14,4 +14,3 @@ drf-spectacular
 django-redis
 redis
 celery[redis]
-

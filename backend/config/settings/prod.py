@@ -4,6 +4,7 @@ Enforces that DEBUG is False and database name does NOT end with '_dev', '_test'
 """
 
 from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 if DEBUG:
@@ -23,4 +24,3 @@ SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=31536000)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
 SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=True)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-

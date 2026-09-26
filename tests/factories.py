@@ -2,23 +2,26 @@
 Model factories and synthetic data generation for EduPulse test suite.
 Uses factory_boy and Faker. Enforces independent behavioral telemetry to prevent ML target leakage.
 """
+
+import itertools
 import random
+
 import factory
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
     Batch,
+    Course,
+    Department,
+    HabitCheckInLog,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
     Subject,
     TeacherProfile,
-    StudentProfile,
     TeachingAssignment,
-    Result,
-    SemesterResult,
-    HabitCheckInLog,
+    University,
 )
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -26,6 +29,7 @@ User = get_user_model()
 # ---------------------------------------------------------------------------
 # USER FACTORIES
 # ---------------------------------------------------------------------------
+
 
 class UserFactory(factory.django.DjangoModelFactory):
     """Base user factory with unusable password and @example.test email domain."""
@@ -86,6 +90,7 @@ class AdminUserFactory(UserFactory):
 # ---------------------------------------------------------------------------
 # ACADEMIC STRUCTURE FACTORIES
 # ---------------------------------------------------------------------------
+
 
 class UniversityFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -162,6 +167,7 @@ class SubjectFactory(factory.django.DjangoModelFactory):
 # ---------------------------------------------------------------------------
 # PEOPLE PROFILE FACTORIES
 # ---------------------------------------------------------------------------
+
 
 class TeacherProfileFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -251,6 +257,7 @@ class ResultFactory(factory.django.DjangoModelFactory):
 # or evaluated against artificial target leakage, falsifying model validation benchmarks.
 # ---------------------------------------------------------------------------
 
+
 class SemesterResultFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = SemesterResult
@@ -296,8 +303,6 @@ class HabitCheckInLogFactory(factory.django.DjangoModelFactory):
 # HIERARCHY HELPER
 # ---------------------------------------------------------------------------
 
-import itertools
-
 _univ_counter = itertools.count(1000)
 
 
@@ -318,7 +323,6 @@ def make_university(students_per_batch: int = 10) -> dict:
         name=f"Apex Institute of Technology {univ_suffix}",
         code=f"AIT{univ_suffix}",
     )
-
 
     vc = VCUserFactory(username=f"vc_apex_{univ_suffix}")
     registrar = RegistrarUserFactory(username=f"registrar_apex_{univ_suffix}")
@@ -362,23 +366,35 @@ def make_university(students_per_batch: int = 10) -> dict:
         strength=students_per_batch,
     )
 
-    sub1 = SubjectFactory(course=course, code=f"CS101_{univ_suffix}", title="Programming Fundamentals", semester=1)
-    sub2 = SubjectFactory(course=course, code=f"MA101_{univ_suffix}", title="Engineering Mathematics I", semester=1)
+    sub1 = SubjectFactory(
+        course=course, code=f"CS101_{univ_suffix}", title="Programming Fundamentals", semester=1
+    )
+    sub2 = SubjectFactory(
+        course=course, code=f"MA101_{univ_suffix}", title="Engineering Mathematics I", semester=1
+    )
 
-    t1_user = TeacherUserFactory(username=f"teacher_alpha_{univ_suffix}", department=department, school=school)
-    teacher1 = TeacherProfileFactory(user=t1_user, department=department, staff_id=f"FAC1_{univ_suffix}")
+    t1_user = TeacherUserFactory(
+        username=f"teacher_alpha_{univ_suffix}", department=department, school=school
+    )
+    teacher1 = TeacherProfileFactory(
+        user=t1_user, department=department, staff_id=f"FAC1_{univ_suffix}"
+    )
 
-    t2_user = TeacherUserFactory(username=f"teacher_beta_{univ_suffix}", department=department, school=school)
-    teacher2 = TeacherProfileFactory(user=t2_user, department=department, staff_id=f"FAC2_{univ_suffix}")
+    t2_user = TeacherUserFactory(
+        username=f"teacher_beta_{univ_suffix}", department=department, school=school
+    )
+    teacher2 = TeacherProfileFactory(
+        user=t2_user, department=department, staff_id=f"FAC2_{univ_suffix}"
+    )
 
     assign1 = TeachingAssignmentFactory(subject=sub1, batch=batch, teacher=teacher1)
     assign2 = TeachingAssignmentFactory(subject=sub2, batch=batch, teacher=teacher2)
 
     students = []
     for i in range(students_per_batch):
-        roll = f"24CSE{univ_suffix}{i+1:03d}"
+        roll = f"24CSE{univ_suffix}{i + 1:03d}"
         s_user = StudentUserFactory(
-            username=f"stu_{univ_suffix}_{i+1:03d}",
+            username=f"stu_{univ_suffix}_{i + 1:03d}",
             department=department,
             school=school,
         )

@@ -14,24 +14,23 @@ Guarded:
 import csv
 import os
 from pathlib import Path
-from django.conf import settings
+
+from academics.models import (
+    Batch,
+    Course,
+    Department,
+    InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+)
+from accounts.models import User
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from django.db import transaction
-
-from accounts.models import User
-from academics.models import (
-    School,
-    Department,
-    Course,
-    Batch,
-    Subject,
-    StudentProfile,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-)
 
 
 class Command(BaseCommand):
@@ -65,13 +64,12 @@ class Command(BaseCommand):
 
         # 1. Environment Guard for --commit
         django_env = os.environ.get("DJANGO_ENV", "").strip().lower()
-        if commit:
-            if django_env not in ("prod", "test"):
-                raise CommandError(
-                    f"Security Violation: Real institutional data import with --commit is restricted "
-                    f"to 'prod' and 'test' environments (got DJANGO_ENV='{django_env}'). "
-                    f"Use default dry-run mode for schema validation in development."
-                )
+        if commit and django_env not in ("prod", "test"):
+            raise CommandError(
+                f"Security Violation: Real institutional data import with --commit is restricted "
+                f"to 'prod' and 'test' environments (got DJANGO_ENV='{django_env}'). "
+                f"Use default dry-run mode for schema validation in development."
+            )
 
         # 2. Resolve CSV file paths
         data_dir = options.get("data_dir")
@@ -94,7 +92,9 @@ class Command(BaseCommand):
 
         active_files = {k: v for k, v in file_paths.items() if v}
         if not active_files:
-            raise CommandError("No input CSV files provided. Specify --data-dir or individual CSV flags.")
+            raise CommandError(
+                "No input CSV files provided. Specify --data-dir or individual CSV flags."
+            )
 
         self.stdout.write(
             self.style.NOTICE(
@@ -108,10 +108,12 @@ class Command(BaseCommand):
 
         for key, path in active_files.items():
             if not os.path.isfile(path):
-                all_errors.append({"file": path, "row": 0, "column": "FILE", "error": "File not found"})
+                all_errors.append(
+                    {"file": path, "row": 0, "column": "FILE", "error": "File not found"}
+                )
                 continue
 
-            with open(path, "r", encoding="utf-8-sig") as f:
+            with open(path, encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
                 parsed_data[key] = rows
@@ -119,12 +121,16 @@ class Command(BaseCommand):
                 all_errors.extend(errors)
 
         if all_errors:
-            self.stdout.write(self.style.ERROR(f"Validation FAILED with {len(all_errors)} error(s):"))
+            self.stdout.write(
+                self.style.ERROR(f"Validation FAILED with {len(all_errors)} error(s):")
+            )
             for err in all_errors:
                 self.stdout.write(
                     f"  [{err['file']}] Row {err['row']} Column '{err['column']}': {err['error']}"
                 )
-            raise CommandError(f"Validation failed with {len(all_errors)} errors. No records written.")
+            raise CommandError(
+                f"Validation failed with {len(all_errors)} errors. No records written."
+            )
 
         self.stdout.write(self.style.SUCCESS("All CSV schemas and data rows passed validation."))
 
@@ -159,9 +165,25 @@ class Command(BaseCommand):
 
         required_columns = {
             "subjects": ["code", "title", "course_code", "semester", "credits"],
-            "students": ["roll_no", "first_name", "last_name", "email", "course_code", "batch_code", "admission_year"],
+            "students": [
+                "roll_no",
+                "first_name",
+                "last_name",
+                "email",
+                "course_code",
+                "batch_code",
+                "admission_year",
+            ],
             "results": ["roll_no", "subject_code", "semester", "internal_marks", "external_marks"],
-            "assessments": ["roll_no", "subject_code", "semester", "title", "assessment_type", "marks_obtained", "max_marks"],
+            "assessments": [
+                "roll_no",
+                "subject_code",
+                "semester",
+                "title",
+                "assessment_type",
+                "marks_obtained",
+                "max_marks",
+            ],
             "attendance": ["roll_no", "semester", "attendance_percentage"],
         }
 
@@ -170,7 +192,12 @@ class Command(BaseCommand):
         for col in req:
             if col not in first_row_cols:
                 errors.append(
-                    {"file": file_path, "row": 1, "column": col, "error": f"Missing required column header '{col}'"}
+                    {
+                        "file": file_path,
+                        "row": 1,
+                        "column": col,
+                        "error": f"Missing required column header '{col}'",
+                    }
                 )
 
         if errors:
@@ -180,28 +207,70 @@ class Command(BaseCommand):
         for idx, row in enumerate(rows, start=2):
             if file_type == "students":
                 if not row.get("roll_no", "").strip():
-                    errors.append({"file": file_path, "row": idx, "column": "roll_no", "error": "roll_no cannot be empty"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "roll_no",
+                            "error": "roll_no cannot be empty",
+                        }
+                    )
                 email = row.get("email", "").strip()
                 try:
                     validate_email(email)
                 except ValidationError:
-                    errors.append({"file": file_path, "row": idx, "column": "email", "error": f"Invalid email format: '{email}'"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "email",
+                            "error": f"Invalid email format: '{email}'",
+                        }
+                    )
                 try:
                     int(row.get("admission_year", "0"))
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "admission_year", "error": "admission_year must be integer"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "admission_year",
+                            "error": "admission_year must be integer",
+                        }
+                    )
 
             elif file_type == "subjects":
                 try:
                     sem = int(row.get("semester", "0"))
                     if sem < 1 or sem > 12:
-                        errors.append({"file": file_path, "row": idx, "column": "semester", "error": "semester must be between 1 and 12"})
+                        errors.append(
+                            {
+                                "file": file_path,
+                                "row": idx,
+                                "column": "semester",
+                                "error": "semester must be between 1 and 12",
+                            }
+                        )
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "semester", "error": "semester must be integer"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "semester",
+                            "error": "semester must be integer",
+                        }
+                    )
                 try:
                     int(row.get("credits", "0"))
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "credits", "error": "credits must be integer"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "credits",
+                            "error": "credits must be integer",
+                        }
+                    )
 
             elif file_type == "results":
                 try:
@@ -209,28 +278,61 @@ class Command(BaseCommand):
                     int(row.get("internal_marks", "0"))
                     int(row.get("external_marks", "0"))
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "marks", "error": "Marks and semester must be numeric"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "marks",
+                            "error": "Marks and semester must be numeric",
+                        }
+                    )
 
             elif file_type == "assessments":
                 valid_types = ["MIDTERM", "ASSIGNMENT", "QUIZ", "LAB", "PROJECT"]
                 a_type = row.get("assessment_type", "").strip().upper()
                 if a_type not in valid_types:
                     errors.append(
-                        {"file": file_path, "row": idx, "column": "assessment_type", "error": f"Invalid assessment_type '{a_type}', expected one of {valid_types}"}
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "assessment_type",
+                            "error": f"Invalid assessment_type '{a_type}', expected one of {valid_types}",
+                        }
                     )
                 try:
                     float(row.get("marks_obtained", "0"))
                     float(row.get("max_marks", "0"))
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "marks", "error": "marks_obtained and max_marks must be numeric"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "marks",
+                            "error": "marks_obtained and max_marks must be numeric",
+                        }
+                    )
 
             elif file_type == "attendance":
                 try:
                     att = float(row.get("attendance_percentage", "-1"))
                     if att < 0 or att > 100:
-                        errors.append({"file": file_path, "row": idx, "column": "attendance_percentage", "error": "attendance_percentage must be 0-100"})
+                        errors.append(
+                            {
+                                "file": file_path,
+                                "row": idx,
+                                "column": "attendance_percentage",
+                                "error": "attendance_percentage must be 0-100",
+                            }
+                        )
                 except ValueError:
-                    errors.append({"file": file_path, "row": idx, "column": "attendance_percentage", "error": "attendance_percentage must be numeric"})
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "row": idx,
+                            "column": "attendance_percentage",
+                            "error": "attendance_percentage must be numeric",
+                        }
+                    )
 
         return errors
 
@@ -319,7 +421,9 @@ class Command(BaseCommand):
                 course = None
                 if row.get("course_code"):
                     dept_code = row.get("department_code")
-                    course = self._get_or_create_course(row["course_code"].strip(), dept_code=dept_code)
+                    course = self._get_or_create_course(
+                        row["course_code"].strip(), dept_code=dept_code
+                    )
 
                 batch = None
                 if row.get("batch_code") and course:
@@ -349,11 +453,15 @@ class Command(BaseCommand):
                         "guardian_name": row.get("guardian_name", "").strip(),
                         "guardian_phone": row.get("guardian_phone", "").strip(),
                         "distance_from_home": row.get("distance_from_home", "Moderate").strip(),
-                        "parental_education_level": row.get("parental_education_level", "College").strip(),
+                        "parental_education_level": row.get(
+                            "parental_education_level", "College"
+                        ).strip(),
                         "family_income": row.get("family_income", "Medium").strip(),
                         "internet_access": parse_bool(row.get("internet_access", True), True),
                         "access_to_resources": row.get("access_to_resources", "Medium").strip(),
-                        "learning_disabilities": parse_bool(row.get("learning_disabilities", False), False),
+                        "learning_disabilities": parse_bool(
+                            row.get("learning_disabilities", False), False
+                        ),
                         "data_origin": "real",
                     },
                 )

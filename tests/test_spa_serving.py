@@ -11,7 +11,7 @@ Verifies:
 """
 
 from unittest.mock import patch
-from pathlib import Path
+
 import pytest
 from django.test import Client
 

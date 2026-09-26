@@ -9,39 +9,33 @@ Verifies:
 6. Advisory disclaimer and ethical terminology ('Estimated Risk', never 'AI Grade') in views and templates.
 """
 
-import os
 import joblib
+import pandas as pd
 import pytest
 import sklearn
-from pathlib import Path
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-import pandas as pd
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
-
+from predictions.explain import (
+    FEATURE_HUMAN_NAMES,
+    explain_prediction,
+)
 from predictions.models import ModelVersion
 from predictions.services import (
     DEFAULT_DISCLAIMER,
     PredictorService,
-    PredictionResult,
     get_model_label,
     predict_for_students,
-    predict_current_subjects,
 )
-from predictions.explain import (
-    explain_prediction,
-    FEATURE_HUMAN_NAMES,
-)
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
 from tests.factories import (
+    ResultFactory,
+    SemesterResultFactory,
     StudentProfileFactory,
     SubjectFactory,
-    SemesterResultFactory,
-    ResultFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
 )
 
 
@@ -59,34 +53,44 @@ def trained_models(model_artifacts_dir):
     """Creates minimal baseline and institute model pipelines."""
     # 1. Baseline Model (features: attendance_percentage, hours_studied, previous_score)
     baseline_features = ["attendance_percentage", "hours_studied", "previous_score"]
-    X_base = pd.DataFrame([
-        [60.0, 10.0, 50.0],
-        [85.0, 20.0, 75.0],
-        [95.0, 30.0, 90.0],
-    ], columns=baseline_features)
+    X_base = pd.DataFrame(
+        [
+            [60.0, 10.0, 50.0],
+            [85.0, 20.0, 75.0],
+            [95.0, 30.0, 90.0],
+        ],
+        columns=baseline_features,
+    )
     y_base = [50.0, 75.0, 90.0]
 
-    baseline_pipe = Pipeline([
-        ("scaler", StandardScaler()),
-        ("regressor", Ridge()),
-    ])
+    baseline_pipe = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("regressor", Ridge()),
+        ]
+    )
     baseline_pipe.fit(X_base, y_base)
     baseline_file = "baseline_v1.joblib"
     joblib.dump(baseline_pipe, model_artifacts_dir / baseline_file)
 
     # 2. Institute Model (features: attendance_percentage, previous_score, internal_assessment_score)
     inst_features = ["attendance_percentage", "previous_score", "internal_assessment_score"]
-    X_inst = pd.DataFrame([
-        [60.0, 50.0, 15.0],
-        [80.0, 70.0, 22.0],
-        [95.0, 90.0, 28.0],
-    ], columns=inst_features)
+    X_inst = pd.DataFrame(
+        [
+            [60.0, 50.0, 15.0],
+            [80.0, 70.0, 22.0],
+            [95.0, 90.0, 28.0],
+        ],
+        columns=inst_features,
+    )
     y_inst = [55.0, 72.0, 92.0]
 
-    inst_pipe = Pipeline([
-        ("scaler", StandardScaler()),
-        ("regressor", Ridge()),
-    ])
+    inst_pipe = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            ("regressor", Ridge()),
+        ]
+    )
     inst_pipe.fit(X_inst, y_inst)
     inst_file = "institute_v1.joblib"
     joblib.dump(inst_pipe, model_artifacts_dir / inst_file)
@@ -106,6 +110,7 @@ def trained_models(model_artifacts_dir):
 # ============================================================================
 # EXPLAINABILITY TESTS
 # ============================================================================
+
 
 class TestExplainability:
     """Tests for app/predictions/explain.py."""
@@ -166,6 +171,7 @@ class TestExplainability:
 
     def test_non_linear_model_fallback(self):
         """Models without linear coefficients return global importance note."""
+
         class DummyNonLinearModel:
             pass
 
@@ -186,6 +192,7 @@ class TestExplainability:
 # MODEL LABEL TESTS
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestModelLabels:
     """Tests honest provenance labels generated for predictions."""
@@ -199,12 +206,16 @@ class TestModelLabels:
 
     def test_get_model_label_institute(self):
         mv = ModelVersion(slot="institute", version=2, n_train_rows=1250)
-        assert get_model_label(mv) == "Institute-calibrated estimate (model v2, trained on 1250 records)"
+        assert (
+            get_model_label(mv)
+            == "Institute-calibrated estimate (model v2, trained on 1250 records)"
+        )
 
 
 # ============================================================================
 # MODEL ROUTER TESTS
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestModelRouter:
@@ -267,7 +278,9 @@ class TestModelRouter:
         assert selected_model.id == mv_inst.id
         assert selected_model.slot == "institute"
 
-    def test_active_for_falls_back_to_baseline_when_institute_features_missing(self, trained_models):
+    def test_active_for_falls_back_to_baseline_when_institute_features_missing(
+        self, trained_models
+    ):
         """When student lacks institute features (e.g. internal marks), router falls back to baseline."""
         PredictorService.clear_cache()
 
@@ -344,6 +357,7 @@ class TestModelRouter:
 # ============================================================================
 # PREDICTION INFERENCE & PROVENANCE INTEGRATION TESTS
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestPredictionResultsIntegration:
@@ -431,11 +445,14 @@ class TestPredictionResultsIntegration:
 # API & ADVISORY NOTICE TESTS
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestViewAdvisoriesAndTerminology:
     """Verifies that API responses render advisory notices and avoid forbidden 'AI Grade' terms."""
 
-    def test_my_predictions_api_contains_advisory_notice_and_no_ai_grade(self, client: Client, trained_models):
+    def test_my_predictions_api_contains_advisory_notice_and_no_ai_grade(
+        self, client: Client, trained_models
+    ):
         student = StudentProfileFactory(current_semester=1)
         SubjectFactory(course=student.course, semester=1)
         client.force_login(student.user)
@@ -473,6 +490,7 @@ class TestViewAdvisoriesAndTerminology:
 
     def test_at_risk_api_contains_model_metadata_and_no_ai_grade(self, client: Client):
         from tests.factories import HODUserFactory
+
         hod_user = HODUserFactory()
         client.force_login(hod_user)
 

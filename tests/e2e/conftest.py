@@ -3,27 +3,28 @@ Playwright End-to-End (E2E) browser test fixtures and configuration.
 Enforces that tests run against the edupulse_e2e database with live Django server.
 """
 
+import contextlib
 import os
+from pathlib import Path
+
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 import pytest
-from pathlib import Path
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
     Batch,
+    Course,
+    Department,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
     Subject,
     TeacherProfile,
-    StudentProfile,
     TeachingAssignment,
-    SemesterResult,
-    Result,
-    HabitCheckInLog,
+    University,
 )
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from predictions.models import ModelVersion
 
 User = get_user_model()
@@ -57,7 +58,9 @@ def e2e_page(page, live_server, request):
     def on_request(req):
         url = req.url
         # Allow only same-origin live_server requests and data: or blob: URLs
-        if not (url.startswith(live_server.url) or url.startswith("data:") or url.startswith("blob:")):
+        if not (
+            url.startswith(live_server.url) or url.startswith("data:") or url.startswith("blob:")
+        ):
             third_party_requests.append(url)
 
     page.on("console", on_console)
@@ -69,13 +72,13 @@ def e2e_page(page, live_server, request):
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
         test_name = request.node.name.replace("/", "_").replace("::", "_")
         screenshot_path = ARTIFACTS_DIR / f"fail_{test_name}.png"
-        try:
+        with contextlib.suppress(Exception):
             page.screenshot(path=str(screenshot_path), full_page=True)
-        except Exception:
-            pass
 
     # Strict hygiene assertions: zero third-party requests and zero console errors
-    assert not third_party_requests, f"Forbidden third-party network requests detected: {third_party_requests}"
+    assert not third_party_requests, (
+        f"Forbidden third-party network requests detected: {third_party_requests}"
+    )
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -91,13 +94,33 @@ def e2e_seed_data(db):
     Provisions a comprehensive, isolated academic hierarchy in the E2E database.
     Creates structured test accounts with known passwords for real browser login.
     """
-    univ = University.objects.create(name="E2E Institute of Technology", code="E2E01", established_year=2000)
+    univ = University.objects.create(
+        name="E2E Institute of Technology", code="E2E01", established_year=2000
+    )
     school = School.objects.create(university=univ, name="School of Engineering", code="SOE")
-    dept = Department.objects.create(school=school, name="Computer Science & Engineering", code="CSE")
+    dept = Department.objects.create(
+        school=school, name="Computer Science & Engineering", code="CSE"
+    )
     other_dept = Department.objects.create(school=school, name="Electrical Engineering", code="EE")
-    course = Course.objects.create(department=dept, name="B.Tech Computer Science", code="CS101", level="UG", duration_years=4)
-    batch = Batch.objects.create(course=course, batch_code="2024-CSE-A", admission_year=2024, current_study_year=2, current_semester=3)
-    subject = Subject.objects.create(course=course, code="CS301", title="Database Management Systems", semester=3, credits=4, internal_max=30, external_max=70)
+    course = Course.objects.create(
+        department=dept, name="B.Tech Computer Science", code="CS101", level="UG", duration_years=4
+    )
+    batch = Batch.objects.create(
+        course=course,
+        batch_code="2024-CSE-A",
+        admission_year=2024,
+        current_study_year=2,
+        current_semester=3,
+    )
+    subject = Subject.objects.create(
+        course=course,
+        code="CS301",
+        title="Database Management Systems",
+        semester=3,
+        credits=4,
+        internal_max=30,
+        external_max=70,
+    )
 
     # 1. Student
     student_user = User.objects.create_user(

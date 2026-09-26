@@ -4,29 +4,28 @@ Enforces default-deny, role capabilities, scope isolation, and OpenAPI documenta
 """
 
 from decimal import Decimal
-from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
-from django.db import transaction
-from django.middleware.csrf import get_token
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
-from rest_framework import permissions, status, views
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.response import Response
 
 from academics.models import (
     Batch,
     HabitCheckInLog,
     Result,
     SemesterResult,
-    StudentProfile,
     StudentHabitPreference,
+    StudentProfile,
     Subject,
     TeachingAssignment,
 )
+from django.contrib.auth import authenticate, login, logout
+from django.db import transaction
+from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from predictions.models import ModelVersion
 from predictions.services import PredictorService, predict_for_students
+from rest_framework import permissions, status, views
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
 from .caching import (
     get_student_prediction_version,
@@ -40,15 +39,14 @@ from .permissions import (
     IsStudentUser,
     IsSystemAdminUser,
     IsTeacherUser,
-    StaffOrDevOnly,
 )
 from .serializers import (
     BulkInternalMarksRequestSerializer,
     BulkInternalMarksResponseSerializer,
     CSRFResponseSerializer,
-    LogoutResponseSerializer,
     HabitCheckInLogSerializer,
     LoginRequestSerializer,
+    LogoutResponseSerializer,
     ModelVersionSerializer,
     StudentPredictionsResponseSerializer,
     StudentResultsSerializer,
@@ -57,16 +55,17 @@ from .serializers import (
 )
 from .throttling import LoginRateThrottle
 
-
 # ============================================================================
 # 1. CSRF & Authentication Views
 # ============================================================================
+
 
 class CSRFView(views.APIView):
     """
     Returns a fresh CSRF token required for state-mutating requests (POST, PUT, DELETE).
     Publicly accessible.
     """
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -86,6 +85,7 @@ class LoginView(views.APIView):
     Throttled to 5 requests/minute per IP and username.
     Employs generic error messaging on authentication failure to prevent credential enumeration.
     """
+
     permission_classes = [permissions.AllowAny]
     throttle_classes = [LoginRateThrottle]
 
@@ -143,6 +143,7 @@ class LogoutView(views.APIView):
     """
     Terminates the active session and invalidates the session cookie.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -161,11 +162,13 @@ class LogoutView(views.APIView):
 # 2. Identity & Capability View
 # ============================================================================
 
+
 class UserMeView(views.APIView):
     """
     Returns the authenticated user's profile, role, scope label, and capability list.
     Excludes email, phone numbers, and demographic attributes.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(
@@ -182,6 +185,7 @@ class UserMeView(views.APIView):
 # 3. Student Academic Results & Predictions Views
 # ============================================================================
 
+
 class StudentResultsView(views.APIView):
     """
     Returns academic history (semester results and subject results) for a student.
@@ -190,6 +194,7 @@ class StudentResultsView(views.APIView):
     - Faculty may only view students within their taught batch / department / school.
     - Executives (VC, Registrar, Controller) receive 403 (aggregates only).
     """
+
     permission_classes = [permissions.IsAuthenticated, IsSelfOrInStaffScope]
 
     @extend_schema(
@@ -207,6 +212,7 @@ class StudentResultsView(views.APIView):
     )
     def get(self, request, id: int):
         from django.db.models import Q
+
         student = StudentProfile.objects.filter(Q(pk=id) | Q(user_id=id)).first()
         if not student:
             return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -219,7 +225,11 @@ class StudentResultsView(views.APIView):
             sem_qs = sem_qs.filter(is_published=True)
 
         # Query subject results
-        subj_qs = Result.objects.filter(student=student).select_related("subject").order_by("semester", "subject__code")
+        subj_qs = (
+            Result.objects.filter(student=student)
+            .select_related("subject")
+            .order_by("semester", "subject__code")
+        )
 
         data = {
             "student_id": student.id,
@@ -236,6 +246,7 @@ class StudentPredictionsView(views.APIView):
     Includes honest model labels, top explanatory factors, disclaimer, and insufficient data reasons.
     Enforces the same scope isolation as results.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsSelfOrInStaffScope]
 
     @extend_schema(
@@ -243,7 +254,13 @@ class StudentPredictionsView(views.APIView):
         description="Generates real-time score forecasts and advisory explanations for the specified student ID.",
         parameters=[
             OpenApiParameter("id", int, OpenApiParameter.PATH, description="Student ID"),
-            OpenApiParameter("semester", int, OpenApiParameter.QUERY, description="Target semester (defaults to current)", required=False),
+            OpenApiParameter(
+                "semester",
+                int,
+                OpenApiParameter.QUERY,
+                description="Target semester (defaults to current)",
+                required=False,
+            ),
         ],
         responses={
             200: StudentPredictionsResponseSerializer,
@@ -254,6 +271,7 @@ class StudentPredictionsView(views.APIView):
     )
     def get(self, request, id: int):
         from django.db.models import Q
+
         student = StudentProfile.objects.filter(Q(pk=id) | Q(user_id=id)).first()
         if not student:
             return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -275,32 +293,38 @@ class StudentPredictionsView(views.APIView):
             return Response(cached, status=status.HTTP_200_OK)
 
         active_models = PredictorService.get_active_models()
-        mv = PredictorService.active_for(student, active_models=active_models) if active_models else None
+        mv = (
+            PredictorService.active_for(student, active_models=active_models)
+            if active_models
+            else None
+        )
         if not mv and active_models:
             mv = active_models.get("baseline") or active_models.get("institute")
 
         predictions = (
-            predict_for_students([student], model_version=mv, semester=target_sem)
-            if mv
-            else []
+            predict_for_students([student], model_version=mv, semester=target_sem) if mv else []
         )
 
         prediction_items = []
         for p in predictions:
-            prediction_items.append({
-                "subject_code": p.subject_code,
-                "subject_name": p.subject_title,
-                "semester": p.semester,
-                "predicted_score": round(p.predicted_percentage, 1) if p.predicted_percentage is not None else None,
-                "confidence_score": 0.85 if p.predicted_percentage is not None else None,
-                "risk_band": p.risk_band,
-                "model_label": p.model_label,
-                "model_version": p.model_version,
-                "factors": p.factors,
-                "disclaimer": p.disclaimer,
-                "insufficient_data": p.predicted_percentage is None,
-                "insufficient_data_reasons": p.reasons,
-            })
+            prediction_items.append(
+                {
+                    "subject_code": p.subject_code,
+                    "subject_name": p.subject_title,
+                    "semester": p.semester,
+                    "predicted_score": round(p.predicted_percentage, 1)
+                    if p.predicted_percentage is not None
+                    else None,
+                    "confidence_score": 0.85 if p.predicted_percentage is not None else None,
+                    "risk_band": p.risk_band,
+                    "model_label": p.model_label,
+                    "model_version": p.model_version,
+                    "factors": p.factors,
+                    "disclaimer": p.disclaimer,
+                    "insufficient_data": p.predicted_percentage is None,
+                    "insufficient_data_reasons": p.reasons,
+                }
+            )
 
         data = {
             "student_id": student.id,
@@ -316,11 +340,13 @@ class StudentPredictionsView(views.APIView):
 # 4. Habits Check-In Views
 # ============================================================================
 
+
 class HabitCheckInListCreateView(views.APIView):
     """
     Dedicated endpoint for students to log habits and view their check-in history.
     Restricted to authenticated students.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsStudentUser]
     pagination_class = StandardResultsSetPagination
 
@@ -375,6 +401,7 @@ class HabitCheckInListCreateView(views.APIView):
             # Update habit streak if preference exists
             habit_pref, _ = StudentHabitPreference.objects.get_or_create(student=student)
             from datetime import timedelta
+
             if habit_pref.last_checkin_date:
                 if habit_pref.last_checkin_date == today - timedelta(days=1):
                     habit_pref.streak_count += 1
@@ -395,10 +422,12 @@ class HabitCheckInListCreateView(views.APIView):
 # 5. Faculty Teaching Assignments & Internal Marks Views
 # ============================================================================
 
+
 class TeachingAssignmentsView(views.APIView):
     """
     Returns active teaching assignments for the authenticated teacher.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsTeacherUser]
 
     @extend_schema(
@@ -422,6 +451,7 @@ class BulkInternalMarksView(views.APIView):
     Validates all marks (0 <= mark <= subject.internal_max).
     Returns per-row error reporting if any row fails validation.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsTeacherUser]
 
     @extend_schema(
@@ -479,25 +509,31 @@ class BulkInternalMarksView(views.APIView):
             mark_val = Decimal(str(entry["internal_marks"]))
 
             if raw_id not in student_id_to_profile_id:
-                row_errors.append({
-                    "row": idx,
-                    "student_id": raw_id,
-                    "error": f"Student ID {raw_id} is not enrolled in batch '{batch.batch_code}'.",
-                })
+                row_errors.append(
+                    {
+                        "row": idx,
+                        "student_id": raw_id,
+                        "error": f"Student ID {raw_id} is not enrolled in batch '{batch.batch_code}'.",
+                    }
+                )
                 continue
 
             if mark_val < Decimal("0.0"):
-                row_errors.append({
-                    "row": idx,
-                    "student_id": raw_id,
-                    "error": "Internal marks cannot be negative.",
-                })
+                row_errors.append(
+                    {
+                        "row": idx,
+                        "student_id": raw_id,
+                        "error": "Internal marks cannot be negative.",
+                    }
+                )
             elif mark_val > internal_max:
-                row_errors.append({
-                    "row": idx,
-                    "student_id": raw_id,
-                    "error": f"Internal marks ({mark_val}) exceed subject maximum ({internal_max}).",
-                })
+                row_errors.append(
+                    {
+                        "row": idx,
+                        "student_id": raw_id,
+                        "error": f"Internal marks ({mark_val}) exceed subject maximum ({internal_max}).",
+                    }
+                )
 
         if row_errors:
             return Response(
@@ -541,11 +577,13 @@ class BulkInternalMarksView(views.APIView):
 # 6. Model Registry Views
 # ============================================================================
 
+
 class ModelVersionListView(views.APIView):
     """
     Returns registered machine learning models and candidate benchmarks.
     Restricted to SYSTEM_ADMIN role only.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsSystemAdminUser]
 
     @extend_schema(
@@ -565,6 +603,7 @@ class ModelVersionActivateView(views.APIView):
     Deactivates any other active model version in the same slot.
     Restricted to SYSTEM_ADMIN role only.
     """
+
     permission_classes = [permissions.IsAuthenticated, IsSystemAdminUser]
     serializer_class = ModelVersionSerializer
 

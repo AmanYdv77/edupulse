@@ -22,7 +22,8 @@ export const TeacherClassesView: React.FC = () => {
     },
   });
 
-  const activeAssignment = assignments?.find((a) => a.id === selectedAssignmentId) || assignments?.[0];
+  const activeAssignment =
+    assignments?.find((a) => a.id === selectedAssignmentId) || assignments?.[0];
   const subjectId = activeAssignment?.subject_id;
 
   // 2. Fetch Scope Overview KPIs
@@ -62,18 +63,26 @@ export const TeacherClassesView: React.FC = () => {
   }
 
   if (!assignments || assignments.length === 0) {
-    return <EmptyState title="No teaching assignments found" description="You have not been assigned to any course batches this term." />;
+    return (
+      <EmptyState
+        title="No teaching assignments found"
+        description="You have not been assigned to any course batches this term."
+      />
+    );
   }
 
-  const histogramData = distData?.bins?.map((b) => ({
-    range: b.label,
-    count: b.count,
-  })) || [];
+  const histogramData =
+    distData?.bins?.map((b) => ({
+      range: b.label,
+      count: b.count,
+    })) || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>My Assigned Classes & Performance</h1>
+        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+          My Assigned Classes & Performance
+        </h1>
         <p style={{ color: 'var(--color-text-muted)' }}>
           Scoped academic metrics and grade distribution for your assigned sections
         </p>
@@ -82,7 +91,7 @@ export const TeacherClassesView: React.FC = () => {
       {/* Assignment Switcher Tabs */}
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
         {assignments.map((a) => {
-          const isSelected = (activeAssignment?.id === a.id);
+          const isSelected = activeAssignment?.id === a.id;
           return (
             <Button
               key={`assign-${a.id}`}
@@ -98,7 +107,13 @@ export const TeacherClassesView: React.FC = () => {
 
       {/* Class Overview Stats */}
       {overview && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--space-4)',
+          }}
+        >
           <StatCard
             label="Total Students"
             value={overview.total_students}
@@ -136,7 +151,10 @@ export const TeacherClassesView: React.FC = () => {
           {loadingDist ? (
             <Skeleton height="15rem" />
           ) : histogramData.length === 0 ? (
-            <EmptyState title="No marks distribution data" description="No results recorded for this subject." />
+            <EmptyState
+              title="No marks distribution data"
+              description="No results recorded for this subject."
+            />
           ) : (
             <AccessibleChart
               title="Percentage Score Distribution"
@@ -153,7 +171,13 @@ export const TeacherClassesView: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="range" stroke="#9ca3af" />
                   <YAxis stroke="#9ca3af" allowDecimals={false} />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#f9fafb' }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      borderColor: '#374151',
+                      color: '#f9fafb',
+                    }}
+                  />
                   <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>

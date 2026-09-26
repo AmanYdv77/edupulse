@@ -1,48 +1,42 @@
 """
 Tests verifying double-layer database guards, model factories, and university hierarchy generation.
 """
+
 import os
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
-    Batch,
-    Subject,
-    TeacherProfile,
-    StudentProfile,
-    TeachingAssignment,
+    HabitCheckInLog,
     Result,
     SemesterResult,
-    HabitCheckInLog,
 )
+from django.contrib.auth import get_user_model
+
 from tests.factories import (
-    UserFactory,
-    StudentUserFactory,
-    TeacherUserFactory,
-    HODUserFactory,
-    DeanUserFactory,
-    VCUserFactory,
-    RegistrarUserFactory,
-    ControllerUserFactory,
     AdminUserFactory,
-    UniversityFactory,
-    SchoolFactory,
-    DepartmentFactory,
-    CourseFactory,
     BatchFactory,
+    ControllerUserFactory,
+    CourseFactory,
+    DeanUserFactory,
+    DepartmentFactory,
+    HabitCheckInLogFactory,
+    HODUserFactory,
+    RegistrarUserFactory,
+    ResultFactory,
+    SchoolFactory,
+    SemesterResultFactory,
+    StudentProfileFactory,
+    StudentUserFactory,
     SubjectFactory,
     TeacherProfileFactory,
-    StudentProfileFactory,
+    TeacherUserFactory,
     TeachingAssignmentFactory,
-    ResultFactory,
-    SemesterResultFactory,
-    HabitCheckInLogFactory,
+    UniversityFactory,
+    UserFactory,
+    VCUserFactory,
     make_university,
 )
 
@@ -55,6 +49,7 @@ TEST_DB_URL = "postgres://postgres:edupulse_dev_secret_pw@127.0.0.1:55432/edupul
 # ---------------------------------------------------------------------------
 # GUARD TESTS (Subprocess execution testing pytest_configure hook)
 # ---------------------------------------------------------------------------
+
 
 def test_pytest_guard_refuses_dev_database():
     """
@@ -80,7 +75,9 @@ def test_pytest_guard_refuses_dev_database():
         capture_output=True,
         text=True,
     )
-    assert proc.returncode == 2, f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 2, (
+        f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    )
     output = proc.stdout + proc.stderr
     assert "Security Violation" in output
     assert "edupulse_dev" in output
@@ -110,7 +107,9 @@ def test_pytest_guard_refuses_prod_environment():
         capture_output=True,
         text=True,
     )
-    assert proc.returncode == 2, f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 2, (
+        f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    )
     output = proc.stdout + proc.stderr
     assert "Security Violation" in output
     assert "production environment" in output
@@ -119,6 +118,7 @@ def test_pytest_guard_refuses_prod_environment():
 # ---------------------------------------------------------------------------
 # FACTORY PERSISTENCE & INTEGRITY TESTS
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_user_factories_persist_valid_users():
@@ -140,7 +140,9 @@ def test_user_factories_persist_valid_users():
         assert user.pk is not None
         assert user.role == expected_role
         assert user.email.endswith("@example.test")
-        assert not user.has_usable_password(), f"{factory_cls.__name__} should have an unusable password"
+        assert not user.has_usable_password(), (
+            f"{factory_cls.__name__} should have an unusable password"
+        )
 
 
 @pytest.mark.django_db

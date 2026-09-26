@@ -3,10 +3,10 @@ Celery background tasks for EduPulse Predictions Domain.
 """
 
 import logging
-from typing import Any, Dict, Optional
-from celery import shared_task
+from typing import Any
 
 from academics.models import StudentProfile
+from celery import shared_task
 from predictions.models import PredictionSnapshot
 from predictions.services import PredictorService, predict_for_students
 
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
     retry_kwargs={"max_retries": 3},
 )
 def take_prediction_snapshots(
-    self, checkpoint: Optional[str] = None, slot: str = "baseline"
-) -> Dict[str, Any]:
+    self: Any, checkpoint: str | None = None, slot: str = "baseline"
+) -> dict[str, Any]:
     """
     Periodic task to compute batch predictions and store immutable PredictionSnapshots.
     Idempotent: skips existing snapshots for the specified checkpoint.
