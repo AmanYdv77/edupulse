@@ -133,12 +133,12 @@ class TestMLFeatureContract:
 
     @pytest.mark.django_db
     def test_my_predictions_ui_shows_no_active_model(self, client: Client):
-        """When accessing /my-predictions/, the UI clearly displays 'No active prediction model'."""
+        """When querying predictions with no active models, the API returns an empty predictions list."""
         uni = make_university(students_per_batch=1)
-        student_user = uni["students"][0].user
-        client.force_login(student_user)
+        student = uni["students"][0]
+        client.force_login(student.user)
 
-        response = client.get("/my-predictions/")
+        response = client.get(f"/api/v1/students/{student.id}/predictions/")
         assert response.status_code == 200
-        content = response.content.decode("utf-8")
-        assert "No active prediction model" in content
+        data = response.json()
+        assert data["predictions"] == []

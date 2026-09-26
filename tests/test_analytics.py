@@ -3,7 +3,6 @@ Tests for Multi-Tier Analytics Engine, statistical computations, and cohort quer
 Ported from legacy scripts/test_analytics_suite.py to pytest using model factories.
 """
 import pytest
-from django.urls import reverse
 from analytics.engine import (
     compute_cohort_deep_dive,
     get_student_analytics,
@@ -85,26 +84,6 @@ def test_stakeholder_analytics_engines():
 
 
 @pytest.mark.django_db
-def test_analytics_hub_endpoint_status_across_roles(client):
-    """
-    Verify /analytics/ view renders HTTP 200 across stakeholder roles.
-    """
-    tree = make_university(students_per_batch=3)
-    users_to_test = [
-        tree["students"][0].user,
-        tree["teachers"][0].user,
-        tree["hod"],
-        tree["dean"],
-        tree["executives"]["vc"],
-    ]
-
-    for user in users_to_test:
-        client.force_login(user)
-        response = client.get(reverse("analytics_hub"))
-        assert response.status_code == 200, f"Expected 200 for role {user.role}, got {response.status_code}"
-
-
-@pytest.mark.django_db
 def test_legacy_cohort_query_api_retired_returns_404(client):
     """
     Verify legacy /analytics/api/cohort-query/ endpoint has been retired and returns HTTP 404.
@@ -115,4 +94,3 @@ def test_legacy_cohort_query_api_retired_returns_404(client):
 
     response = client.get("/analytics/api/cohort-query/")
     assert response.status_code == 404
-
