@@ -28,7 +28,12 @@ def process_internal_marks_csv(
         reader = csv.DictReader(io_string)
         for row in reader:
             keys = {k.lower().strip(): k for k in row.keys()}
-            roll_key = keys.get("roll_no") or keys.get("roll") or keys.get("student_id") or keys.get("rollno")
+            roll_key = (
+                keys.get("roll_no")
+                or keys.get("roll")
+                or keys.get("student_id")
+                or keys.get("rollno")
+            )
             marks_key = keys.get("marks") or keys.get("marks_obtained") or keys.get("score")
             if roll_key and marks_key and row[roll_key] and row[marks_key]:
                 roll = row[roll_key].strip()

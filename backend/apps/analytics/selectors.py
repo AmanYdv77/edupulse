@@ -89,9 +89,15 @@ def get_scope_context(user) -> ScopeContext:
         if school:
             school_ids = {school.id}
             dept_ids = set(Department.objects.filter(school=school).values_list("id", flat=True))
-            course_ids = set(Course.objects.filter(department_id__in=dept_ids).values_list("id", flat=True))
-            batch_ids = set(Batch.objects.filter(course_id__in=course_ids).values_list("id", flat=True))
-            subject_ids = set(Subject.objects.filter(course_id__in=course_ids).values_list("id", flat=True))
+            course_ids = set(
+                Course.objects.filter(department_id__in=dept_ids).values_list("id", flat=True)
+            )
+            batch_ids = set(
+                Batch.objects.filter(course_id__in=course_ids).values_list("id", flat=True)
+            )
+            subject_ids = set(
+                Subject.objects.filter(course_id__in=course_ids).values_list("id", flat=True)
+            )
         else:
             school_ids = set()
             dept_ids = set()
@@ -121,8 +127,12 @@ def get_scope_context(user) -> ScopeContext:
             dept_ids = {dept.id}
             school_ids = {dept.school_id} if dept.school_id else set()
             course_ids = set(Course.objects.filter(department=dept).values_list("id", flat=True))
-            batch_ids = set(Batch.objects.filter(course_id__in=course_ids).values_list("id", flat=True))
-            subject_ids = set(Subject.objects.filter(course_id__in=course_ids).values_list("id", flat=True))
+            batch_ids = set(
+                Batch.objects.filter(course_id__in=course_ids).values_list("id", flat=True)
+            )
+            subject_ids = set(
+                Subject.objects.filter(course_id__in=course_ids).values_list("id", flat=True)
+            )
         else:
             dept_ids = set()
             school_ids = set()
@@ -149,9 +159,15 @@ def get_scope_context(user) -> ScopeContext:
             assignments = TeachingAssignment.objects.filter(teacher=teacher)
             batch_ids = set(assignments.values_list("batch_id", flat=True))
             subject_ids = set(assignments.values_list("subject_id", flat=True))
-            course_ids = set(Batch.objects.filter(id__in=batch_ids).values_list("course_id", flat=True))
-            dept_ids = set(Course.objects.filter(id__in=course_ids).values_list("department_id", flat=True))
-            school_ids = set(Department.objects.filter(id__in=dept_ids).values_list("school_id", flat=True))
+            course_ids = set(
+                Batch.objects.filter(id__in=batch_ids).values_list("course_id", flat=True)
+            )
+            dept_ids = set(
+                Course.objects.filter(id__in=course_ids).values_list("department_id", flat=True)
+            )
+            school_ids = set(
+                Department.objects.filter(id__in=dept_ids).values_list("school_id", flat=True)
+            )
         else:
             batch_ids = set()
             subject_ids = set()
@@ -219,9 +235,17 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
             department_id = int(department_id)
         except (ValueError, TypeError):
             raise PermissionDenied("Invalid department filter.")
-        if not scope_ctx.is_university_wide and department_id not in scope_ctx.allowed_department_ids:
-            raise PermissionDenied("Requested department is outside your authorized academic scope.")
-        elif scope_ctx.is_university_wide and not Department.objects.filter(id=department_id).exists():
+        if (
+            not scope_ctx.is_university_wide
+            and department_id not in scope_ctx.allowed_department_ids
+        ):
+            raise PermissionDenied(
+                "Requested department is outside your authorized academic scope."
+            )
+        elif (
+            scope_ctx.is_university_wide
+            and not Department.objects.filter(id=department_id).exists()
+        ):
             raise PermissionDenied("Requested department does not exist.")
         sanitized["department"] = department_id
 
@@ -258,7 +282,9 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
     students_qs = StudentProfile.objects.all()
 
     if scope_ctx.scope_level == "school":
-        students_qs = students_qs.filter(course__department__school_id__in=scope_ctx.allowed_school_ids)
+        students_qs = students_qs.filter(
+            course__department__school_id__in=scope_ctx.allowed_school_ids
+        )
     elif scope_ctx.scope_level == "department":
         students_qs = students_qs.filter(course__department_id__in=scope_ctx.allowed_department_ids)
     elif scope_ctx.scope_level == "teacher":
@@ -387,40 +413,28 @@ def get_analytics_breakdown(scope_ctx: ScopeContext, by_level: str, filters: dic
 
     # Route aggregation according to entity
     if by_level == "school":
-        qs = (
-            SemesterResult.objects.filter(is_published=True, student__in=students_qs)
-            .values(
-                entity_id=F("student__course__department__school__id"),
-                entity_name=F("student__course__department__school__name"),
-                entity_code=F("student__course__department__school__code"),
-            )
+        qs = SemesterResult.objects.filter(is_published=True, student__in=students_qs).values(
+            entity_id=F("student__course__department__school__id"),
+            entity_name=F("student__course__department__school__name"),
+            entity_code=F("student__course__department__school__code"),
         )
     elif by_level == "department":
-        qs = (
-            SemesterResult.objects.filter(is_published=True, student__in=students_qs)
-            .values(
-                entity_id=F("student__course__department__id"),
-                entity_name=F("student__course__department__name"),
-                entity_code=F("student__course__department__code"),
-            )
+        qs = SemesterResult.objects.filter(is_published=True, student__in=students_qs).values(
+            entity_id=F("student__course__department__id"),
+            entity_name=F("student__course__department__name"),
+            entity_code=F("student__course__department__code"),
         )
     elif by_level == "course":
-        qs = (
-            SemesterResult.objects.filter(is_published=True, student__in=students_qs)
-            .values(
-                entity_id=F("student__course__id"),
-                entity_name=F("student__course__name"),
-                entity_code=F("student__course__code"),
-            )
+        qs = SemesterResult.objects.filter(is_published=True, student__in=students_qs).values(
+            entity_id=F("student__course__id"),
+            entity_name=F("student__course__name"),
+            entity_code=F("student__course__code"),
         )
     elif by_level == "batch":
-        qs = (
-            SemesterResult.objects.filter(is_published=True, student__in=students_qs)
-            .values(
-                entity_id=F("student__batch__id"),
-                entity_name=F("student__batch__batch_code"),
-                entity_code=F("student__batch__batch_code"),
-            )
+        qs = SemesterResult.objects.filter(is_published=True, student__in=students_qs).values(
+            entity_id=F("student__batch__id"),
+            entity_name=F("student__batch__batch_code"),
+            entity_code=F("student__batch__batch_code"),
         )
     elif by_level == "subject":
         res_qs = Result.objects.filter(student__in=students_qs)
@@ -469,18 +483,15 @@ def get_analytics_breakdown(scope_ctx: ScopeContext, by_level: str, filters: dic
     if semester is not None:
         qs = qs.filter(semester=semester)
 
-    raw_groups = (
-        qs.annotate(
-            student_count=Count("student_id", distinct=True),
-            total_results=Count("id"),
-            pass_count=Count(
-                "id",
-                filter=~Q(Q(sgpa__lt=4.0) | Q(result_status="FAIL") | Q(percentage__lt=40.0)),
-            ),
-            avg_pct=Avg("percentage"),
-        )
-        .order_by("entity_name")
-    )
+    raw_groups = qs.annotate(
+        student_count=Count("student_id", distinct=True),
+        total_results=Count("id"),
+        pass_count=Count(
+            "id",
+            filter=~Q(Q(sgpa__lt=4.0) | Q(result_status="FAIL") | Q(percentage__lt=40.0)),
+        ),
+        avg_pct=Avg("percentage"),
+    ).order_by("entity_name")
 
     return _format_and_mask_breakdown(by_level, raw_groups, min_group_size)
 
@@ -521,7 +532,9 @@ def _format_and_mask_breakdown(by_level: str, raw_groups, min_group_size: int) -
             )
 
     if hidden_count > 0:
-        hidden_pass_rate = round((hidden_passes / hidden_results) * 100, 1) if hidden_results > 0 else 0.0
+        hidden_pass_rate = (
+            round((hidden_passes / hidden_results) * 100, 1) if hidden_results > 0 else 0.0
+        )
         hidden_avg_pct = round(hidden_pct_sum / hidden_results, 1) if hidden_results > 0 else 0.0
         visible_groups.append(
             {
@@ -641,7 +654,9 @@ def get_analytics_distribution(scope_ctx: ScopeContext, subject_id: int, filters
 
     results_qs = results_qs.annotate(
         calculated_pct=ExpressionWrapper(
-            F("total_secured") * 100.0 / Case(
+            F("total_secured")
+            * 100.0
+            / Case(
                 When(max_marks__gt=0, then=F("max_marks")),
                 default=Value(100),
                 output_field=FloatField(),
@@ -653,11 +668,36 @@ def get_analytics_distribution(scope_ctx: ScopeContext, subject_id: int, filters
     bins_agg = results_qs.aggregate(
         total=Count("id"),
         bin_0_39=Count(Case(When(calculated_pct__lt=40.0, then=1), output_field=IntegerField())),
-        bin_40_49=Count(Case(When(calculated_pct__gte=40.0, calculated_pct__lt=50.0, then=1), output_field=IntegerField())),
-        bin_50_59=Count(Case(When(calculated_pct__gte=50.0, calculated_pct__lt=60.0, then=1), output_field=IntegerField())),
-        bin_60_69=Count(Case(When(calculated_pct__gte=60.0, calculated_pct__lt=70.0, then=1), output_field=IntegerField())),
-        bin_70_79=Count(Case(When(calculated_pct__gte=70.0, calculated_pct__lt=80.0, then=1), output_field=IntegerField())),
-        bin_80_89=Count(Case(When(calculated_pct__gte=80.0, calculated_pct__lt=90.0, then=1), output_field=IntegerField())),
+        bin_40_49=Count(
+            Case(
+                When(calculated_pct__gte=40.0, calculated_pct__lt=50.0, then=1),
+                output_field=IntegerField(),
+            )
+        ),
+        bin_50_59=Count(
+            Case(
+                When(calculated_pct__gte=50.0, calculated_pct__lt=60.0, then=1),
+                output_field=IntegerField(),
+            )
+        ),
+        bin_60_69=Count(
+            Case(
+                When(calculated_pct__gte=60.0, calculated_pct__lt=70.0, then=1),
+                output_field=IntegerField(),
+            )
+        ),
+        bin_70_79=Count(
+            Case(
+                When(calculated_pct__gte=70.0, calculated_pct__lt=80.0, then=1),
+                output_field=IntegerField(),
+            )
+        ),
+        bin_80_89=Count(
+            Case(
+                When(calculated_pct__gte=80.0, calculated_pct__lt=90.0, then=1),
+                output_field=IntegerField(),
+            )
+        ),
         bin_90_100=Count(Case(When(calculated_pct__gte=90.0, then=1), output_field=IntegerField())),
     )
 

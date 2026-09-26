@@ -22,6 +22,7 @@ from predictions.models import ModelVersion
 # Auth & Identity Serializers
 # ============================================================================
 
+
 class CSRFResponseSerializer(serializers.Serializer):
     csrfToken = serializers.CharField(help_text="CSRF token for unsafe state-mutating requests")
 
@@ -40,6 +41,7 @@ class UserMeSerializer(serializers.Serializer):
     Public representation of the authenticated user's session.
     Strictly excludes email, phone number, and protected demographics.
     """
+
     id = serializers.IntegerField(read_only=True)
     display_name = serializers.SerializerMethodField()
     role = serializers.CharField(read_only=True)
@@ -60,6 +62,7 @@ class UserMeSerializer(serializers.Serializer):
 # ============================================================================
 # Academic Results Serializers
 # ============================================================================
+
 
 class SubjectResultItemSerializer(serializers.ModelSerializer):
     subject_code = serializers.CharField(source="subject.code", read_only=True)
@@ -107,6 +110,7 @@ class StudentResultsSerializer(serializers.Serializer):
 # Predictions Serializers
 # ============================================================================
 
+
 class FactorDetailSerializer(serializers.Serializer):
     feature = serializers.CharField()
     name = serializers.CharField()
@@ -139,6 +143,7 @@ class StudentPredictionsResponseSerializer(serializers.Serializer):
 # ============================================================================
 class NormalizedChoiceField(serializers.ChoiceField):
     """Normalizes input strings to title case before validating against choices."""
+
     def to_internal_value(self, data):
         if data and isinstance(data, str):
             data = data.capitalize()
@@ -214,6 +219,7 @@ class HabitCheckInLogSerializer(serializers.ModelSerializer):
 # Faculty & Internal Marks Serializers
 # ============================================================================
 
+
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
     subject_id = serializers.IntegerField(source="subject.id", read_only=True)
     subject_code = serializers.CharField(source="subject.code", read_only=True)
@@ -258,6 +264,7 @@ class BulkInternalMarksResponseSerializer(serializers.Serializer):
 # ============================================================================
 # Model Registry Serializers
 # ============================================================================
+
 
 class ModelVersionSerializer(serializers.ModelSerializer):
     class Meta:

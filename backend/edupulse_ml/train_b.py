@@ -29,6 +29,7 @@ class NaiveBaselineRegressor(BaseEstimator, RegressorMixin):
     Baseline regressor that forecasts exam performance using a student's prior semester score.
     Falls back to global training mean if student has no prior history.
     """
+
     def __init__(self):
         self.global_mean_ = 50.0
 
@@ -116,10 +117,12 @@ def train_and_evaluate_model_b(
     # Define Candidate Estimators
     candidates = {
         "naive_baseline": NaiveBaselineRegressor(),
-        "ridge": Pipeline([
-            ("scaler", StandardScaler()),
-            ("regressor", Ridge(alpha=10.0, random_state=random_state)),
-        ]),
+        "ridge": Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("regressor", Ridge(alpha=10.0, random_state=random_state)),
+            ]
+        ),
         "hist_gradient_boosting": HistGradientBoostingRegressor(
             max_iter=60,
             max_leaf_nodes=15,
@@ -133,7 +136,9 @@ def train_and_evaluate_model_b(
     n_groups = len(np.unique(groups_train))
     n_splits = min(5, n_groups)
     if n_splits < 2:
-        raise ValueError(f"Insufficient distinct students ({n_groups}) for grouped cross-validation.")
+        raise ValueError(
+            f"Insufficient distinct students ({n_groups}) for grouped cross-validation."
+        )
 
     gkf = GroupKFold(n_splits=n_splits)
     cv_scores = {}
@@ -179,9 +184,11 @@ def train_and_evaluate_model_b(
     artifact_filename = f"institute_model_b_{best_candidate_name}_{data_fingerprint}.joblib"
     try:
         from django.conf import settings
+
         artifact_dir = Path(settings.MODEL_ARTIFACT_DIR).resolve()
     except Exception:
         import os
+
         model_env = os.environ.get("MODEL_ARTIFACT_DIR")
         if model_env:
             artifact_dir = Path(model_env).resolve()

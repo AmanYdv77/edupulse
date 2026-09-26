@@ -39,10 +39,10 @@ def evaluate_regression(
     actual_pass = y_true_arr >= pass_mark
     pred_pass = y_pred_bounded >= pass_mark
 
-    tp = int(np.sum(actual_pass & pred_pass))       # Correctly predicted pass
-    tn = int(np.sum((~actual_pass) & (~pred_pass))) # Correctly predicted fail (at-risk)
-    fp = int(np.sum((~actual_pass) & pred_pass))     # Missed risk (predicted pass, actually failed)
-    fn = int(np.sum(actual_pass & (~pred_pass)))     # False alarm (predicted fail, actually passed)
+    tp = int(np.sum(actual_pass & pred_pass))  # Correctly predicted pass
+    tn = int(np.sum((~actual_pass) & (~pred_pass)))  # Correctly predicted fail (at-risk)
+    fp = int(np.sum((~actual_pass) & pred_pass))  # Missed risk (predicted pass, actually failed)
+    fn = int(np.sum(actual_pass & (~pred_pass)))  # False alarm (predicted fail, actually passed)
 
     total = len(y_true_arr)
     acc = float((tp + tn) / total) if total > 0 else 0.0

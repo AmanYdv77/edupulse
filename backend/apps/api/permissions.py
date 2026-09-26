@@ -20,6 +20,7 @@ class HasCapabilityPermission(permissions.BasePermission):
     Base permission checking if request.user has a specific capability.
     Subclasses define `required_capability`.
     """
+
     required_capability: str = ""
 
     def has_permission(self, request, view):
@@ -61,10 +62,7 @@ class IsSystemAdminUser(permissions.BasePermission):
         return bool(
             request.user
             and request.user.is_authenticated
-            and (
-                getattr(request.user, "role", None) == "SYSTEM_ADMIN"
-                or request.user.is_superuser
-            )
+            and (getattr(request.user, "role", None) == "SYSTEM_ADMIN" or request.user.is_superuser)
         )
 
 
@@ -151,7 +149,15 @@ class StaffOrDevOnly(permissions.BasePermission):
             and (
                 request.user.is_staff
                 or getattr(request.user, "role", None)
-                in ("SYSTEM_ADMIN", "TEACHER", "HOD", "DEAN", "VC", "REGISTRAR", "CONTROLLER_OF_EXAMS")
+                in (
+                    "SYSTEM_ADMIN",
+                    "TEACHER",
+                    "HOD",
+                    "DEAN",
+                    "VC",
+                    "REGISTRAR",
+                    "CONTROLLER_OF_EXAMS",
+                )
             )
         )
 
@@ -200,4 +206,3 @@ class CanExportAtRiskRoster(permissions.BasePermission):
         if "view_at_risk_roster" not in user_caps:
             return False
         return bool(user_caps.intersection({"export_department_roster", "export_school_roster"}))
-

@@ -69,21 +69,28 @@ def train_baseline_pipeline(
 
     # Candidate family 1: Ridge regression with StandardScaler
     for alpha in [0.01, 0.1, 1.0, 10.0, 100.0]:
-        candidates[f"ridge_alpha_{alpha}"] = Pipeline([
-            ("scaler", StandardScaler()),
-            ("regressor", Ridge(alpha=alpha, random_state=random_state)),
-        ])
+        candidates[f"ridge_alpha_{alpha}"] = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("regressor", Ridge(alpha=alpha, random_state=random_state)),
+            ]
+        )
 
     # Candidate family 2: HistGradientBoostingRegressor
     for max_iter in [50, 100]:
         for max_depth in [3, 5]:
-            candidates[f"hgb_iter_{max_iter}_depth_{max_depth}"] = Pipeline([
-                ("regressor", HistGradientBoostingRegressor(
-                    max_iter=max_iter,
-                    max_depth=max_depth,
-                    random_state=random_state,
-                )),
-            ])
+            candidates[f"hgb_iter_{max_iter}_depth_{max_depth}"] = Pipeline(
+                [
+                    (
+                        "regressor",
+                        HistGradientBoostingRegressor(
+                            max_iter=max_iter,
+                            max_depth=max_depth,
+                            random_state=random_state,
+                        ),
+                    ),
+                ]
+            )
 
     # 4. 5-Fold cross-validation on TRAIN split only (never touching the test split)
     cv = KFold(n_splits=5, shuffle=True, random_state=random_state)
@@ -92,7 +99,9 @@ def train_baseline_pipeline(
     for name, estimator in candidates.items():
         # neg_root_mean_squared_error returns negative RMSE, so negate it
         scores = -cross_val_score(
-            estimator, X_train, y_train,
+            estimator,
+            X_train,
+            y_train,
             scoring="neg_root_mean_squared_error",
             cv=cv,
         )
@@ -106,7 +115,9 @@ def train_baseline_pipeline(
 
     # 5. Select best non-dummy model by lowest CV RMSE
     non_dummy_candidates = {k: v for k, v in cv_results.items() if k != "dummy_mean"}
-    best_candidate_name = min(non_dummy_candidates, key=lambda k: non_dummy_candidates[k]["mean_cv_rmse"])
+    best_candidate_name = min(
+        non_dummy_candidates, key=lambda k: non_dummy_candidates[k]["mean_cv_rmse"]
+    )
     best_estimator = candidates[best_candidate_name]
 
     # 6. Fit best estimator and dummy baseline on full training set

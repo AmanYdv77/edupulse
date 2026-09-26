@@ -49,7 +49,9 @@ def compute_habit_summary_from_logs(logs: list) -> HabitSummary:
         tutoring = latest.tutoring_sessions
         physical = latest.physical_activity
     else:
-        total_weekly_study_units = sum(log.hours_studied * 7.0 for log in daily_logs) + sum(log.hours_studied for log in weekly_logs)
+        total_weekly_study_units = sum(log.hours_studied * 7.0 for log in daily_logs) + sum(
+            log.hours_studied for log in weekly_logs
+        )
         total_count = len(daily_logs) + len(weekly_logs)
         avg_study = total_weekly_study_units / total_count if total_count else None
 
@@ -88,4 +90,3 @@ def habit_summary(
 
     logs = list(student.habit_logs.filter(log_date__gte=cutoff_date).order_by("-log_date", "-id"))
     return compute_habit_summary_from_logs(logs)
-

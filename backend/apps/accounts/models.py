@@ -37,11 +37,20 @@ class User(AbstractUser):
     status = models.CharField(max_length=20, default="active", blank=True)
 
     # Scope assignment fields for department- and school-level roles
-    department = models.ForeignKey("academics.Department", on_delete=models.SET_NULL,
-                                   null=True, blank=True, related_name="staff_members")
-    school = models.ForeignKey("academics.School", on_delete=models.SET_NULL,
-                                null=True, blank=True, related_name="staff_members")
+    department = models.ForeignKey(
+        "academics.Department",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="staff_members",
+    )
+    school = models.ForeignKey(
+        "academics.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="staff_members",
+    )
 
     def __str__(self):
         return f"{self.username} ({self.get_role_display()})"
-

@@ -29,6 +29,7 @@ def role_required(*allowed_roles):
     If unauthenticated, redirects to login.
     If authenticated but role not allowed, logs WARNING and raises PermissionDenied (HTTP 403).
     """
+
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
@@ -46,7 +47,9 @@ def role_required(*allowed_roles):
                 raise PermissionDenied("You do not have permission to access this resource.")
 
             return view_func(request, *args, **kwargs)
+
         return _wrapped_view
+
     return decorator
 
 
@@ -95,7 +98,9 @@ def scope_for(user):
             "school": school,
             "department": None,
             "teacher_profile": getattr(user, "teacher_profile", None),
-            "allowed_schools": School.objects.filter(id=school.id) if school else School.objects.none(),
+            "allowed_schools": School.objects.filter(id=school.id)
+            if school
+            else School.objects.none(),
             "allowed_departments": depts,
             "allowed_courses": courses,
             "allowed_batches": batches,
@@ -114,7 +119,9 @@ def scope_for(user):
             batches = Batch.objects.filter(course__department=dept)
             results = Result.objects.filter(subject__course__department=dept)
             label = f"Department: {dept}"
-            schools = School.objects.filter(id=dept.school_id) if dept.school else School.objects.none()
+            schools = (
+                School.objects.filter(id=dept.school_id) if dept.school else School.objects.none()
+            )
         else:
             courses = Course.objects.none()
             batches = Batch.objects.none()
@@ -129,7 +136,9 @@ def scope_for(user):
             "department": dept,
             "teacher_profile": getattr(user, "teacher_profile", None),
             "allowed_schools": schools,
-            "allowed_departments": Department.objects.filter(id=dept.id) if dept else Department.objects.none(),
+            "allowed_departments": Department.objects.filter(id=dept.id)
+            if dept
+            else Department.objects.none(),
             "allowed_courses": courses,
             "allowed_batches": batches,
             "results": results,
@@ -144,7 +153,9 @@ def scope_for(user):
             batch_ids = assignments.values_list("batch_id", flat=True)
             batches = Batch.objects.filter(id__in=batch_ids)
             courses = Course.objects.filter(id__in=batches.values_list("course_id", flat=True))
-            depts = Department.objects.filter(id__in=courses.values_list("department_id", flat=True))
+            depts = Department.objects.filter(
+                id__in=courses.values_list("department_id", flat=True)
+            )
             schools = School.objects.filter(id__in=depts.values_list("school_id", flat=True))
             results = Result.objects.filter(teacher=teacher)
             label = "Students you teach"

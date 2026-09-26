@@ -9,4 +9,3 @@ if not MODEL_ARTIFACT_DIR:
     MODEL_ARTIFACT_DIR = str(BASE_DIR.parent / "artifacts" / "models")
 
 require_db_name(allowed_suffix="_e2e")
-

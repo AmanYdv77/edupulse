@@ -1,6 +1,7 @@
 """
 Tests for Django Admin publication actions and administrative workflows.
 """
+
 import pytest
 from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory

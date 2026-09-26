@@ -2,6 +2,7 @@
 Performance and query count benchmarks using django_assert_max_num_queries.
 Validates bounded query execution for REST API endpoints.
 """
+
 import pytest
 from django.urls import reverse
 from tests.factories import make_university
@@ -17,7 +18,9 @@ from tests.factories import make_university
         ("vc", 15),
     ],
 )
-def test_analytics_overview_query_count_bounded(client, django_assert_max_num_queries, role_key, max_queries):
+def test_analytics_overview_query_count_bounded(
+    client, django_assert_max_num_queries, role_key, max_queries
+):
     """
     Verify that analytics overview API queries adhere to an established upper-bound query budget.
     """

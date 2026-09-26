@@ -163,7 +163,9 @@ class PredictionSnapshot(models.Model):
         verbose_name = "Prediction Snapshot"
         verbose_name_plural = "Prediction Snapshots"
         indexes = [
-            models.Index(fields=["student", "semester", "taken_at"], name="idx_pred_snap_student_sem_time"),
+            models.Index(
+                fields=["student", "semester", "taken_at"], name="idx_pred_snap_student_sem_time"
+            ),
             models.Index(fields=["model_version", "taken_at"], name="idx_pred_snap_model_time"),
             models.Index(fields=["checkpoint", "taken_at"], name="idx_pred_snap_checkpoint_time"),
         ]
@@ -179,5 +181,7 @@ class PredictionSnapshot(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        score_repr = f"{self.predicted_percentage}%" if self.predicted_percentage is not None else "N/A"
+        score_repr = (
+            f"{self.predicted_percentage}%" if self.predicted_percentage is not None else "N/A"
+        )
         return f"Snapshot {self.student.roll_no} | {self.subject.code} | {self.risk_band} ({score_repr}) @ {self.checkpoint}"

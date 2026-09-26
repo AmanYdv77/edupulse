@@ -6,6 +6,7 @@ Unit and integration tests for Task A17:
 - Idempotent management command take_prediction_snapshots
 - Scoped snapshot selectors for institutional hierarchy
 """
+
 import joblib
 import pytest
 import sklearn

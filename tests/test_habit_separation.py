@@ -3,6 +3,7 @@ Tests for Task A16: Strict separation of self-reported habit telemetry from offi
 Verifies nullable habit fields on SemesterResult, habit_summary service correctness,
 and that check-in submissions do NOT mutate official academic records.
 """
+
 from datetime import timedelta
 import pathlib
 import pytest
@@ -10,7 +11,12 @@ import warnings
 from django.utils import timezone
 from django.urls import reverse
 
-from academics.models import SemesterResult, HabitCheckInLog, StudentHabitPreference, sync_habits_to_semester_result
+from academics.models import (
+    SemesterResult,
+    HabitCheckInLog,
+    StudentHabitPreference,
+    sync_habits_to_semester_result,
+)
 from academics.services.habits import habit_summary, HabitSummary
 from tests.factories import StudentProfileFactory
 
@@ -207,7 +213,7 @@ def test_no_hardcoded_habit_defaults_in_codebase():
     are not present in app/academics or app/accounts or app/predictions.
     """
     app_dir = pathlib.Path(__file__).resolve().parent.parent / "app"
-    forbidden_tokens = ["attendance_percentage\": 85.0", "attendance_percentage = 85.0"]
+    forbidden_tokens = ['attendance_percentage": 85.0', "attendance_percentage = 85.0"]
 
     for py_file in app_dir.rglob("*.py"):
         # Skip migrations and test files

@@ -23,7 +23,7 @@ class TestResultConstraints:
     def test_result_boundary_values_accepted(self):
         student = StudentProfileFactory()
         subject = SubjectFactory(max_marks=100)
-        
+
         # Lower boundary: 0
         r_min = Result.objects.create(
             student=student,
@@ -120,17 +120,23 @@ class TestSemesterResultConstraints:
         sr2 = SemesterResult.objects.create(student=student, semester=2, attendance_percentage=0.0)
         assert sr2.attendance_percentage == 0.0
 
-        sr3 = SemesterResult.objects.create(student=student, semester=3, attendance_percentage=100.0)
+        sr3 = SemesterResult.objects.create(
+            student=student, semester=3, attendance_percentage=100.0
+        )
         assert sr3.attendance_percentage == 100.0
 
         # Out of bounds
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=4, attendance_percentage=-1.0)
+                SemesterResult.objects.create(
+                    student=student, semester=4, attendance_percentage=-1.0
+                )
 
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=5, attendance_percentage=101.0)
+                SemesterResult.objects.create(
+                    student=student, semester=5, attendance_percentage=101.0
+                )
 
     def test_sleep_and_study_boundaries_and_rejection(self):
         student = StudentProfileFactory()
@@ -148,12 +154,16 @@ class TestSemesterResultConstraints:
         # Sleep > 24 rejected
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=2, sleep_hours_per_night=24.5)
+                SemesterResult.objects.create(
+                    student=student, semester=2, sleep_hours_per_night=24.5
+                )
 
         # Study > 168 rejected
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=3, hours_studied_per_week=170.0)
+                SemesterResult.objects.create(
+                    student=student, semester=3, hours_studied_per_week=170.0
+                )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -189,16 +199,22 @@ class TestHabitCheckInLogConstraints:
         # DAILY > 24 rejected
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                HabitCheckInLog.objects.create(student=student, log_type="DAILY", hours_studied=25.0)
+                HabitCheckInLog.objects.create(
+                    student=student, log_type="DAILY", hours_studied=25.0
+                )
 
         # WEEKLY: 0 to 168 accepted
-        w_ok = HabitCheckInLog.objects.create(student=student, log_type="WEEKLY", hours_studied=168.0)
+        w_ok = HabitCheckInLog.objects.create(
+            student=student, log_type="WEEKLY", hours_studied=168.0
+        )
         assert w_ok.hours_studied == 168.0
 
         # WEEKLY > 168 rejected
         with pytest.raises(IntegrityError):
             with transaction.atomic():
-                HabitCheckInLog.objects.create(student=student, log_type="WEEKLY", hours_studied=170.0)
+                HabitCheckInLog.objects.create(
+                    student=student, log_type="WEEKLY", hours_studied=170.0
+                )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -211,10 +227,14 @@ class TestIndexPresenceAndMigrationReversibility:
             assert "idx_result_student_sem" in indexes
             assert "idx_result_subject_sem" in indexes
 
-            sem_indexes = connection.introspection.get_constraints(cursor, "academics_semesterresult")
+            sem_indexes = connection.introspection.get_constraints(
+                cursor, "academics_semesterresult"
+            )
             assert "idx_semresult_pub_sem" in sem_indexes
 
-            habit_indexes = connection.introspection.get_constraints(cursor, "academics_habitcheckinlog")
+            habit_indexes = connection.introspection.get_constraints(
+                cursor, "academics_habitcheckinlog"
+            )
             assert "idx_habitlog_student_date" in habit_indexes
 
     def test_migration_reversibility(self):

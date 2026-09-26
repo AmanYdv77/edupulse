@@ -16,7 +16,11 @@ class NoCacheAuthenticatedMiddleware:
         response = self.get_response(request)
         user = getattr(request, "user", None)
         if user and user.is_authenticated:
-            content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else response.get("Content-Type", "")
+            content_type = (
+                response.headers.get("Content-Type", "")
+                if hasattr(response, "headers")
+                else response.get("Content-Type", "")
+            )
             if "text/html" in content_type:
                 response["Cache-Control"] = "no-store, private"
                 response["Pragma"] = "no-cache"

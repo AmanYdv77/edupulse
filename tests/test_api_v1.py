@@ -59,6 +59,7 @@ def api_client():
 # 1. CSRF & Authentication Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestAuthAndCSRF:
     def test_get_csrf_token(self, api_client):
@@ -156,6 +157,7 @@ class TestAuthAndCSRF:
 # 2. Table-Driven Capabilities per Role Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestCapabilitiesPerRole:
     @pytest.mark.parametrize(
@@ -229,6 +231,7 @@ class TestCapabilitiesPerRole:
 # ============================================================================
 # 3. Scope Isolation on Academic Results & Predictions
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestScopeIsolation:
@@ -313,6 +316,7 @@ class TestScopeIsolation:
 # 4. Habit Check-In Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestHabitCheckIns:
     def test_valid_daily_checkin(self, api_client):
@@ -378,6 +382,7 @@ class TestHabitCheckIns:
 # ============================================================================
 # 5. Bulk Internal Marks Tests
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestBulkInternalMarks:
@@ -469,6 +474,7 @@ class TestBulkInternalMarks:
 # 6. Model Registry RBAC Tests
 # ============================================================================
 
+
 @pytest.mark.django_db
 class TestModelRegistryAPI:
     def test_system_admin_can_access_models(self, api_client):
@@ -506,6 +512,7 @@ class TestModelRegistryAPI:
 # ============================================================================
 # 7. Pagination, Query Budgets & OpenAPI Schema Tests
 # ============================================================================
+
 
 @pytest.mark.django_db
 class TestPaginationAndQueryBudgets:

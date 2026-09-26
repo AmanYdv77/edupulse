@@ -78,7 +78,9 @@ def scoped_snapshots_for(user) -> tuple[QuerySet, str]:
 
     role = getattr(user, "role", None)
 
-    if role in ("VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN") or getattr(user, "is_superuser", False):
+    if role in ("VC", "REGISTRAR", "CONTROLLER_OF_EXAMS", "SYSTEM_ADMIN") or getattr(
+        user, "is_superuser", False
+    ):
         return PredictionSnapshot.objects.all(), "Entire University"
 
     if role == "DEAN":
@@ -102,7 +104,9 @@ def scoped_snapshots_for(user) -> tuple[QuerySet, str]:
         return qs, label
 
     if role == "TEACHER":
-        qs = PredictionSnapshot.objects.filter(student__results__teacher__user_id=user.id).distinct()
+        qs = PredictionSnapshot.objects.filter(
+            student__results__teacher__user_id=user.id
+        ).distinct()
         return qs, "Students you teach"
 
     if role == "STUDENT":

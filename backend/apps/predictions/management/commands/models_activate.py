@@ -12,7 +12,9 @@ class Command(BaseCommand):
     help = "Activates a model version by ID and deactivates any existing active version in the same slot."
 
     def add_arguments(self, parser):
-        parser.add_argument("version_id", type=int, help="Database ID of the ModelVersion to activate")
+        parser.add_argument(
+            "version_id", type=int, help="Database ID of the ModelVersion to activate"
+        )
 
     def handle(self, *args, **options):
         version_id = options["version_id"]

@@ -293,11 +293,15 @@ class Command(BaseCommand):
                             "guardian_relation": "Parent",
                             "guardian_phone": f"98{random_gen.randint(10000000, 99999999)}",
                             "distance_from_home": random_gen.choice(["Near", "Moderate", "Far"]),
-                            "parental_education_level": random_gen.choice(["High School", "College", "Postgraduate"]),
+                            "parental_education_level": random_gen.choice(
+                                ["High School", "College", "Postgraduate"]
+                            ),
                             "family_income": random_gen.choice(["Low", "Medium", "High"]),
                             "internet_access": random_gen.choice([True, True, True, False]),
                             "access_to_resources": random_gen.choice(["Low", "Medium", "High"]),
-                            "learning_disabilities": random_gen.choice([False, False, False, False, True]),
+                            "learning_disabilities": random_gen.choice(
+                                [False, False, False, False, True]
+                            ),
                             "data_origin": "demo",
                         },
                     )
@@ -341,7 +345,9 @@ class Command(BaseCommand):
                                 "credits": subj.credits,
                                 "grade_points": grade_point,
                                 "credit_points": credit_point,
-                                "letter_grade": "A" if sub_total >= 80 else ("B" if sub_total >= 60 else "C"),
+                                "letter_grade": "A"
+                                if sub_total >= 80
+                                else ("B" if sub_total >= 60 else "C"),
                                 "exam_session": "Winter 2024",
                             },
                         )
@@ -352,7 +358,11 @@ class Command(BaseCommand):
                         total_credit_points += credit_point
 
                     sgpa = round(total_credit_points / total_credits, 2) if total_credits else 0.0
-                    percentage = round((total_marks_secured / total_max_marks) * 100, 1) if total_max_marks else 0.0
+                    percentage = (
+                        round((total_marks_secured / total_max_marks) * 100, 1)
+                        if total_max_marks
+                        else 0.0
+                    )
 
                     # Semester Result record
                     SemesterResult.objects.update_or_create(
@@ -428,4 +438,5 @@ class Command(BaseCommand):
 def timezone_date_offset(days_ago):
     from django.utils import timezone
     from datetime import timedelta
+
     return timezone.now().date() - timedelta(days=days_ago)

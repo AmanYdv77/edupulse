@@ -24,35 +24,55 @@ def synthetic_kaggle_csv(tmp_path):
     # Score correlated with attendance and hours studied
     score = np.clip(0.4 * attendance + 0.8 * hours + 0.2 * prev + np.random.normal(0, 3, n), 10, 98)
 
-    df = pd.DataFrame({
-        "Hours_Studied": hours,
-        "Attendance": attendance,
-        "Sleep_Hours": sleep,
-        "Previous_Scores": prev,
-        "Tutoring_Sessions": tutor,
-        "Physical_Activity": phys,
-        "Exam_Score": score,
-        # Protected demographic columns (must be excluded)
-        "Gender": ["Male", "Female"] * (n // 2),
-        "Learning_Disabilities": [0, 1] * (n // 2),
-        # Unapproved socio-economic proxies (must be excluded)
-        "Family_Income": ["Low", "Medium", "High", "Medium"] * (n // 4),
-        "Distance_from_Home": ["Near", "Far"] * (n // 2),
-    })
+    df = pd.DataFrame(
+        {
+            "Hours_Studied": hours,
+            "Attendance": attendance,
+            "Sleep_Hours": sleep,
+            "Previous_Scores": prev,
+            "Tutoring_Sessions": tutor,
+            "Physical_Activity": phys,
+            "Exam_Score": score,
+            # Protected demographic columns (must be excluded)
+            "Gender": ["Male", "Female"] * (n // 2),
+            "Learning_Disabilities": [0, 1] * (n // 2),
+            # Unapproved socio-economic proxies (must be excluded)
+            "Family_Income": ["Low", "Medium", "High", "Medium"] * (n // 4),
+            "Distance_from_Home": ["Near", "Far"] * (n // 2),
+        }
+    )
 
     # Add 2 out-of-bounds score rows that should be dropped
-    oob_rows = pd.DataFrame([
-        {
-            "Hours_Studied": 10, "Attendance": 80, "Sleep_Hours": 7, "Previous_Scores": 60,
-            "Tutoring_Sessions": 1, "Physical_Activity": 2, "Exam_Score": 150.0,
-            "Gender": "Male", "Learning_Disabilities": 0, "Family_Income": "High", "Distance_from_Home": "Near"
-        },
-        {
-            "Hours_Studied": 10, "Attendance": 80, "Sleep_Hours": 7, "Previous_Scores": 60,
-            "Tutoring_Sessions": 1, "Physical_Activity": 2, "Exam_Score": -10.0,
-            "Gender": "Female", "Learning_Disabilities": 0, "Family_Income": "Low", "Distance_from_Home": "Far"
-        }
-    ])
+    oob_rows = pd.DataFrame(
+        [
+            {
+                "Hours_Studied": 10,
+                "Attendance": 80,
+                "Sleep_Hours": 7,
+                "Previous_Scores": 60,
+                "Tutoring_Sessions": 1,
+                "Physical_Activity": 2,
+                "Exam_Score": 150.0,
+                "Gender": "Male",
+                "Learning_Disabilities": 0,
+                "Family_Income": "High",
+                "Distance_from_Home": "Near",
+            },
+            {
+                "Hours_Studied": 10,
+                "Attendance": 80,
+                "Sleep_Hours": 7,
+                "Previous_Scores": 60,
+                "Tutoring_Sessions": 1,
+                "Physical_Activity": 2,
+                "Exam_Score": -10.0,
+                "Gender": "Female",
+                "Learning_Disabilities": 0,
+                "Family_Income": "Low",
+                "Distance_from_Home": "Far",
+            },
+        ]
+    )
     df = pd.concat([df, oob_rows], ignore_index=True)
 
     csv_path = tmp_path / "StudentPerformanceFactors.csv"
@@ -77,8 +97,12 @@ class TestTrainModelA:
 
         # Verify only approved baseline features exist
         expected_features = {
-            "hours_studied", "attendance_percentage", "sleep_hours",
-            "previous_score", "tutoring_sessions", "physical_activity"
+            "hours_studied",
+            "attendance_percentage",
+            "sleep_hours",
+            "previous_score",
+            "tutoring_sessions",
+            "physical_activity",
         }
         assert set(X.columns) == expected_features
 
@@ -152,6 +176,9 @@ class TestTrainModelA:
         doc_path = Path(settings.BASE_DIR).parent / "docs" / "MODEL_CARD_A.md"
         assert doc_path.is_file()
         content = doc_path.read_text(encoding="utf-8")
-        assert "The dataset is widely regarded as synthetic; metrics show the pipeline works, not real-world accuracy" in content
+        assert (
+            "The dataset is widely regarded as synthetic; metrics show the pipeline works, not real-world accuracy"
+            in content
+        )
         assert "verify the license on the dataset page" in content
         assert "Dropped Attributes & Ethical Governance" in content

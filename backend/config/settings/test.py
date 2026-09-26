@@ -2,6 +2,7 @@
 Test settings for EduPulse.
 Enforces that the database name ends with '_test'.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -51,7 +52,9 @@ ALLOWED_HOSTS = list(set(ALLOWED_HOSTS + ["localhost", "127.0.0.1", "testserver"
 
 # Pre-flight environment guards
 if os.environ.get("DJANGO_ENV", "").strip().lower() == "prod":
-    sys.stderr.write("Security Violation: Test suite cannot run in production environment (DJANGO_ENV=prod).\n")
+    sys.stderr.write(
+        "Security Violation: Test suite cannot run in production environment (DJANGO_ENV=prod).\n"
+    )
     sys.exit(2)
 
 db_name = DATABASES["default"].get("NAME", "")
@@ -77,4 +80,3 @@ CACHES = {
 # Synchronous, eager Celery task execution for test suite
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
-

@@ -52,7 +52,9 @@ class SPAIndexView(View):
                 "<p style='color:#9ca3af;'>Frontend distribution build not found. Please run <code>npm run build</code> inside the <code>frontend/</code> directory.</p>"
                 "</body></html>"
             )
-            response = HttpResponse(fallback_html, content_type="text/html; charset=utf-8", status=200)
+            response = HttpResponse(
+                fallback_html, content_type="text/html; charset=utf-8", status=200
+            )
             response["Cache-Control"] = "no-cache, no-store, must-revalidate"
             return response
 
@@ -65,4 +67,3 @@ class SPAIndexView(View):
         except Exception as e:
             logger.error("Error reading SPA index.html: %s", e)
             return HttpResponseServerError("Failed to load SPA index file.")
-

@@ -46,7 +46,9 @@ def test_edupulse_ml_imports_zero_django():
         env=env,
     )
 
-    assert result.returncode == 0, f"edupulse_ml attempted to import Django or failed: {result.stderr}"
+    assert result.returncode == 0, (
+        f"edupulse_ml attempted to import Django or failed: {result.stderr}"
+    )
     assert "EDUPULSE_ML_INDEPENDENCE_OK" in result.stdout
 
 

@@ -351,7 +351,9 @@ class AtRiskExportCSVAPIView(APIView):
                     round(snap.predicted_percentage, 1)
                     if snap.predicted_percentage is not None
                     else "",
-                    "; ".join(snap.reasons) if isinstance(snap.reasons, list) else str(snap.reasons),
+                    "; ".join(snap.reasons)
+                    if isinstance(snap.reasons, list)
+                    else str(snap.reasons),
                     snap.taken_at.isoformat() if snap.taken_at else "",
                 ]
             )

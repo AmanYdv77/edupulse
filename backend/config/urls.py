@@ -15,9 +15,12 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include("api.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema", permission_classes=[StaffOrDevOnly]), name="swagger-ui"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema", permission_classes=[StaffOrDevOnly]),
+        name="swagger-ui",
+    ),
     path("", RedirectView.as_view(url="/app/", permanent=False), name="root-redirect"),
     path("app/", SPAIndexView.as_view(), name="spa-root"),
     path("app/<path:path>", SPAIndexView.as_view(), name="spa-fallback"),
 ]
-

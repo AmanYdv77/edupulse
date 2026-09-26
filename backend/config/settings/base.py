@@ -46,68 +46,66 @@ SECURE_REFERRER_POLICY = "same-origin"
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # --- third party ---
-    'rest_framework',
-    'drf_spectacular',
-
+    "rest_framework",
+    "drf_spectacular",
     # --- our domain apps ---
-    'accounts',
-    'academics',
-    'predictions',
-    'analytics',
-    'api',
-    'core',
+    "accounts",
+    "academics",
+    "predictions",
+    "analytics",
+    "api",
+    "core",
 ]
 
 # Custom User model with institutional role hierarchy
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'accounts.middleware.NoCacheAuthenticatedMiddleware',
-    'core.middleware.SecurityHeadersMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "accounts.middleware.NoCacheAuthenticatedMiddleware",
+    "core.middleware.SecurityHeadersMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database Configuration
 # Uses PostgreSQL via django-environ (DATABASE_URL)
 DATABASES = {
-    'default': env.db("DATABASE_URL"),
+    "default": env.db("DATABASE_URL"),
 }
-DATABASES['default']['CONN_MAX_AGE'] = 60
-DATABASES['default']['CONN_HEALTH_CHECKS'] = True
+DATABASES["default"]["CONN_MAX_AGE"] = 60
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 
 
 def require_db_name(allowed_suffix: str | None = None, disallowed_suffixes: tuple[str, ...] = ()):
@@ -128,37 +126,39 @@ def require_db_name(allowed_suffix: str | None = None, disallowed_suffixes: tupl
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 
 # Internationalization
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-FRONTEND_DIST_DIR = REPO_DIR / 'frontend' / 'dist'
+STATIC_URL = "static/"
+FRONTEND_DIST_DIR = REPO_DIR / "frontend" / "dist"
 
 STATICFILES_DIRS = [
-    d for d in [
-        BASE_DIR / 'static',
-        FRONTEND_DIST_DIR / 'assets',
-    ] if d.is_dir()
+    d
+    for d in [
+        BASE_DIR / "static",
+        FRONTEND_DIST_DIR / "assets",
+    ]
+    if d.is_dir()
 ]
 
 # Authentication redirects
@@ -183,37 +183,37 @@ MODEL_B_MIN_SNAPSHOT_SEMESTERS = 1
 
 # REST Framework configuration
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
     ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'api.pagination.StandardResultsSetPagination',
-    'PAGE_SIZE': 25,
-    'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
-        'api.throttling.UserReadRateThrottle',
-        'api.throttling.UserWriteRateThrottle',
+    "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 25,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "api.throttling.UserReadRateThrottle",
+        "api.throttling.UserWriteRateThrottle",
     ],
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '5/minute',
-        'user_read': '120/minute',
-        'user_write': '30/minute',
-        'auth': '5/minute',
-        'export': '5/hour',
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/minute",
+        "user_read": "120/minute",
+        "user_write": "30/minute",
+        "auth": "5/minute",
+        "export": "5/hour",
     },
-    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # drf-spectacular OpenAPI 3.0 documentation settings
 SPECTACULAR_SETTINGS = {
-    'TITLE': 'EduPulse Core API',
-    'DESCRIPTION': 'Versioned core JSON API for student results, predictions, habit check-ins, teaching assignments, and model registry.',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
+    "TITLE": "EduPulse Core API",
+    "DESCRIPTION": "Versioned core JSON API for student results, predictions, habit check-ins, teaching assignments, and model registry.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 # Redis Cache configuration
@@ -241,7 +241,7 @@ CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_ACKS_LATE = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 minutes soft limit
-CELERY_TASK_TIME_LIMIT = 330       # 5.5 minutes hard limit
+CELERY_TASK_TIME_LIMIT = 330  # 5.5 minutes hard limit
 CELERY_TIMEZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
@@ -255,4 +255,3 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 1800.0,  # 30 minutes in seconds
     },
 }
-

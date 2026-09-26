@@ -2,6 +2,7 @@
 Academic models representing university structure, courses, grades, teaching assignments,
 and student habit telemetry.
 """
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -10,6 +11,7 @@ from django.utils import timezone
 # ---------------------------------------------------------------------------
 # STRUCTURE
 # ---------------------------------------------------------------------------
+
 
 class University(models.Model):
     name = models.CharField(max_length=150)
@@ -23,10 +25,16 @@ class University(models.Model):
 class School(models.Model):
     name = models.CharField(max_length=120)
     code = models.CharField(max_length=10, unique=True)
-    university = models.ForeignKey(University, on_delete=models.CASCADE,
-                                   null=True, blank=True, related_name="schools")
-    dean = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-                             null=True, blank=True, related_name="dean_of")
+    university = models.ForeignKey(
+        University, on_delete=models.CASCADE, null=True, blank=True, related_name="schools"
+    )
+    dean = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dean_of",
+    )
 
     def __str__(self):
         return self.name
@@ -36,8 +44,13 @@ class Department(models.Model):
     name = models.CharField(max_length=120)
     code = models.CharField(max_length=10, unique=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="departments")
-    hod = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-                            null=True, blank=True, related_name="hod_of")
+    hod = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="hod_of",
+    )
 
     def __str__(self):
         return self.name
@@ -87,12 +100,15 @@ class Subject(models.Model):
 # PEOPLE PROFILES
 # ---------------------------------------------------------------------------
 
+
 class TeacherProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                related_name="teacher_profile")
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="teacher_profile"
+    )
     staff_id = models.CharField(max_length=30, unique=True)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True,
-                                   blank=True, related_name="teachers")
+    department = models.ForeignKey(
+        Department, on_delete=models.SET_NULL, null=True, blank=True, related_name="teachers"
+    )
     designation = models.CharField(max_length=80, blank=True)
     qualification = models.CharField(max_length=80, blank=True)
     employment_type = models.CharField(max_length=40, blank=True)
@@ -103,14 +119,17 @@ class TeacherProfile(models.Model):
 
 
 class StudentProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                related_name="student_profile")
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_profile"
+    )
     roll_no = models.CharField(max_length=40, unique=True)
     registration_no = models.CharField(max_length=40, blank=True)
-    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True,
-                              blank=True, related_name="students")
-    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True,
-                               blank=True, related_name="students")
+    batch = models.ForeignKey(
+        Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name="students"
+    )
+    course = models.ForeignKey(
+        Course, on_delete=models.SET_NULL, null=True, blank=True, related_name="students"
+    )
     admission_year = models.IntegerField(null=True, blank=True)
     current_year = models.IntegerField(default=1)
     current_semester = models.IntegerField(default=1)
@@ -119,7 +138,7 @@ class StudentProfile(models.Model):
     guardian_name = models.CharField(max_length=120, blank=True)
     guardian_relation = models.CharField(max_length=40, blank=True)
     guardian_phone = models.CharField(max_length=15, blank=True)
-    
+
     # ML Static Features (from Kaggle Dataset)
     distance_from_home = models.CharField(max_length=20, blank=True, null=True)
     parental_education_level = models.CharField(max_length=50, blank=True, null=True)
@@ -134,7 +153,7 @@ class StudentProfile(models.Model):
         choices=DATA_ORIGIN_CHOICES,
         default="real",
         db_index=True,
-        help_text="Tracks whether student record is synthetic demo data or real institutional data."
+        help_text="Tracks whether student record is synthetic demo data or real institutional data.",
     )
 
     @property
@@ -153,11 +172,13 @@ class StudentProfile(models.Model):
 # TEACHING ASSIGNMENTS (who teaches what to which batch)
 # ---------------------------------------------------------------------------
 
+
 class TeachingAssignment(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="assignments")
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="assignments")
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True,
-                                blank=True, related_name="assignments")
+    teacher = models.ForeignKey(
+        TeacherProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="assignments"
+    )
     academic_session = models.CharField(max_length=30, blank=True)
 
     def __str__(self):
@@ -168,13 +189,16 @@ class TeachingAssignment(models.Model):
 # RESULTS
 # ---------------------------------------------------------------------------
 
+
 class Result(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="results")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="results")
-    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True,
-                              related_name="results")
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True,
-                                blank=True, related_name="results")
+    batch = models.ForeignKey(
+        Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name="results"
+    )
+    teacher = models.ForeignKey(
+        TeacherProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="results"
+    )
     semester = models.IntegerField()
     internal_marks = models.IntegerField(default=0)
     external_marks = models.IntegerField(default=0)
@@ -209,12 +233,15 @@ class Result(models.Model):
         return round(self.total_secured / self.max_marks * 100, 1) if self.max_marks else 0
 
     def __str__(self):
-        return f"{self.student.roll_no} | {self.subject.code} | {self.total_secured}/{self.max_marks}"
+        return (
+            f"{self.student.roll_no} | {self.subject.code} | {self.total_secured}/{self.max_marks}"
+        )
 
 
 class SemesterResult(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE,
-                                related_name="semester_results")
+    student = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE, related_name="semester_results"
+    )
     semester = models.IntegerField()
     total_max = models.IntegerField(default=0)
     total_secured = models.IntegerField(default=0)
@@ -228,7 +255,7 @@ class SemesterResult(models.Model):
     declaration_date = models.CharField(max_length=20, blank=True)
     is_published = models.BooleanField(
         default=True,
-        help_text="Final official result published by Admin. When False, held as draft until bulk release."
+        help_text="Final official result published by Admin. When False, held as draft until bulk release.",
     )
 
     # Behavioral / Habit Telemetry Fields (Official Institute Records or Left Blank)
@@ -236,40 +263,61 @@ class SemesterResult(models.Model):
     # NOT self-reported daily logs. Missing values MUST remain None/NULL so that downstream
     # models and analysis do not train on invented defaults.
     attendance_percentage = models.FloatField(
-        null=True, blank=True, default=None,
-        help_text="Official attendance percentage recorded by the institution (0-100). None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official attendance percentage recorded by the institution (0-100). None if unrecorded.",
     )
     hours_studied_per_week = models.FloatField(
-        null=True, blank=True, default=None,
-        help_text="Official study hours per week. None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official study hours per week. None if unrecorded.",
     )
     sleep_hours_per_night = models.FloatField(
-        null=True, blank=True, default=None,
-        help_text="Official sleep hours per night. None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official sleep hours per night. None if unrecorded.",
     )
     motivation_level = models.CharField(
-        max_length=20, blank=True, null=True, default=None,
-        help_text="Official motivation level ('Low', 'Medium', 'High'). None if unrecorded."
+        max_length=20,
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Official motivation level ('Low', 'Medium', 'High'). None if unrecorded.",
     )
     tutoring_sessions = models.IntegerField(
-        null=True, blank=True, default=None,
-        help_text="Official count of tutoring sessions attended. None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official count of tutoring sessions attended. None if unrecorded.",
     )
     extracurricular_activities = models.BooleanField(
-        null=True, blank=True, default=None,
-        help_text="Official participation status in extracurricular activities. None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official participation status in extracurricular activities. None if unrecorded.",
     )
     physical_activity = models.IntegerField(
-        null=True, blank=True, default=None,
-        help_text="Official physical activity days/hours per week. None if unrecorded."
+        null=True,
+        blank=True,
+        default=None,
+        help_text="Official physical activity days/hours per week. None if unrecorded.",
     )
     parental_involvement = models.CharField(
-        max_length=20, blank=True, null=True, default=None,
-        help_text="Official parental involvement level. None if unrecorded."
+        max_length=20,
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Official parental involvement level. None if unrecorded.",
     )
     peer_influence = models.CharField(
-        max_length=20, blank=True, null=True, default=None,
-        help_text="Official peer influence level. None if unrecorded."
+        max_length=20,
+        blank=True,
+        null=True,
+        default=None,
+        help_text="Official peer influence level. None if unrecorded.",
     )
 
     class Meta:
@@ -285,21 +333,30 @@ class SemesterResult(models.Model):
             models.CheckConstraint(
                 condition=(
                     models.Q(attendance_percentage__isnull=True)
-                    | (models.Q(attendance_percentage__gte=0.0) & models.Q(attendance_percentage__lte=100.0))
+                    | (
+                        models.Q(attendance_percentage__gte=0.0)
+                        & models.Q(attendance_percentage__lte=100.0)
+                    )
                 ),
                 name="check_semester_result_attendance_range",
             ),
             models.CheckConstraint(
                 condition=(
                     models.Q(sleep_hours_per_night__isnull=True)
-                    | (models.Q(sleep_hours_per_night__gte=0.0) & models.Q(sleep_hours_per_night__lte=24.0))
+                    | (
+                        models.Q(sleep_hours_per_night__gte=0.0)
+                        & models.Q(sleep_hours_per_night__lte=24.0)
+                    )
                 ),
                 name="check_semester_result_sleep_range",
             ),
             models.CheckConstraint(
                 condition=(
                     models.Q(hours_studied_per_week__isnull=True)
-                    | (models.Q(hours_studied_per_week__gte=0.0) & models.Q(hours_studied_per_week__lte=168.0))
+                    | (
+                        models.Q(hours_studied_per_week__gte=0.0)
+                        & models.Q(hours_studied_per_week__lte=168.0)
+                    )
                 ),
                 name="check_semester_result_study_hours_range",
             ),
@@ -313,6 +370,7 @@ class SemesterResult(models.Model):
 # CONTINUOUS EVALUATION / INTERNAL ASSESSMENTS (Uploaded by Faculty)
 # ---------------------------------------------------------------------------
 
+
 class InternalAssessment(models.Model):
     ASSESSMENT_TYPES = [
         ("MIDTERM", "Mid-Semester Examination"),
@@ -321,17 +379,33 @@ class InternalAssessment(models.Model):
         ("LAB", "Practical / Lab Assessment"),
         ("PROJECT", "Term Project / Seminar"),
     ]
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="internal_assessments")
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="internal_assessments")
-    batch = models.ForeignKey(Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name="internal_assessments")
-    teacher = models.ForeignKey(TeacherProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="internal_assessments")
+    student = models.ForeignKey(
+        StudentProfile, on_delete=models.CASCADE, related_name="internal_assessments"
+    )
+    subject = models.ForeignKey(
+        Subject, on_delete=models.CASCADE, related_name="internal_assessments"
+    )
+    batch = models.ForeignKey(
+        Batch, on_delete=models.SET_NULL, null=True, blank=True, related_name="internal_assessments"
+    )
+    teacher = models.ForeignKey(
+        TeacherProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="internal_assessments",
+    )
     semester = models.IntegerField(default=1)
     title = models.CharField(max_length=100, help_text="e.g. Midterm Test 1, Assignment 2")
-    assessment_type = models.CharField(max_length=20, choices=ASSESSMENT_TYPES, default="ASSIGNMENT")
+    assessment_type = models.CharField(
+        max_length=20, choices=ASSESSMENT_TYPES, default="ASSIGNMENT"
+    )
     marks_obtained = models.FloatField(default=0.0)
     max_marks = models.FloatField(default=25.0)
     date_conducted = models.DateField(default=timezone.now)
-    is_submitted = models.BooleanField(default=True, help_text="Visible across hierarchical scope when submitted")
+    is_submitted = models.BooleanField(
+        default=True, help_text="Visible across hierarchical scope when submitted"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -351,12 +425,15 @@ class InternalAssessment(models.Model):
 # ---------------------------------------------------------------------------
 from django.utils import timezone
 
+
 class StudentHabitPreference(models.Model):
     FREQUENCY_CHOICES = [
         ("DAILY", "Daily Quick-Check (30 sec)"),
         ("WEEKLY", "Weekly Summary (2 min)"),
     ]
-    student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name="habit_preference")
+    student = models.OneToOneField(
+        StudentProfile, on_delete=models.CASCADE, related_name="habit_preference"
+    )
     frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default="DAILY")
     streak_count = models.IntegerField(default=0)
     last_checkin_date = models.DateField(null=True, blank=True)
@@ -380,11 +457,17 @@ class HabitCheckInLog(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name="habit_logs")
     log_type = models.CharField(max_length=10, choices=LOG_TYPES, default="DAILY")
     log_date = models.DateField(default=timezone.now)
-    hours_studied = models.FloatField(default=0.0, help_text="Hours studied (today if daily, total for week if weekly)")
-    sleep_hours = models.FloatField(default=7.0, help_text="Hours slept (last night if daily, avg/night if weekly)")
+    hours_studied = models.FloatField(
+        default=0.0, help_text="Hours studied (today if daily, total for week if weekly)"
+    )
+    sleep_hours = models.FloatField(
+        default=7.0, help_text="Hours slept (last night if daily, avg/night if weekly)"
+    )
     motivation_level = models.CharField(max_length=10, choices=MOTIVATION_CHOICES, default="Medium")
     tutoring_sessions = models.IntegerField(default=0, help_text="Tutoring sessions attended")
-    physical_activity = models.IntegerField(default=0, help_text="Hours/days of physical activity or exercise")
+    physical_activity = models.IntegerField(
+        default=0, help_text="Hours/days of physical activity or exercise"
+    )
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -400,8 +483,16 @@ class HabitCheckInLog(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    (models.Q(log_type="DAILY") & models.Q(hours_studied__gte=0.0) & models.Q(hours_studied__lte=24.0))
-                    | (models.Q(log_type="WEEKLY") & models.Q(hours_studied__gte=0.0) & models.Q(hours_studied__lte=168.0))
+                    (
+                        models.Q(log_type="DAILY")
+                        & models.Q(hours_studied__gte=0.0)
+                        & models.Q(hours_studied__lte=24.0)
+                    )
+                    | (
+                        models.Q(log_type="WEEKLY")
+                        & models.Q(hours_studied__gte=0.0)
+                        & models.Q(hours_studied__lte=168.0)
+                    )
                 ),
                 name="check_habit_log_hours_studied_range",
             ),
@@ -418,6 +509,7 @@ def sync_habits_to_semester_result(student):
     Use `academics.services.habits.habit_summary(student)` to query self-reported habit metrics.
     """
     import warnings
+
     warnings.warn(
         "sync_habits_to_semester_result is deprecated and no longer writes to SemesterResult. "
         "Use academics.services.habits.habit_summary(student) instead.",

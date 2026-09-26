@@ -49,18 +49,20 @@ def make_synthetic_institute_df(
             target = 0.45 * prev_score + 0.35 * internal + 0.20 * att + rng.normal(0, 2)
             target = float(np.clip(target, 20.0, 100.0))
 
-            records.append({
-                "student_id": s_idx,
-                "semester": sem,
-                "subject_id": sem * 10 + 1,
-                "subject_code": f"SUB{sem}01",
-                "attendance_percentage": att,
-                "previous_score": prev_score,
-                "internal_assessment_score": internal,
-                "target_percentage": target,
-                "gender": gender,
-                "category": category,
-            })
+            records.append(
+                {
+                    "student_id": s_idx,
+                    "semester": sem,
+                    "subject_id": sem * 10 + 1,
+                    "subject_code": f"SUB{sem}01",
+                    "attendance_percentage": att,
+                    "previous_score": prev_score,
+                    "internal_assessment_score": internal,
+                    "target_percentage": target,
+                    "gender": gender,
+                    "category": category,
+                }
+            )
 
     return pd.DataFrame(records)
 
@@ -129,11 +131,13 @@ class TestTemporalSplitAndGroupedCV:
 class TestFairnessAudit:
     def test_fairness_suppresses_small_groups(self):
         # 15 Male students, 30 Female students
-        metadata = pd.DataFrame({
-            "student_id": list(range(1, 16)) + list(range(16, 46)),
-            "gender": ["Male"] * 15 + ["Female"] * 30,
-            "category": ["Gen"] * 45,
-        })
+        metadata = pd.DataFrame(
+            {
+                "student_id": list(range(1, 16)) + list(range(16, 46)),
+                "gender": ["Male"] * 15 + ["Female"] * 30,
+                "category": ["Gen"] * 45,
+            }
+        )
         y_true = np.full(45, 75.0)
         y_pred = np.full(45, 74.0)
 
@@ -203,7 +207,10 @@ class TestTrainModelBCommand:
         synthetic_df = make_synthetic_institute_df(n_students=220, n_semesters=4)
 
         # Mock load_institute_dataset to provide synthetic DataFrame
-        with patch("predictions.management.commands.train_model_b.load_institute_dataset", return_value=synthetic_df):
+        with patch(
+            "predictions.management.commands.train_model_b.load_institute_dataset",
+            return_value=synthetic_df,
+        ):
             out = StringIO()
             call_command("train_model_b", confirm_real_data=True, stdout=out)
             output = out.getvalue()

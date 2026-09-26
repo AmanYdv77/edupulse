@@ -1,6 +1,7 @@
 """
 Pytest configuration, database guards, and global fixtures for EduPulse.
 """
+
 import os
 import random
 from urllib.parse import urlparse
@@ -28,7 +29,9 @@ def pytest_configure(config):
         )
 
     # Ensure a fallback test secret key is present if not provided in environment
-    os.environ.setdefault("DJANGO_SECRET_KEY", "insecure-test-secret-key-for-pytest-infra-only-32chars")
+    os.environ.setdefault(
+        "DJANGO_SECRET_KEY", "insecure-test-secret-key-for-pytest-infra-only-32chars"
+    )
 
     # Guard Layer 2: Pre-Django DATABASE_URL verification
     db_url = os.environ.get("DATABASE_URL")

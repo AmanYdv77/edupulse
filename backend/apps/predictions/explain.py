@@ -83,8 +83,16 @@ def explain_prediction(
             contributions = []
             for idx, fname in enumerate(safe_features):
                 val = float(feature_values.get(fname, 0.0) or 0.0)
-                mean_val = float(scaler.mean_[idx]) if scaler is not None and hasattr(scaler, "mean_") else 50.0
-                scale_val = float(scaler.scale_[idx]) if scaler is not None and hasattr(scaler, "scale_") and scaler.scale_[idx] != 0 else 1.0
+                mean_val = (
+                    float(scaler.mean_[idx])
+                    if scaler is not None and hasattr(scaler, "mean_")
+                    else 50.0
+                )
+                scale_val = (
+                    float(scaler.scale_[idx])
+                    if scaler is not None and hasattr(scaler, "scale_") and scaler.scale_[idx] != 0
+                    else 1.0
+                )
                 coef = float(raw_coefs[idx])
 
                 # Normalized deviation contribution
@@ -98,17 +106,25 @@ def explain_prediction(
             factors = []
             for fname, contrib, val in top_factors:
                 human_name = FEATURE_HUMAN_NAMES.get(fname, fname.replace("_", " ").title())
-                direction = "positive" if contrib > 0.05 else ("negative" if contrib < -0.05 else "neutral")
+                direction = (
+                    "positive" if contrib > 0.05 else ("negative" if contrib < -0.05 else "neutral")
+                )
                 impact_pct = f"{contrib:+.1f}%"
-                direction_word = "Positive" if direction == "positive" else ("Negative" if direction == "negative" else "Neutral")
+                direction_word = (
+                    "Positive"
+                    if direction == "positive"
+                    else ("Negative" if direction == "negative" else "Neutral")
+                )
 
-                factors.append({
-                    "feature": fname,
-                    "name": human_name,
-                    "impact": impact_pct,
-                    "direction": direction,
-                    "description": f"{direction_word} influence from {human_name} ({impact_pct}).",
-                })
+                factors.append(
+                    {
+                        "feature": fname,
+                        "name": human_name,
+                        "impact": impact_pct,
+                        "direction": direction,
+                        "description": f"{direction_word} influence from {human_name} ({impact_pct}).",
+                    }
+                )
             return factors
 
     # 3. Non-Linear Model Fallback (e.g., HistGradientBoostingRegressor)
@@ -127,12 +143,14 @@ def explain_prediction(
     factors = []
     for fname in ranked_features[:3]:
         human_name = FEATURE_HUMAN_NAMES.get(fname, fname.replace("_", " ").title())
-        factors.append({
-            "feature": fname,
-            "name": human_name,
-            "impact": "Global factor",
-            "direction": "neutral",
-            "description": f"Global influence on model decisions (per-student attribution is unavailable).",
-        })
+        factors.append(
+            {
+                "feature": fname,
+                "name": human_name,
+                "impact": "Global factor",
+                "direction": "neutral",
+                "description": f"Global influence on model decisions (per-student attribution is unavailable).",
+            }
+        )
 
     return factors

@@ -59,7 +59,9 @@ class TestCsrfAndCookieHardening:
         student_user = uni["students"][0].user
 
         middleware = NoCacheAuthenticatedMiddleware(
-            get_response=lambda r: HttpResponse("<html><body>Dashboard</body></html>", content_type="text/html")
+            get_response=lambda r: HttpResponse(
+                "<html><body>Dashboard</body></html>", content_type="text/html"
+            )
         )
 
         # 1. Authenticated user + text/html -> sets headers
@@ -105,7 +107,9 @@ class TestCsrfAndCookieHardening:
     def test_prod_check_deploy_has_zero_warnings(self):
         """Verify python manage.py check --deploy passes with 0 warnings on prod settings."""
         env = os.environ.copy()
-        env["DJANGO_SECRET_KEY"] = "c8f7e2a9b4d1e6f3a8b2c5d7e1f4a9b3c6d8e2f5a7b1c4d9e3f6a8b2c5d7e1f4"
+        env["DJANGO_SECRET_KEY"] = (
+            "c8f7e2a9b4d1e6f3a8b2c5d7e1f4a9b3c6d8e2f5a7b1c4d9e3f6a8b2c5d7e1f4"
+        )
         env["DJANGO_DEBUG"] = "False"
         env["DATABASE_URL"] = "postgres://postgres:postgres@localhost:55432/edupulse_prod"
         env["DJANGO_ALLOWED_HOSTS"] = "edupulse.example.com"
@@ -114,7 +118,13 @@ class TestCsrfAndCookieHardening:
 
         manage_py = Path(settings.BASE_DIR) / "manage.py"
         res = subprocess.run(
-            [sys.executable, str(manage_py), "check", "--deploy", "--settings=config.settings.prod"],
+            [
+                sys.executable,
+                str(manage_py),
+                "check",
+                "--deploy",
+                "--settings=config.settings.prod",
+            ],
             capture_output=True,
             text=True,
             env=env,

@@ -25,4 +25,7 @@ def test_hod_scoped_analytics_and_unauthorized_routes(e2e_page, live_server, e2e
     e2e_page.goto(f"{live_server.url}/app/models")
     # RouteGuard redirects to /app/unauthorized or shows access denied
     e2e_page.wait_for_selector("text=403", timeout=8000)
-    assert e2e_page.locator("text=Access Denied").is_visible() or e2e_page.locator("text=403").is_visible()
+    assert (
+        e2e_page.locator("text=Access Denied").is_visible()
+        or e2e_page.locator("text=403").is_visible()
+    )

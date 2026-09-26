@@ -25,7 +25,9 @@ class Command(BaseCommand):
 
         for m in models:
             active_str = "YES" if m.is_active else "no"
-            metrics_str = ", ".join(f"{k}={v}" for k, v in m.metrics.items()) if m.metrics else "None"
+            metrics_str = (
+                ", ".join(f"{k}={v}" for k, v in m.metrics.items()) if m.metrics else "None"
+            )
             row = (
                 f"{m.id:<5} | {m.slot:<12} | v{m.version:<4} | {active_str:<8} | "
                 f"{m.sklearn_version:<10} | {m.trained_on[:23]:<25} | {metrics_str}"

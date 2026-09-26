@@ -72,8 +72,7 @@ def load_kaggle_spf(csv_path: Path) -> Tuple[pd.DataFrame, pd.Series, dict]:
 
     # 3. Restrict strictly to contract-approved baseline features
     approved_baseline_features = [
-        name for name, spec in FEATURES.items()
-        if "baseline" in spec.allowed_models
+        name for name, spec in FEATURES.items() if "baseline" in spec.allowed_models
     ]
     # Validate against contract
     validate_feature_list(approved_baseline_features, model_kind="baseline")

@@ -40,11 +40,13 @@ def get_model_label(model_version: Optional[ModelVersion]) -> str:
 
 class IncompatibleEnvironmentError(Exception):
     """Raised when the serialized model artifact was built with an incompatible library version."""
+
     pass
 
 
 class ModelNotFoundError(Exception):
     """Raised when no active ModelVersion is registered for the requested slot."""
+
     pass
 
 
@@ -84,6 +86,7 @@ class PredictionResult:
     Carries provenance information, human-friendly factor explanations, and advisory disclaimers.
     Implements key-based dictionary access for backwards compatibility with legacy templates.
     """
+
     student_id: int
     student_roll_no: str
     subject_id: int
@@ -137,7 +140,9 @@ class PredictorService:
         """Returns active ModelVersion objects keyed by slot in a single query."""
         return {
             mv.slot: mv
-            for mv in ModelVersion.objects.filter(is_active=True, slot__in=["institute", "baseline"])
+            for mv in ModelVersion.objects.filter(
+                is_active=True, slot__in=["institute", "baseline"]
+            )
         }
 
     @classmethod
@@ -336,10 +341,9 @@ def predict_for_students(
             if len(student_list) == 1:
                 model_version = PredictorService.active_for(student_list[0])
             if not model_version:
-                model_version = (
-                    PredictorService.get_active_model_version("institute")
-                    or PredictorService.get_active_model_version("baseline")
-                )
+                model_version = PredictorService.get_active_model_version(
+                    "institute"
+                ) or PredictorService.get_active_model_version("baseline")
 
     # Return empty list when no prediction model is active (displays "No active model" in UI)
     if not model_version:
@@ -366,9 +370,9 @@ def predict_for_students(
 
     # 2. Bulk prefetch latest SemesterResult for each student
     student_ids = [s.id for s in student_list]
-    prior_results_qs = SemesterResult.objects.filter(
-        student_id__in=student_ids
-    ).order_by("student_id", "-semester")
+    prior_results_qs = SemesterResult.objects.filter(student_id__in=student_ids).order_by(
+        "student_id", "-semester"
+    )
 
     latest_sem_by_student: dict[int, SemesterResult] = {}
     for sr in prior_results_qs:
@@ -405,12 +409,34 @@ def predict_for_students(
         habits = compute_habit_summary_from_logs(logs_by_student.get(s.id, []))
 
         # Build feature vector without fabricating defaults
-        attendance = sr.attendance_percentage if sr and sr.attendance_percentage is not None else None
-        prev_score = sr.percentage if sr and sr.percentage is not None else (float(sr.sgpa * 10.0) if sr and sr.sgpa is not None else None)
-        hours_studied = habits.hours_studied_per_week if habits and habits.hours_studied_per_week is not None else (sr.hours_studied_per_week if sr else None)
-        sleep_hours = habits.sleep_hours_per_night if habits and habits.sleep_hours_per_night is not None else (sr.sleep_hours_per_night if sr else None)
-        tutoring = habits.tutoring_sessions if habits and habits.tutoring_sessions is not None else (sr.tutoring_sessions if sr else None)
-        physical = habits.physical_activity if habits and habits.physical_activity is not None else (sr.physical_activity if sr else None)
+        attendance = (
+            sr.attendance_percentage if sr and sr.attendance_percentage is not None else None
+        )
+        prev_score = (
+            sr.percentage
+            if sr and sr.percentage is not None
+            else (float(sr.sgpa * 10.0) if sr and sr.sgpa is not None else None)
+        )
+        hours_studied = (
+            habits.hours_studied_per_week
+            if habits and habits.hours_studied_per_week is not None
+            else (sr.hours_studied_per_week if sr else None)
+        )
+        sleep_hours = (
+            habits.sleep_hours_per_night
+            if habits and habits.sleep_hours_per_night is not None
+            else (sr.sleep_hours_per_night if sr else None)
+        )
+        tutoring = (
+            habits.tutoring_sessions
+            if habits and habits.tutoring_sessions is not None
+            else (sr.tutoring_sessions if sr else None)
+        )
+        physical = (
+            habits.physical_activity
+            if habits and habits.physical_activity is not None
+            else (sr.physical_activity if sr else None)
+        )
 
         for subj in subjs:
             res = result_map.get((s.id, subj.id))
@@ -429,7 +455,11 @@ def predict_for_students(
             }
 
             # Check for missing required features
-            missing_features = [f for f in model_version.feature_names if f not in feature_row or feature_row[f] is None]
+            missing_features = [
+                f
+                for f in model_version.feature_names
+                if f not in feature_row or feature_row[f] is None
+            ]
 
             if missing_features:
                 factors = [

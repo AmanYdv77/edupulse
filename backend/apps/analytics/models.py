@@ -1,6 +1,7 @@
 """
 Database models for the analytics domain.
 """
+
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -11,6 +12,7 @@ class ExportAuditLog(models.Model):
     Immutable audit log for scoped analytics data exports (e.g. at-risk student rosters).
     Maintains accountability and compliance without storing exported student PII in the log.
     """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

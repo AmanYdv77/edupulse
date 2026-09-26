@@ -17,6 +17,7 @@ from edupulse_ml.contract import validate_feature_list
 
 class InsufficientDataError(Exception):
     """Raised when institutional records do not meet minimum training thresholds."""
+
     pass
 
 
@@ -53,7 +54,9 @@ def load_institute_dataset(
 
     if not results:
         if enforce_thresholds:
-            raise InsufficientDataError("No verified real institutional records found for training.")
+            raise InsufficientDataError(
+                "No verified real institutional records found for training."
+            )
         return pd.DataFrame()
 
     # Bulk prefetch previous semester results for previous_score and attendance
@@ -118,10 +121,18 @@ def load_institute_dataset(
 
         # Habit telemetry if enabled (v2)
         if use_habits:
-            hours_studied = getattr(current_record, "hours_studied_per_week", None) if current_record else None
-            sleep_hours = getattr(current_record, "sleep_hours_per_night", None) if current_record else None
-            tutoring = getattr(current_record, "tutoring_sessions", None) if current_record else None
-            phys_act = getattr(current_record, "physical_activity", None) if current_record else None
+            hours_studied = (
+                getattr(current_record, "hours_studied_per_week", None) if current_record else None
+            )
+            sleep_hours = (
+                getattr(current_record, "sleep_hours_per_night", None) if current_record else None
+            )
+            tutoring = (
+                getattr(current_record, "tutoring_sessions", None) if current_record else None
+            )
+            phys_act = (
+                getattr(current_record, "physical_activity", None) if current_record else None
+            )
 
             row_dict["hours_studied"] = hours_studied
             row_dict["sleep_hours"] = sleep_hours
@@ -161,7 +172,9 @@ def validate_institute_thresholds(df: pd.DataFrame) -> None:
     if n_rows < min_rows:
         reasons.append(f"Total training rows ({n_rows}) < minimum required ({min_rows})")
     if n_semesters < min_semesters:
-        reasons.append(f"Distinct historical semesters ({n_semesters}) < minimum required ({min_semesters})")
+        reasons.append(
+            f"Distinct historical semesters ({n_semesters}) < minimum required ({min_semesters})"
+        )
 
     if reasons:
         raise InsufficientDataError(

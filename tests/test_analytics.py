@@ -2,6 +2,7 @@
 Tests for Multi-Tier Analytics Engine, statistical computations, and cohort query APIs.
 Ported from legacy scripts/test_analytics_suite.py to pytest using model factories.
 """
+
 import pytest
 from analytics.engine import (
     compute_cohort_deep_dive,
@@ -22,7 +23,9 @@ def test_statistical_cohort_deep_dive_engine():
     make_university(students_per_batch=10)
     stats = compute_cohort_deep_dive()
 
-    assert stats["total_count"] >= 10, "Cohort total count should include all active student records"
+    assert stats["total_count"] >= 10, (
+        "Cohort total count should include all active student records"
+    )
     assert len(stats["chart_data"]) == 7, "Histogram distribution must contain exactly 7 bins"
     assert "min_sgpa" in stats
     assert "q1_sgpa" in stats

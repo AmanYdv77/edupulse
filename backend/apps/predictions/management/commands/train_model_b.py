@@ -54,7 +54,9 @@ class Command(BaseCommand):
         self.stdout.write(self.style.NOTICE("Loading verified real-world institutional records..."))
 
         # 3. Load Dataset & Enforce Thresholds
-        use_habits = options.get("use_habits", False) or getattr(settings, "MODEL_B_USE_HABITS", False)
+        use_habits = options.get("use_habits", False) or getattr(
+            settings, "MODEL_B_USE_HABITS", False
+        )
         try:
             df = load_institute_dataset(enforce_thresholds=True, use_habits=use_habits)
         except (InsufficientDataError, RuntimeError) as exc:
@@ -83,11 +85,15 @@ class Command(BaseCommand):
             try:
                 _, test_df = split_temporal_holdout(df)
                 # Check if test_df has features required by Model A
-                missing_feats = [f for f in active_model_a.feature_names if f not in test_df.columns]
+                missing_feats = [
+                    f for f in active_model_a.feature_names if f not in test_df.columns
+                ]
                 if not missing_feats:
                     model_a_loaded = PredictorService.load("baseline")
                     preds_a = model_a_loaded.predict(test_df[active_model_a.feature_names])
-                    incumbent_metrics = evaluate_regression(test_df["target_percentage"].values, preds_a)
+                    incumbent_metrics = evaluate_regression(
+                        test_df["target_percentage"].values, preds_a
+                    )
             except Exception as e:
                 self.stdout.write(self.style.WARNING(f"Could not score holdout with Model A: {e}"))
 
@@ -100,7 +106,10 @@ class Command(BaseCommand):
 
         # 7. Register Candidate in Model Registry
         latest_version = (
-            ModelVersion.objects.filter(slot="institute").order_by("-version").values_list("version", flat=True).first()
+            ModelVersion.objects.filter(slot="institute")
+            .order_by("-version")
+            .values_list("version", flat=True)
+            .first()
             or 0
         )
         new_version = latest_version + 1
@@ -135,7 +144,11 @@ class Command(BaseCommand):
 
         # 8. Output Results & Decision
         self.stdout.write("\n" + "=" * 60)
-        self.stdout.write(self.style.SUCCESS(f"Registered Model B Candidate (id={mv.id}, institute v{new_version})"))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Registered Model B Candidate (id={mv.id}, institute v{new_version})"
+            )
+        )
         self.stdout.write(f"Algorithm:       {candidate_name}")
         self.stdout.write(f"Features:        {', '.join(train_results['feature_names'])}")
         self.stdout.write(f"Holdout Sem:     Semester {holdout_semester}")
@@ -163,5 +176,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("PROMOTION STATUS: NOT RECOMMENDED"))
             for r in reasons:
                 self.stdout.write(f"  [-] {r}")
-            self.stdout.write("\nCandidate registered for audit records but not recommended for activation.\n")
+            self.stdout.write(
+                "\nCandidate registered for audit records but not recommended for activation.\n"
+            )
         self.stdout.write("=" * 60 + "\n")

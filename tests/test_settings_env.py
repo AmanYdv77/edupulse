@@ -38,10 +38,7 @@ def run_django_code(
     cmd = [
         PYTHON,
         "-c",
-        (
-            "import sys; sys.path.insert(0, 'backend'); "
-            + code
-        ),
+        ("import sys; sys.path.insert(0, 'backend'); " + code),
     ]
     return subprocess.run(
         cmd,
@@ -74,7 +71,9 @@ class TestSettingsEnvironment(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-        self.assertNotEqual(result.returncode, 0, f"Expected non-zero exit code, got 0. stdout: {result.stdout}")
+        self.assertNotEqual(
+            result.returncode, 0, f"Expected non-zero exit code, got 0. stdout: {result.stdout}"
+        )
         self.assertTrue(
             "ImproperlyConfigured" in result.stderr or "DJANGO_SECRET_KEY" in result.stderr,
             f"Expected ImproperlyConfigured in stderr, got: {result.stderr}",

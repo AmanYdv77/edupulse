@@ -1,6 +1,7 @@
 """
 Tests verifying double-layer database guards, model factories, and university hierarchy generation.
 """
+
 import os
 import subprocess
 import sys
@@ -56,6 +57,7 @@ TEST_DB_URL = "postgres://postgres:edupulse_dev_secret_pw@127.0.0.1:55432/edupul
 # GUARD TESTS (Subprocess execution testing pytest_configure hook)
 # ---------------------------------------------------------------------------
 
+
 def test_pytest_guard_refuses_dev_database():
     """
     Subprocess test: running pytest with DATABASE_URL pointing to a non-_test database
@@ -80,7 +82,9 @@ def test_pytest_guard_refuses_dev_database():
         capture_output=True,
         text=True,
     )
-    assert proc.returncode == 2, f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 2, (
+        f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    )
     output = proc.stdout + proc.stderr
     assert "Security Violation" in output
     assert "edupulse_dev" in output
@@ -110,7 +114,9 @@ def test_pytest_guard_refuses_prod_environment():
         capture_output=True,
         text=True,
     )
-    assert proc.returncode == 2, f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 2, (
+        f"Expected returncode 2, got {proc.returncode}. Output:\n{proc.stdout}\n{proc.stderr}"
+    )
     output = proc.stdout + proc.stderr
     assert "Security Violation" in output
     assert "production environment" in output
@@ -119,6 +125,7 @@ def test_pytest_guard_refuses_prod_environment():
 # ---------------------------------------------------------------------------
 # FACTORY PERSISTENCE & INTEGRITY TESTS
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.django_db
 def test_user_factories_persist_valid_users():
@@ -140,7 +147,9 @@ def test_user_factories_persist_valid_users():
         assert user.pk is not None
         assert user.role == expected_role
         assert user.email.endswith("@example.test")
-        assert not user.has_usable_password(), f"{factory_cls.__name__} should have an unusable password"
+        assert not user.has_usable_password(), (
+            f"{factory_cls.__name__} should have an unusable password"
+        )
 
 
 @pytest.mark.django_db

@@ -25,7 +25,9 @@ def get_student_results_by_semester(student: Any) -> Tuple[list[dict], bool]:
     from academics.models import SemesterResult
 
     published_sems = set(
-        SemesterResult.objects.filter(student=student, is_published=True).values_list("semester", flat=True)
+        SemesterResult.objects.filter(student=student, is_published=True).values_list(
+            "semester", flat=True
+        )
     )
 
     results = (
@@ -38,7 +40,13 @@ def get_student_results_by_semester(student: Any) -> Tuple[list[dict], bool]:
     for r in results:
         s = semesters.setdefault(
             r.semester,
-            {"rows": [], "total_secured": 0, "total_max": 0, "total_credit_points": 0.0, "total_credits": 0},
+            {
+                "rows": [],
+                "total_secured": 0,
+                "total_max": 0,
+                "total_credit_points": 0.0,
+                "total_credits": 0,
+            },
         )
         s["rows"].append(r)
         s["total_secured"] += r.total_secured
@@ -51,12 +59,14 @@ def get_student_results_by_semester(student: Any) -> Tuple[list[dict], bool]:
         s = semesters[sem]
         pct = round(s["total_secured"] / s["total_max"] * 100, 1) if s["total_max"] else 0
         sgpa = round(s["total_credit_points"] / s["total_credits"], 2) if s["total_credits"] else 0
-        semester_list.append({
-            "semester": sem,
-            "rows": s["rows"],
-            "percentage": pct,
-            "sgpa": sgpa,
-            "status": "PASS" if pct >= 40 else "FAIL",
-        })
+        semester_list.append(
+            {
+                "semester": sem,
+                "rows": s["rows"],
+                "percentage": pct,
+                "sgpa": sgpa,
+                "status": "PASS" if pct >= 40 else "FAIL",
+            }
+        )
 
     return semester_list, bool(semester_list)
