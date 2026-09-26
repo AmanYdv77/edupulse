@@ -223,3 +223,27 @@ CACHES = {
     }
 }
 
+# ============================================================================
+# Celery Background Worker & Beat Scheduler Configuration
+# ============================================================================
+CELERY_BROKER_URL = env("REDIS_BROKER_URL", default="redis://127.0.0.1:6379/2")
+CELERY_RESULT_BACKEND = None
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_ACKS_LATE = True
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_TASK_SOFT_TIME_LIMIT = 300  # 5 minutes soft limit
+CELERY_TASK_TIME_LIMIT = 330       # 5.5 minutes hard limit
+CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    "take-prediction-snapshots-weekly": {
+        "task": "predictions.take_snapshots",
+        "schedule": 604800.0,  # 7 days in seconds
+        "kwargs": {"checkpoint": "weekly"},
+    },
+    "warm-analytics-cache-periodic": {
+        "task": "analytics.warm_cache",
+        "schedule": 1800.0,  # 30 minutes in seconds
+    },
+}
+

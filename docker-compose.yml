@@ -17,5 +17,34 @@ services:
       timeout: 5s
       retries: 5
 
+  redis-cache:
+    image: redis:7-alpine
+    container_name: edupulse-redis-cache
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_CACHE_PORT:-56379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-broker:
+    image: redis:7-alpine
+    container_name: edupulse-redis-broker
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    ports:
+      - "${REDIS_BROKER_PORT:-56380}:6379"
+    volumes:
+      - edupulse_redis_broker_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   edupulse_pgdata:
+  edupulse_redis_broker_data:
