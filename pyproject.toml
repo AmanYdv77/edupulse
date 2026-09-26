@@ -7,3 +7,44 @@ markers = [
     "e2e: marks end-to-end browser tests",
 ]
 addopts = "-m 'not e2e' --reuse-db"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".pytest_cache",
+    "node_modules",
+    "frontend",
+    "dist",
+    "**/migrations/*",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "C4", "SIM", "DJ"]
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "DJ001", # Avoid using null=True on string-based fields (legacy DB schema compliance)
+    "DJ012", # Order of model inner classes and methods
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "S106"]
+"backend/config/settings/*" = ["S105", "S106"]
+
+[tool.ruff.format]
+exclude = ["**/migrations/*"]
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+mypy_path = "backend:backend/apps"
+
+[[tool.mypy.overrides]]
+module = [
+    "edupulse_ml.*",
+    "predictions.*",
+]
+disallow_untyped_defs = true

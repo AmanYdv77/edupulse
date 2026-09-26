@@ -1,0 +1,39 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^frontend/dist/
+      - id: end-of-file-fixer
+        exclude: ^frontend/dist/
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+        exclude: ^StudentPerformanceFactors\.csv$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: block-model-and-db-artifacts
+        name: Block model files and database binaries from git
+        entry: bash -c 'for f in "$@"; do case "$f" in *.pkl|*.joblib|*.sqlite3) echo "ERROR: Binary model or database artifact cannot be committed: $f" >&2; exit 1 ;; esac; done' --
+        language: system
+        types: [file]
+        exclude: ^(tests/fixtures/|artifacts/)
