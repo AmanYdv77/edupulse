@@ -26,8 +26,14 @@ from academics.models import (
     TeachingAssignment,
 )
 from predictions.models import ModelVersion
-from predictions.services import PredictorService
+from predictions.services import PredictorService, predict_for_students
 
+from .caching import (
+    get_student_prediction_version,
+    make_prediction_cache_key,
+    safe_cache_get,
+    safe_cache_set,
+)
 from .pagination import StandardResultsSetPagination
 from .permissions import (
     IsSelfOrInStaffScope,
@@ -256,23 +262,38 @@ class StudentPredictionsView(views.APIView):
         else:
             target_sem = student.current_semester
 
-        predictions = PredictorService.predict_student(student, semester=target_sem)
+        cache_key = make_prediction_cache_key(student.id, target_sem)
+        version = get_student_prediction_version(student.id)
+        cached = safe_cache_get(cache_key, version=version)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
+        active_models = PredictorService.get_active_models()
+        mv = PredictorService.active_for(student, active_models=active_models) if active_models else None
+        if not mv and active_models:
+            mv = active_models.get("baseline") or active_models.get("institute")
+
+        predictions = (
+            predict_for_students([student], model_version=mv, semester=target_sem)
+            if mv
+            else []
+        )
 
         prediction_items = []
         for p in predictions:
             prediction_items.append({
                 "subject_code": p.subject_code,
-                "subject_name": p.subject_name,
+                "subject_name": p.subject_title,
                 "semester": p.semester,
-                "predicted_score": p.predicted_score,
-                "confidence_score": p.confidence_score,
+                "predicted_score": round(p.predicted_percentage, 1) if p.predicted_percentage is not None else None,
+                "confidence_score": 0.85 if p.predicted_percentage is not None else None,
                 "risk_band": p.risk_band,
                 "model_label": p.model_label,
                 "model_version": p.model_version,
                 "factors": p.factors,
                 "disclaimer": p.disclaimer,
-                "insufficient_data": p.insufficient_data,
-                "insufficient_data_reasons": p.insufficient_data_reasons,
+                "insufficient_data": p.predicted_percentage is None,
+                "insufficient_data_reasons": p.reasons,
             })
 
         data = {
@@ -280,7 +301,9 @@ class StudentPredictionsView(views.APIView):
             "target_semester": target_sem,
             "predictions": prediction_items,
         }
-        return Response(StudentPredictionsResponseSerializer(data).data)
+        serialized = StudentPredictionsResponseSerializer(data).data
+        safe_cache_set(cache_key, serialized, timeout=600, version=version)
+        return Response(serialized, status=status.HTTP_200_OK)
 
 
 # ============================================================================

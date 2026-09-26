@@ -10,7 +10,7 @@ from pathlib import Path
 os.environ.setdefault("DJANGO_SECRET_KEY", "insecure-test-secret-key-for-pytest-infra-only-32chars")
 
 # Default test database URL pointing to local Docker PostgreSQL instance
-DEFAULT_TEST_DB = "postgres://postgres:edupulse_dev_secret_pw@127.0.0.1:55432/edupulse_test"
+DEFAULT_TEST_DB = "postgres://postgres:edupulse_dev_secret_pw@127.0.0.1:54432/edupulse_test"
 
 # If DATABASE_URL is not explicitly provided in environment or .env, default to DEFAULT_TEST_DB
 if "DATABASE_URL" not in os.environ:
@@ -19,13 +19,26 @@ if "DATABASE_URL" not in os.environ:
     db_url_in_env = None
     if env_file.is_file():
         with open(env_file, "r", encoding="utf-8") as f:
-            for line in f:
+            lines = f.readlines()
+            # First look for TEST_DATABASE_URL
+            for line in lines:
                 line = line.strip()
-                if line.startswith("DATABASE_URL="):
+                if line.startswith("TEST_DATABASE_URL="):
                     db_url_in_env = line.split("=", 1)[1].strip().strip('"').strip("'")
                     break
+            # If not found, look for DATABASE_URL ending in _test
+            if not db_url_in_env:
+                for line in lines:
+                    line = line.strip()
+                    if line.startswith("DATABASE_URL="):
+                        val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                        if val.endswith("_test"):
+                            db_url_in_env = val
+                            break
     if not db_url_in_env:
         os.environ["DATABASE_URL"] = DEFAULT_TEST_DB
+    else:
+        os.environ["DATABASE_URL"] = db_url_in_env
 
 from .base import *
 
@@ -51,3 +64,13 @@ if not db_name.endswith("_test"):
 # Ensure Django test runner uses the pre-created test database directly
 DATABASES["default"].setdefault("TEST", {})
 DATABASES["default"]["TEST"]["NAME"] = DATABASES["default"]["NAME"]
+
+# Hermetic in-memory cache for test suite
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "edupulse-test-locmem",
+        "TIMEOUT": 300,
+    }
+}
+

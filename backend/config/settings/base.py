@@ -206,3 +206,20 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
     'COMPONENT_SPLIT_REQUEST': True,
 }
+
+# Redis Cache configuration
+REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/1")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,  # Graceful fallback to DB if Redis is unreachable
+        },
+        "KEY_PREFIX": "edupulse",
+        "TIMEOUT": 300,  # 5 minutes default TTL
+    }
+}
+
