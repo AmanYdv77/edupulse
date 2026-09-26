@@ -7,3 +7,4 @@ export * from './EmptyState';
 export * from './ErrorState';
 export * from './ModelLabel';
 export * from './DataTable';
+export * from './AccessibleChart';
