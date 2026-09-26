@@ -82,7 +82,7 @@ jobs:
         run: npm run build
 
       - name: Upload Frontend Dist Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist
@@ -216,7 +216,7 @@ jobs:
 
       - name: Upload E2E Failure Artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-failure-artifacts
           path: tests/e2e/artifacts
