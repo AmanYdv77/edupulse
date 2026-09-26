@@ -12,6 +12,12 @@ from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.caching import (
+    get_analytics_cache_version,
+    make_analytics_cache_key,
+    safe_cache_get,
+    safe_cache_set,
+)
 from api.pagination import StandardResultsSetPagination
 from api.permissions import CanExportAtRiskRoster, CanViewAnalytics, CanViewAtRiskRoster
 from api.throttling import ExportRateThrottle, UserReadRateThrottle
@@ -76,8 +82,19 @@ class AnalyticsOverviewAPIView(APIView):
     )
     def get(self, request):
         scope_ctx = get_scope_context(request.user)
+        cache_key = make_analytics_cache_key(
+            "overview",
+            scope_ctx,
+            request.query_params.dict(),
+        )
+        version = get_analytics_cache_version()
+        cached = safe_cache_get(cache_key, version=version)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
         data = get_analytics_overview(scope_ctx, request.query_params)
         serializer = AnalyticsOverviewSerializer(data)
+        safe_cache_set(cache_key, serializer.data, version=version)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -119,8 +136,19 @@ class AnalyticsBreakdownAPIView(APIView):
             )
 
         scope_ctx = get_scope_context(request.user)
+        cache_key = make_analytics_cache_key(
+            f"breakdown_{by}",
+            scope_ctx,
+            request.query_params.dict(),
+        )
+        version = get_analytics_cache_version()
+        cached = safe_cache_get(cache_key, version=version)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
         data = get_analytics_breakdown(scope_ctx, by, request.query_params)
         serializer = AnalyticsBreakdownResponseSerializer(data)
+        safe_cache_set(cache_key, serializer.data, version=version)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -160,8 +188,19 @@ class AnalyticsTrendAPIView(APIView):
             )
 
         scope_ctx = get_scope_context(request.user)
+        cache_key = make_analytics_cache_key(
+            f"trend_{metric}",
+            scope_ctx,
+            request.query_params.dict(),
+        )
+        version = get_analytics_cache_version()
+        cached = safe_cache_get(cache_key, version=version)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
         data = get_analytics_trend(scope_ctx, metric, request.query_params)
         serializer = AnalyticsTrendResponseSerializer(data)
+        safe_cache_set(cache_key, serializer.data, version=version)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -194,8 +233,19 @@ class AnalyticsDistributionAPIView(APIView):
             raise ParseError("The 'subject' query parameter must be a valid integer ID.")
 
         scope_ctx = get_scope_context(request.user)
+        cache_key = make_analytics_cache_key(
+            f"distribution_{subject_id}",
+            scope_ctx,
+            request.query_params.dict(),
+        )
+        version = get_analytics_cache_version()
+        cached = safe_cache_get(cache_key, version=version)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
         data = get_analytics_distribution(scope_ctx, subject_id, request.query_params)
         serializer = AnalyticsDistributionResponseSerializer(data)
+        safe_cache_set(cache_key, serializer.data, version=version)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

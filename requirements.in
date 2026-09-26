@@ -11,3 +11,6 @@ numpy
 joblib
 djangorestframework
 drf-spectacular
+django-redis
+redis
+
