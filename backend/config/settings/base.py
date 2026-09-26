@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'predictions',
     'analytics',
     'api',
+    'core',
 ]
 
 # Custom User model with institutional role hierarchy
@@ -75,6 +76,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'accounts.middleware.NoCacheAuthenticatedMiddleware',
+    'core.middleware.SecurityHeadersMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -149,8 +151,15 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-
 STATIC_URL = 'static/'
+FRONTEND_DIST_DIR = REPO_DIR / 'frontend' / 'dist'
+
+STATICFILES_DIRS = [
+    d for d in [
+        BASE_DIR / 'templates' / 'static',
+        FRONTEND_DIST_DIR / 'assets',
+    ] if d.is_dir()
+]
 
 # Authentication redirects
 LOGIN_REDIRECT_URL = "home"
