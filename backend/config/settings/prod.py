@@ -16,6 +16,16 @@ if not MODEL_ARTIFACT_DIR:
     raise ImproperlyConfigured("MODEL_ARTIFACT_DIR environment variable must be set in production.")
 
 
+# Production Staticfiles Storage (WhiteNoise compressed and manifest-hashed)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # Deployment & HTTPS Security Hardening
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

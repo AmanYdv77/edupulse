@@ -1,13 +1,22 @@
+x-app-environment: &app-environment
+  DJANGO_ENV: ${DJANGO_ENV:-dev}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env}
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-0}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+  DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-edupulse_dev}
+  REDIS_CACHE_URL: redis://:${REDIS_PASSWORD:-edupulse_redis_secret_pw}@redis-cache:6379/1
+  REDIS_BROKER_URL: redis://:${REDIS_PASSWORD:-edupulse_redis_secret_pw}@redis-broker:6379/2
+  REDIS_URL: redis://:${REDIS_PASSWORD:-edupulse_redis_secret_pw}@redis-cache:6379/1
+  MODEL_ARTIFACT_DIR: /app/artifacts/models
+
 services:
   db:
     image: postgres:16-alpine
     container_name: edupulse-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: edupulse_dev
+      POSTGRES_DB: ${POSTGRES_DB:-edupulse_dev}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    ports:
-      - "${POSTGRES_PORT:-54432}:5432"
     volumes:
       - edupulse_pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -21,11 +30,15 @@ services:
     image: redis:7-alpine
     container_name: edupulse-redis-cache
     restart: unless-stopped
-    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
-    ports:
-      - "${REDIS_CACHE_PORT:-56379}:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-edupulse_redis_secret_pw}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-edupulse_redis_secret_pw}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -34,17 +47,117 @@ services:
     image: redis:7-alpine
     container_name: edupulse-redis-broker
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory-policy noeviction
-    ports:
-      - "${REDIS_BROKER_PORT:-56380}:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-edupulse_redis_secret_pw}
+      --maxmemory-policy noeviction
+      --appendonly yes
     volumes:
       - edupulse_redis_broker_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-edupulse_redis_secret_pw}", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edupulse-migrate
+    environment: *app-environment
+    command: python backend/manage.py migrate --noinput
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - edupulse_model_artifacts:/app/artifacts/models
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edupulse-web
+    restart: unless-stopped
+    environment: *app-environment
+    ports:
+      - "${PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-broker:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - edupulse_model_artifacts:/app/artifacts/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edupulse-worker
+    restart: unless-stopped
+    environment: *app-environment
+    command: celery -A config worker --loglevel=info --concurrency=2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-broker:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - edupulse_model_artifacts:/app/artifacts/models
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; from celery import Celery; sys.exit(0)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edupulse-beat
+    restart: unless-stopped
+    environment: *app-environment
+    command: celery -A config beat --loglevel=info
+    deploy:
+      replicas: 1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-broker:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - edupulse_model_artifacts:/app/artifacts/models
+
+  tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles:
+      - tools
+    environment: *app-environment
+    volumes:
+      - edupulse_model_artifacts:/app/artifacts/models
+      - ${DATA_DIR:-./data}:/app/data:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   edupulse_pgdata:
   edupulse_redis_broker_data:
+  edupulse_model_artifacts:

@@ -14,3 +14,5 @@ drf-spectacular
 django-redis
 redis
 celery[redis]
+gunicorn
+whitenoise[brotli]
