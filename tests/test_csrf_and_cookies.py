@@ -117,6 +117,7 @@ class TestCsrfAndCookieHardening:
         env["DATABASE_URL"] = "postgres://postgres:postgres@localhost:55432/edupulse_prod"
         env["DJANGO_ALLOWED_HOSTS"] = "edupulse.example.com"
         env["MODEL_ARTIFACT_DIR"] = str(Path(settings.BASE_DIR).parent / "artifacts" / "models")
+        env.pop("DJANGO_ALLOW_ASYNC_UNSAFE", None)
 
         manage_py = Path(settings.BASE_DIR) / "manage.py"
         res = subprocess.run(

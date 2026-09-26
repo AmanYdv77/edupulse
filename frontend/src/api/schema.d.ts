@@ -101,6 +101,13 @@ export interface paths {
      */
     get: operations["v1_models_list"];
   };
+  "/api/v1/models/{id}/activate/": {
+    /**
+     * Activate Model Version
+     * @description Promotes a model version to active serving in its slot.
+     */
+    post: operations["v1_models_activate_create"];
+  };
   "/api/v1/students/{id}/predictions/": {
     /**
      * Student Performance Predictions
@@ -739,6 +746,24 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["ModelVersion"][];
+        };
+      };
+    };
+  };
+  /**
+   * Activate Model Version
+   * @description Promotes a model version to active serving in its slot.
+   */
+  v1_models_activate_create: {
+    parameters: {
+      path: {
+        id: number;
+      };
+    };
+    responses: {
+      200: {
+        content: {
+          "application/json": components["schemas"]["ModelVersion"];
         };
       };
     };

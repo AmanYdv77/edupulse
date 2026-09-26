@@ -8,3 +8,5 @@ pytest-django
 pytest-cov
 factory-boy
 Faker
+pytest-playwright
+playwright

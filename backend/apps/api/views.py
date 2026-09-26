@@ -206,7 +206,10 @@ class StudentResultsView(views.APIView):
         tags=["Academics"],
     )
     def get(self, request, id: int):
-        student = get_object_or_404(StudentProfile, pk=id)
+        from django.db.models import Q
+        student = StudentProfile.objects.filter(Q(pk=id) | Q(user_id=id)).first()
+        if not student:
+            return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, student)
 
         # Query semester results
@@ -250,7 +253,10 @@ class StudentPredictionsView(views.APIView):
         tags=["Predictions"],
     )
     def get(self, request, id: int):
-        student = get_object_or_404(StudentProfile, pk=id)
+        from django.db.models import Q
+        student = StudentProfile.objects.filter(Q(pk=id) | Q(user_id=id)).first()
+        if not student:
+            return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
         self.check_object_permissions(request, student)
 
         target_sem = request.query_params.get("semester")
@@ -462,30 +468,34 @@ class BulkInternalMarksView(views.APIView):
 
         # 2. Pre-validate every single mark entry
         row_errors = []
-        batch_student_ids = set(batch.students.values_list("id", flat=True))
+        batch_students = list(StudentProfile.objects.filter(batch=batch))
+        student_id_to_profile_id = {}
+        for s in batch_students:
+            student_id_to_profile_id[s.id] = s.id
+            student_id_to_profile_id[s.user_id] = s.id
 
         for idx, entry in enumerate(marks_entries, start=1):
-            student_id = entry["student_id"]
+            raw_id = entry["student_id"]
             mark_val = Decimal(str(entry["internal_marks"]))
 
-            if student_id not in batch_student_ids:
+            if raw_id not in student_id_to_profile_id:
                 row_errors.append({
                     "row": idx,
-                    "student_id": student_id,
-                    "error": f"Student ID {student_id} is not enrolled in batch '{batch.name}'.",
+                    "student_id": raw_id,
+                    "error": f"Student ID {raw_id} is not enrolled in batch '{batch.batch_code}'.",
                 })
                 continue
 
             if mark_val < Decimal("0.0"):
                 row_errors.append({
                     "row": idx,
-                    "student_id": student_id,
+                    "student_id": raw_id,
                     "error": "Internal marks cannot be negative.",
                 })
             elif mark_val > internal_max:
                 row_errors.append({
                     "row": idx,
-                    "student_id": student_id,
+                    "student_id": raw_id,
                     "error": f"Internal marks ({mark_val}) exceed subject maximum ({internal_max}).",
                 })
 
@@ -502,14 +512,15 @@ class BulkInternalMarksView(views.APIView):
         # 3. Atomic Database Update
         with transaction.atomic():
             for entry in marks_entries:
-                student_id = entry["student_id"]
+                raw_id = entry["student_id"]
+                profile_id = student_id_to_profile_id[raw_id]
                 mark_val = entry["internal_marks"]
 
                 result, _ = Result.objects.get_or_create(
-                    student_id=student_id,
+                    student_id=profile_id,
                     subject=subject,
+                    semester=subject.semester,
                     defaults={
-                        "semester": subject.semester,
                         "max_marks": 100,
                         "total_secured": 0,
                     },
@@ -546,3 +557,34 @@ class ModelVersionListView(views.APIView):
     def get(self, request):
         models = ModelVersion.objects.all().order_by("-id")
         return Response(ModelVersionSerializer(models, many=True).data)
+
+
+class ModelVersionActivateView(views.APIView):
+    """
+    Activates a specific model version in its deployment slot.
+    Deactivates any other active model version in the same slot.
+    Restricted to SYSTEM_ADMIN role only.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsSystemAdminUser]
+    serializer_class = ModelVersionSerializer
+
+    @extend_schema(
+        summary="Activate Model Version",
+        description="Promotes a model version to active serving in its slot.",
+        request=None,
+        responses={200: ModelVersionSerializer},
+        tags=["Admin"],
+    )
+    def post(self, request, id: int):
+        model_ver = get_object_or_404(ModelVersion, pk=id)
+        with transaction.atomic():
+            ModelVersion.objects.filter(slot=model_ver.slot).update(is_active=False)
+            model_ver.is_active = True
+            model_ver.save(update_fields=["is_active"])
+        return Response(
+            {
+                "detail": f"Model version {model_ver.slot} v{model_ver.version} successfully activated.",
+                "model": ModelVersionSerializer(model_ver).data,
+            },
+            status=status.HTTP_200_OK,
+        )
