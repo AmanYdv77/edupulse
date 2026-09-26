@@ -5,7 +5,7 @@ import { Skeleton } from './ui/Skeleton';
 
 export interface RouteGuardProps {
   children: React.ReactElement;
-  requiredCapability?: string;
+  requiredCapability?: string | string[];
 }
 
 export const RouteGuard: React.FC<RouteGuardProps> = ({ children, requiredCapability }) => {
@@ -25,8 +25,14 @@ export const RouteGuard: React.FC<RouteGuardProps> = ({ children, requiredCapabi
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredCapability && !hasCapability(requiredCapability)) {
-    return <Navigate to="/unauthorized" replace />;
+  if (requiredCapability) {
+    const isAuthorized = Array.isArray(requiredCapability)
+      ? requiredCapability.some((c) => hasCapability(c))
+      : hasCapability(requiredCapability);
+
+    if (!isAuthorized) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
   return children;

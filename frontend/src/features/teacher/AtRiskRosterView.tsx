@@ -107,7 +107,10 @@ export const AtRiskRosterView: React.FC = () => {
           </p>
         </div>
 
-        {hasCapability('export_at_risk_roster') && (
+        {(hasCapability('export_at_risk_roster') ||
+          hasCapability('export_class_roster') ||
+          hasCapability('export_department_roster') ||
+          hasCapability('export_school_roster')) && (
           <Button variant="outline" size="sm" onClick={handleExportCsv} leftIcon="📥">
             Export CSV
           </Button>

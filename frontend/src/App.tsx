@@ -71,7 +71,7 @@ export const App: React.FC = () => {
               <Route
                 path="student/habits"
                 element={
-                  <RouteGuard requiredCapability="log_habits">
+                  <RouteGuard requiredCapability={['submit_habit_checkin', 'view_own_habits']}>
                     <HabitCheckIn />
                   </RouteGuard>
                 }
@@ -81,7 +81,14 @@ export const App: React.FC = () => {
               <Route
                 path="analytics"
                 element={
-                  <RouteGuard requiredCapability="view_analytics">
+                  <RouteGuard
+                    requiredCapability={[
+                      'view_department_analytics',
+                      'view_school_analytics',
+                      'view_executive_analytics',
+                      'view_class_analytics',
+                    ]}
+                  >
                     <ScopeAnalyticsView />
                   </RouteGuard>
                 }
@@ -89,7 +96,7 @@ export const App: React.FC = () => {
               <Route
                 path="classes"
                 element={
-                  <RouteGuard requiredCapability="view_analytics">
+                  <RouteGuard requiredCapability="view_teaching_assignments">
                     <TeacherClassesView />
                   </RouteGuard>
                 }
@@ -97,7 +104,7 @@ export const App: React.FC = () => {
               <Route
                 path="roster"
                 element={
-                  <RouteGuard requiredCapability="view_at_risk_roster">
+                  <RouteGuard requiredCapability={['view_at_risk_roster', 'view_class_analytics']}>
                     <AtRiskRosterView />
                   </RouteGuard>
                 }
@@ -117,7 +124,7 @@ export const App: React.FC = () => {
               <Route
                 path="models"
                 element={
-                  <RouteGuard requiredCapability="manage_model_registry">
+                  <RouteGuard requiredCapability="manage_models">
                     <ModelRegistryView />
                   </RouteGuard>
                 }

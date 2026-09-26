@@ -7,19 +7,24 @@ import './AppLayout.css';
 interface NavItem {
   label: string;
   to: string;
-  capability?: string;
+  capability?: string | string[];
   icon?: string;
 }
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: '📊' },
   { label: 'My Results', to: '/student/results', capability: 'view_own_results', icon: '📝' },
-  { label: 'Habit Check-In', to: '/student/habits', capability: 'log_habits', icon: '⏱️' },
-  { label: 'My Classes', to: '/classes', capability: 'enter_internal_marks', icon: '🏫' },
-  { label: 'Institutional Analytics', to: '/analytics', capability: 'view_analytics', icon: '📈' },
-  { label: 'At-Risk Roster', to: '/roster', capability: 'view_at_risk_roster', icon: '⚠️' },
+  { label: 'Habit Check-In', to: '/student/habits', capability: ['submit_habit_checkin', 'view_own_habits', 'log_habits'], icon: '⏱️' },
+  { label: 'My Classes', to: '/classes', capability: ['view_teaching_assignments', 'enter_internal_marks'], icon: '🏫' },
+  {
+    label: 'Institutional Analytics',
+    to: '/analytics',
+    capability: ['view_analytics', 'view_department_analytics', 'view_school_analytics', 'view_executive_analytics', 'view_class_analytics'],
+    icon: '📈',
+  },
+  { label: 'At-Risk Roster', to: '/roster', capability: ['view_at_risk_roster', 'view_class_analytics'], icon: '⚠️' },
   { label: 'Internal Marks Entry', to: '/marks', capability: 'enter_internal_marks', icon: '✏️' },
-  { label: 'Model Registry', to: '/models', capability: 'manage_model_registry', icon: '🤖' },
+  { label: 'Model Registry', to: '/models', capability: ['manage_models', 'manage_model_registry'], icon: '🤖' },
 ];
 
 export const AppLayout: React.FC = () => {
@@ -29,7 +34,9 @@ export const AppLayout: React.FC = () => {
 
   const authorizedNavItems = ALL_NAV_ITEMS.filter((item) => {
     if (!item.capability) return true;
-    return hasCapability(item.capability);
+    return Array.isArray(item.capability)
+      ? item.capability.some((c) => hasCapability(c))
+      : hasCapability(item.capability);
   });
 
   const handleLogout = async () => {

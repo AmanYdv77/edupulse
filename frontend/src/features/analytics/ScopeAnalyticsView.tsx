@@ -25,9 +25,13 @@ export const ScopeAnalyticsView: React.FC = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isExecutive = ['VICE_CHANCELLOR', 'REGISTRAR', 'CONTROLLER_OF_EXAMINATIONS'].includes(
-    user?.role || ''
-  );
+  const isExecutive = [
+    'VC',
+    'REGISTRAR',
+    'CONTROLLER_OF_EXAMS',
+    'VICE_CHANCELLOR',
+    'CONTROLLER_OF_EXAMINATIONS',
+  ].includes(user?.role || '');
 
   const defaultBreakdownBy = user?.role === 'DEAN' ? 'department' : 'course';
   const breakdownBy = searchParams.get('by') || defaultBreakdownBy;

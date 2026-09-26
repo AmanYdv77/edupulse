@@ -63,7 +63,7 @@ class UserMeSerializer(serializers.Serializer):
 
 class SubjectResultItemSerializer(serializers.ModelSerializer):
     subject_code = serializers.CharField(source="subject.code", read_only=True)
-    subject_name = serializers.CharField(source="subject.name", read_only=True)
+    subject_name = serializers.CharField(source="subject.title", read_only=True)
     subject_credits = serializers.IntegerField(source="subject.credits", read_only=True)
     grade = serializers.CharField(source="letter_grade", read_only=True)
 
@@ -217,10 +217,10 @@ class HabitCheckInLogSerializer(serializers.ModelSerializer):
 class TeachingAssignmentSerializer(serializers.ModelSerializer):
     subject_id = serializers.IntegerField(source="subject.id", read_only=True)
     subject_code = serializers.CharField(source="subject.code", read_only=True)
-    subject_name = serializers.CharField(source="subject.name", read_only=True)
+    subject_name = serializers.CharField(source="subject.title", read_only=True)
     internal_max = serializers.IntegerField(source="subject.internal_max", read_only=True)
     batch_id = serializers.IntegerField(source="batch.id", read_only=True)
-    batch_name = serializers.CharField(source="batch.name", read_only=True)
+    batch_name = serializers.CharField(source="batch.batch_code", read_only=True)
     course_name = serializers.CharField(source="batch.course.name", read_only=True)
     semester = serializers.IntegerField(source="subject.semester", read_only=True)
 

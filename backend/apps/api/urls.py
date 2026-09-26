@@ -14,6 +14,7 @@ from .views import (
     TeachingAssignmentsView,
     BulkInternalMarksView,
     ModelVersionListView,
+    ModelVersionActivateView,
 )
 from analytics.api_views import (
     AnalyticsOverviewAPIView,
@@ -46,6 +47,7 @@ urlpatterns = [
 
     # Model Registry
     path("models/", ModelVersionListView.as_view(), name="models"),
+    path("models/<int:id>/activate/", ModelVersionActivateView.as_view(), name="model-activate"),
 
     # Analytics API Family
     path("analytics/overview/", AnalyticsOverviewAPIView.as_view(), name="analytics-overview"),

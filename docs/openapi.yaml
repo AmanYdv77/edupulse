@@ -438,6 +438,28 @@ paths:
                 items:
                   $ref: '#/components/schemas/ModelVersion'
           description: ''
+  /api/v1/models/{id}/activate/:
+    post:
+      operationId: v1_models_activate_create
+      description: Promotes a model version to active serving in its slot.
+      summary: Activate Model Version
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Admin
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelVersion'
+          description: ''
   /api/v1/students/{id}/predictions/:
     get:
       operationId: v1_students_predictions_retrieve
