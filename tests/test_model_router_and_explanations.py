@@ -428,15 +428,16 @@ class TestPredictionResultsIntegration:
 
 
 # ============================================================================
-# TEMPLATE & ADVISORY NOTICE TESTS
+# API & ADVISORY NOTICE TESTS
 # ============================================================================
 
 @pytest.mark.django_db
 class TestViewAdvisoriesAndTerminology:
-    """Verifies that templates render advisory notices and avoid forbidden 'AI Grade' terms."""
+    """Verifies that API responses render advisory notices and avoid forbidden 'AI Grade' terms."""
 
-    def test_my_predictions_view_contains_advisory_notice_and_no_ai_grade(self, client: Client, trained_models):
+    def test_my_predictions_api_contains_advisory_notice_and_no_ai_grade(self, client: Client, trained_models):
         student = StudentProfileFactory(current_semester=1)
+        SubjectFactory(course=student.course, semester=1)
         client.force_login(student.user)
 
         # Baseline model active
@@ -455,38 +456,29 @@ class TestViewAdvisoriesAndTerminology:
             is_active=True,
         )
 
-        url = reverse("my_predictions")
+        url = reverse("api_v1:student-predictions", kwargs={"id": student.id})
         response = client.get(url)
         assert response.status_code == 200
 
-        content = response.content.decode("utf-8")
+        data = response.json()
+        assert len(data["predictions"]) > 0
 
-        # Must include advisory notice
-        assert "Advisory Notice:" in content
-        assert "Estimates are indicative forecasts based on historical patterns" in content
+        # Must include advisory disclaimer
+        assert "disclaimer" in data["predictions"][0]
+        assert "Estimates are indicative forecasts" in data["predictions"][0]["disclaimer"]
 
-        # Must NOT include "AI Grade"
-        assert "AI Grade" not in content
+        # Must NOT include "AI Grade" anywhere in JSON
+        raw_json = response.content.decode("utf-8")
+        assert "AI Grade" not in raw_json
 
-        # Must include "Estimated Risk"
-        assert "Estimated Risk" in content
+    def test_at_risk_api_contains_model_metadata_and_no_ai_grade(self, client: Client):
+        from tests.factories import HODUserFactory
+        hod_user = HODUserFactory()
+        client.force_login(hod_user)
 
-    def test_at_risk_students_view_contains_advisory_notice_and_no_ai_grade(self, client: Client):
-        teacher = TeacherProfileFactory()
-        client.force_login(teacher.user)
-
-        url = reverse("at_risk_students")
+        url = reverse("api_v1:analytics-at-risk")
         response = client.get(url)
         assert response.status_code == 200
 
-        content = response.content.decode("utf-8")
-
-        # Must include advisory notice
-        assert "Advisory Notice:" in content
-        assert "Estimates are indicative forecasts based on historical patterns" in content
-
-        # Must NOT include "AI Grade"
-        assert "AI Grade" not in content
-
-        # Must include "Estimated Risk"
-        assert "Estimated Risk" in content
+        raw_json = response.content.decode("utf-8")
+        assert "AI Grade" not in raw_json

@@ -1,7 +1,6 @@
 """
-Tests for security defects and role/scope authorization enforcement (Task A10).
-The 3 formerly-xfailing tests now pass without markers, along with comprehensive
-tests for out-of-scope queries, post verification, and security logging.
+Tests for security defects and role/scope authorization enforcement (Task A10 & REST API).
+Verifies out-of-scope queries, post verification, and security logging without PII leakage.
 """
 
 import logging
@@ -33,25 +32,21 @@ def test_student_cohort_api_access_forbidden(client):
     assert response.status_code == 403, f"Expected HTTP 403 Forbidden, got {response.status_code}"
 
 
-
 @pytest.mark.django_db
 def test_hod_without_department_sees_no_other_department_data(client):
     """
-    Defect 2 (Fixed in A10): An HOD without an assigned department must not be shown data from other departments.
+    Defect 2: An HOD without an assigned department must not receive data from other departments.
     """
     tree = make_university(students_per_batch=2)
     unassigned_hod = HODUserFactory.create(department=None, school=None)
     client.force_login(unassigned_hod)
 
-    url = reverse("analytics_hub")
+    url = reverse("api_v1:analytics-overview")
     response = client.get(url)
 
     assert response.status_code == 200
-    first_dept = Department.objects.first()
-    first_course = first_dept.courses.first() if first_dept else None
-    assert first_course is not None
-    content = response.content.decode("utf-8")
-    assert first_course.code not in content, "Unassigned HOD was shown data from Department.objects.first()"
+    data = response.json()
+    assert data["total_students"] == 0, "Unassigned HOD was shown students from another department"
 
 
 @pytest.mark.django_db
@@ -63,26 +58,24 @@ def test_dean_without_school_sees_no_other_school_data(client):
     unassigned_dean = DeanUserFactory.create(school=None)
     client.force_login(unassigned_dean)
 
-    url = reverse("analytics_hub")
+    url = reverse("api_v1:analytics-overview")
     response = client.get(url)
 
     assert response.status_code == 200
-    first_school = School.objects.first()
-    assert first_school is not None
-    content = response.content.decode("utf-8")
-    assert first_school.name not in content, "Unassigned Dean was shown data from School.objects.first()"
+    data = response.json()
+    assert data["total_students"] == 0, "Unassigned Dean was shown students from another school"
 
 
 @pytest.mark.django_db
 def test_non_teacher_staff_cannot_list_assignments(client):
     """
-    Defect 3 (Fixed in A10): A staff user without a teacher profile must not list university teaching assignments.
+    Defect 3: A staff user without a teacher profile must not list teaching assignments.
     """
     tree = make_university(students_per_batch=2)
-    admin_user = tree["executives"]["admin"]  # is_staff=True, no teacher_profile
+    admin_user = tree["executives"]["admin"]
     client.force_login(admin_user)
 
-    url = reverse("teacher_internal_marks")
+    url = reverse("api_v1:teaching-assignments")
     response = client.get(url)
 
     assert response.status_code == 403, f"Expected HTTP 403 Forbidden, got {response.status_code}"
@@ -106,7 +99,6 @@ def test_api_cohort_query_out_of_scope_returns_403(client):
     assert response.status_code == 403, f"Expected HTTP 403 for out-of-scope department query, got {response.status_code}"
 
 
-
 @pytest.mark.django_db
 def test_teacher_cannot_post_marks_for_unassigned_class(client):
     """
@@ -122,11 +114,15 @@ def test_teacher_cannot_post_marks_for_unassigned_class(client):
 
     client.force_login(teacher_1.user)
 
-    url = reverse("teacher_internal_marks") + f"?assignment={foreign_assignment.id}"
-    response = client.post(url, {
-        "title": "Unauthorized Test",
-        "max_marks": "25.0",
-    })
+    url = reverse("api_v1:internal-marks")
+    payload = {
+        "subject_id": foreign_assignment.subject.id,
+        "batch_id": foreign_assignment.batch.id,
+        "marks": [
+            {"student_id": tree["students"][0].id, "internal_marks": 20.0}
+        ]
+    }
+    response = client.post(url, payload, content_type="application/json")
 
     assert response.status_code == 403, f"Expected HTTP 403 Forbidden, got {response.status_code}"
 
@@ -141,7 +137,7 @@ def test_denied_request_logs_warning_without_pii(client, caplog):
     client.force_login(student_user)
 
     with caplog.at_level(logging.WARNING, logger="accounts.security"):
-        url = reverse("scoped_results")
+        url = reverse("api_v1:teaching-assignments")
         client.get(url)
 
     # Check log message

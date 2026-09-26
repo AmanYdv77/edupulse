@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>403 - CSRF Verification Failed | EduPulse</title>
+  <title>500 - Server Error | EduPulse</title>
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/error.css' %}">
 </head>
 <body>
   <main class="error-card">
-    <div class="error-code">403</div>
-    <h1 class="error-title">CSRF Verification Failed</h1>
-    <p class="error-message">Your session security token was missing, rotated, or expired. Please refresh the application to synchronize your session.</p>
+    <div class="error-code">500</div>
+    <h1 class="error-title">Internal Server Error</h1>
+    <p class="error-message">An unexpected error occurred while processing your request. The engineering team has been notified.</p>
     <div class="error-actions">
       <a href="/app/" class="btn btn-primary">Return to Application</a>
-      <a href="/app/login" class="btn btn-secondary">Log In</a>
     </div>
   </main>
 </body>

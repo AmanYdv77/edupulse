@@ -15,16 +15,15 @@ from tests.factories import make_university
 class TestCsrfAndCookieHardening:
     """Verifies CSRF token flow, cookie security, and bfcache prevention."""
 
-    def test_base_html_has_no_csrf_sync_script(self):
-        """Ensure the fragile inline CSRF synchronizer script is completely removed."""
-        base_html_path = Path(settings.BASE_DIR) / "templates" / "base.html"
-        content = base_html_path.read_text(encoding="utf-8")
-
-        assert "Automatic CSRF Token Synchronizer" not in content
-        assert "getActiveCsrfCookie" not in content
-        assert "syncCsrfInputs" not in content
-        # Ensure no inline script searches for csrfmiddlewaretoken inputs
-        assert "input[name=\"csrfmiddlewaretoken\"]" not in content
+    def test_templates_have_no_csrf_sync_script(self):
+        """Ensure no fragile inline CSRF synchronizer script exists in templates."""
+        templates_dir = Path(settings.BASE_DIR) / "templates"
+        for html_file in templates_dir.glob("*.html"):
+            content = html_file.read_text(encoding="utf-8")
+            assert "Automatic CSRF Token Synchronizer" not in content
+            assert "getActiveCsrfCookie" not in content
+            assert "syncCsrfInputs" not in content
+            assert 'input[name="csrfmiddlewaretoken"]' not in content
 
     def test_base_settings_security_flags(self):
         """Ensure base security settings adhere to hardened defaults."""
@@ -39,13 +38,13 @@ class TestCsrfAndCookieHardening:
     def test_authenticated_html_response_prevents_bfcache(self, client: Client):
         """
         Authenticated HTML responses must have 'Cache-Control: no-store, private'
-        to prevent browsers from caching forms in the back/forward cache (bfcache).
+        to prevent browsers from caching pages in the back/forward cache (bfcache).
         """
         uni = make_university(students_per_batch=1)
         student_user = uni["students"][0].user
         client.force_login(student_user)
 
-        response = client.get("/dashboard/")
+        response = client.get("/app/")
         assert response.status_code == 200
         assert "text/html" in response.headers.get("Content-Type", "")
 
@@ -64,7 +63,7 @@ class TestCsrfAndCookieHardening:
         )
 
         # 1. Authenticated user + text/html -> sets headers
-        req_auth = rf.get("/dashboard/")
+        req_auth = rf.get("/app/")
         req_auth.user = student_user
         res_auth = middleware(req_auth)
         assert res_auth["Cache-Control"] == "no-store, private"
@@ -84,30 +83,24 @@ class TestCsrfAndCookieHardening:
         res_json = json_middleware(req_auth)
         assert "Cache-Control" not in res_json
 
-    def test_form_submission_with_standard_csrf_token(self):
-        """Standard Django CSRF token flow functions properly without client-side script."""
-        # Use an enforcing client to verify CSRF validation
+    def test_api_login_with_standard_csrf_token(self):
+        """Standard CSRF token flow on /api/v1/auth/login/ works with enforce_csrf_checks=True."""
         csrf_client = Client(enforce_csrf_checks=True)
-        get_res = csrf_client.get("/accounts/login/")
-        assert get_res.status_code == 200
+        csrf_res = csrf_client.get("/api/v1/csrf/")
+        assert csrf_res.status_code == 200
+        csrf_token = csrf_res.json().get("csrfToken")
+        assert csrf_token is not None
 
-        # Extract CSRF token from the cookie set by the view
-        csrf_cookie = csrf_client.cookies.get(settings.CSRF_COOKIE_NAME)
-        assert csrf_cookie is not None
-
-        # POST login with invalid credentials to test CSRF token is accepted (not 403 Forbidden)
+        # POST login with invalid credentials and CSRF header
         post_res = csrf_client.post(
-            "/accounts/login/",
-            {
-                "username": "nonexistent_user",
-                "password": "wrong_password",
-                "csrfmiddlewaretoken": csrf_cookie.value,
-            },
+            "/api/v1/auth/login/",
+            {"username": "nonexistent_user", "password": "wrong_password"},
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf_token,
         )
-        # Form re-renders with 200 (invalid login), not 403 CSRF failure
-        assert post_res.status_code == 200
-        assert b"Forbidden" not in post_res.content
-        assert post_res.status_code != 403
+        # Authentication failure (400), not CSRF failure (403)
+        assert post_res.status_code == 400
+        assert post_res.json()["code"] == "authentication_failed"
 
     def test_prod_check_deploy_has_zero_warnings(self):
         """Verify python manage.py check --deploy passes with 0 warnings on prod settings."""

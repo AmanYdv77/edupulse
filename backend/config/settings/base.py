@@ -156,15 +156,15 @@ FRONTEND_DIST_DIR = REPO_DIR / 'frontend' / 'dist'
 
 STATICFILES_DIRS = [
     d for d in [
-        BASE_DIR / 'templates' / 'static',
+        BASE_DIR / 'static',
         FRONTEND_DIST_DIR / 'assets',
     ] if d.is_dir()
 ]
 
 # Authentication redirects
-LOGIN_REDIRECT_URL = "home"
-LOGOUT_REDIRECT_URL = "login"
-LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/app/"
+LOGOUT_REDIRECT_URL = "/app/login"
+LOGIN_URL = "/app/login"
 
 # Machine Learning model artifact storage directory
 MODEL_ARTIFACT_DIR = env("MODEL_ARTIFACT_DIR", default=None)

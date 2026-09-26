@@ -1,5 +1,8 @@
+import logging
 from rest_framework.views import exception_handler
 from rest_framework.exceptions import APIException
+
+logger = logging.getLogger("accounts.security")
 
 
 def custom_exception_handler(exc, context):
@@ -11,6 +14,7 @@ def custom_exception_handler(exc, context):
         "fields": { ... }
     }
     Guarantees no stack traces, raw internal errors, or unhandled shapes leak to the client.
+    Logs security warnings for 403 Forbidden events without PII.
     """
     response = exception_handler(exc, context)
 
@@ -44,6 +48,14 @@ def custom_exception_handler(exc, context):
             code = getattr(exc, "default_code", "unauthenticated")
         elif status_code == 403:
             code = "permission_denied"
+            request = context.get("request") if context else None
+            if request and getattr(request, "user", None) and request.user.is_authenticated:
+                logger.warning(
+                    "Access denied: user_id=%s, role=%s, path=%s",
+                    request.user.id,
+                    getattr(request.user, "role", None),
+                    request.path,
+                )
         elif status_code == 404:
             code = "not_found"
         elif status_code == 429:

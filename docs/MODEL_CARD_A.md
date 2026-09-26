@@ -5,7 +5,7 @@
 - **Model Version:** 1
 - **Deployment Slot:** `baseline`
 - **Algorithm:** ridge_alpha_1.0
-- **Framework:** scikit-learn 1.8.0
+- **Framework:** scikit-learn 1.9.1
 - **Training Timestamp / Python Runtime:** Python 3.12.4
 - **Artifact File:** `model_a_baseline.joblib` (Stored in `MODEL_ARTIFACT_DIR`)
 - **Dataset Fingerprint (SHA-256):** `0159b524d7579b3210d760db3748d1cdd4c3d5a451d50b28d7bafede2f02de76`

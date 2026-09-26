@@ -155,7 +155,7 @@ def test_checkin_post_does_not_mutate_semester_result(client):
         sleep_hours_per_night=None,
     )
 
-    url = reverse("habit_checkin")
+    url = reverse("api_v1:habit-checkins")
     post_data = {
         "log_type": "DAILY",
         "hours_studied": 4.5,
@@ -166,8 +166,8 @@ def test_checkin_post_does_not_mutate_semester_result(client):
         "notes": "Focused study session on algorithms.",
     }
 
-    response = client.post(url, data=post_data, follow=True)
-    assert response.status_code == 200
+    response = client.post(url, data=post_data, content_type="application/json")
+    assert response.status_code == 201
 
     # Verify HabitCheckInLog was created
     assert HabitCheckInLog.objects.filter(student=student).count() == 1
