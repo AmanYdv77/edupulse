@@ -4,16 +4,18 @@ Enforces empirical superiority over the naive baseline and incumbent Model A
 before any custom model can be recommended for activation.
 """
 
-from typing import Any, Mapping, Optional, Sequence, Tuple
+from collections.abc import Mapping
+from typing import Any
+
 from django.conf import settings
 
 
 def should_promote(
     candidate_metrics: Mapping[str, Any],
-    incumbent_metrics: Optional[Mapping[str, Any]],
+    incumbent_metrics: Mapping[str, Any] | None,
     baseline_metrics: Mapping[str, Any],
-    margin: Optional[float] = None,
-) -> Tuple[bool, list[str]]:
+    margin: float | None = None,
+) -> tuple[bool, list[str]]:
     """
     Evaluates whether a newly trained Model B candidate qualifies to replace the incumbent model.
 

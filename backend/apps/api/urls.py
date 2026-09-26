@@ -2,27 +2,28 @@
 URL configuration for the EduPulse Core REST API (/api/v1/).
 """
 
+from analytics.api_views import (
+    AnalyticsBreakdownAPIView,
+    AnalyticsDistributionAPIView,
+    AnalyticsOverviewAPIView,
+    AnalyticsTrendAPIView,
+    AtRiskExportCSVAPIView,
+    AtRiskRosterAPIView,
+)
 from django.urls import path
+
 from .views import (
+    BulkInternalMarksView,
     CSRFView,
+    HabitCheckInListCreateView,
     LoginView,
     LogoutView,
-    UserMeView,
-    StudentResultsView,
-    StudentPredictionsView,
-    HabitCheckInListCreateView,
-    TeachingAssignmentsView,
-    BulkInternalMarksView,
-    ModelVersionListView,
     ModelVersionActivateView,
-)
-from analytics.api_views import (
-    AnalyticsOverviewAPIView,
-    AnalyticsBreakdownAPIView,
-    AnalyticsTrendAPIView,
-    AnalyticsDistributionAPIView,
-    AtRiskRosterAPIView,
-    AtRiskExportCSVAPIView,
+    ModelVersionListView,
+    StudentPredictionsView,
+    StudentResultsView,
+    TeachingAssignmentsView,
+    UserMeView,
 )
 
 app_name = "api_v1"

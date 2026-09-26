@@ -3,7 +3,8 @@ Evaluation metrics for EduPulse predictive modeling.
 Computes continuous regression statistics and threshold-based academic pass/fail classification metrics.
 """
 
-from typing import Any, Mapping
+from typing import Any
+
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 

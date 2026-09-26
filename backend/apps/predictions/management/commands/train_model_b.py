@@ -5,23 +5,24 @@ Enforces real-data checks, environment constraints, and minimum dataset threshol
 
 import os
 import sys
+from typing import Any
+
 import sklearn
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-
-from edupulse_ml.datasets.institute import load_institute_dataset, InsufficientDataError
-from edupulse_ml.train_b import train_and_evaluate_model_b, split_temporal_holdout
+from edupulse_ml.datasets.institute import InsufficientDataError, load_institute_dataset
 from edupulse_ml.evaluate import evaluate_regression
+from edupulse_ml.train_b import split_temporal_holdout, train_and_evaluate_model_b
 from predictions.models import ModelVersion
-from predictions.services import PredictorService
 from predictions.promotion import should_promote
+from predictions.services import PredictorService
 
 
 class Command(BaseCommand):
     help = "Trains, evaluates, and registers Model B (Institutional Custom Model) on verified real institutional records."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
             "--confirm-real-data",
             action="store_true",
@@ -35,7 +36,7 @@ class Command(BaseCommand):
             help="Enable habit telemetry features (v2). Default is False (academic signals only).",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         # 1. Flag Confirmation Guard
         if not options.get("confirm_real_data"):
             raise CommandError(
@@ -60,7 +61,7 @@ class Command(BaseCommand):
         try:
             df = load_institute_dataset(enforce_thresholds=True, use_habits=use_habits)
         except (InsufficientDataError, RuntimeError) as exc:
-            raise CommandError(str(exc))
+            raise CommandError(str(exc)) from exc
 
         self.stdout.write(
             self.style.SUCCESS(

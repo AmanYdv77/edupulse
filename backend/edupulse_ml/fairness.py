@@ -12,8 +12,10 @@ IMPORTANT ETHICAL & GOVERNANCE RULES:
 """
 
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
@@ -139,7 +141,7 @@ def audit_demographic_fairness(
 def save_fairness_report(
     report: dict[str, Any],
     report_filename: str = "fairness_audit_model_b.json",
-    artifact_dir: Optional[Path | str] = None,
+    artifact_dir: Path | str | None = None,
 ) -> Path:
     """
     Persists audit report exclusively to the offline model artifact directory.

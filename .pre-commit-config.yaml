@@ -33,7 +33,8 @@ repos:
     hooks:
       - id: block-model-and-db-artifacts
         name: Block model files and database binaries from git
-        entry: bash -c 'for f in "$@"; do case "$f" in *.pkl|*.joblib|*.sqlite3) echo "ERROR: Binary model or database artifact cannot be committed: $f" >&2; exit 1 ;; esac; done' --
+        entry: >-
+          python -c "import sys; bad = [f for f in sys.argv[1:] if f.endswith(('.pkl', '.joblib', '.sqlite3'))]; sys.exit('ERROR Forbidden binary artifact committed ' + str(bad)) if bad else None"
         language: system
         types: [file]
         exclude: ^(tests/fixtures/|artifacts/)

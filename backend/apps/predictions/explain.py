@@ -4,9 +4,10 @@ Computes per-prediction directional contributions for linear models and global f
 importance for non-linear models without exposing protected demographic attributes.
 """
 
-from typing import Any, Mapping, Optional, Sequence
-import numpy as np
+from collections.abc import Mapping, Sequence
+from typing import Any
 
+import numpy as np
 from edupulse_ml.contract import PROTECTED_ATTRIBUTES
 
 FEATURE_HUMAN_NAMES: dict[str, str] = {
@@ -24,7 +25,7 @@ def explain_prediction(
     model: Any,
     feature_names: Sequence[str],
     feature_values: Mapping[str, Any],
-    model_version: Optional[Any] = None,
+    model_version: Any | None = None,
 ) -> list[dict[str, Any]]:
     """
     Computes top explanatory factors for a given prediction.
@@ -69,7 +70,7 @@ def explain_prediction(
 
     if hasattr(model, "named_steps"):
         # Scikit-learn Pipeline
-        for step_name, step_obj in model.named_steps.items():
+        for _step_name, step_obj in model.named_steps.items():
             if hasattr(step_obj, "coef_"):
                 regressor = step_obj
             elif hasattr(step_obj, "mean_") and hasattr(step_obj, "scale_"):
@@ -104,7 +105,7 @@ def explain_prediction(
             top_factors = contributions[:3]
 
             factors = []
-            for fname, contrib, val in top_factors:
+            for fname, contrib, _val in top_factors:
                 human_name = FEATURE_HUMAN_NAMES.get(fname, fname.replace("_", " ").title())
                 direction = (
                     "positive" if contrib > 0.05 else ("negative" if contrib < -0.05 else "neutral")
@@ -149,7 +150,7 @@ def explain_prediction(
                 "name": human_name,
                 "impact": "Global factor",
                 "direction": "neutral",
-                "description": f"Global influence on model decisions (per-student attribution is unavailable).",
+                "description": "Global influence on model decisions (per-student attribution is unavailable).",
             }
         )
 

@@ -7,18 +7,18 @@ Denied requests are logged at WARNING level with user id, role, and path only (n
 
 import logging
 from functools import wraps
+
+from academics.models import (
+    Batch,
+    Course,
+    Department,
+    Result,
+    School,
+    TeachingAssignment,
+)
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
-
-from academics.models import (
-    School,
-    Department,
-    Course,
-    Batch,
-    Result,
-    TeachingAssignment,
-)
 
 logger = logging.getLogger("accounts.security")
 
@@ -233,9 +233,7 @@ def is_in_scope(user, *, school=None, department=None, course=None, batch=None):
             return False
         if course and course.department.school != user_school:
             return False
-        if batch and batch.course.department.school != user_school:
-            return False
-        return True
+        return not (batch and batch.course.department.school != user_school)
 
     if role == "HOD":
         user_dept = scope["department"]
@@ -247,9 +245,7 @@ def is_in_scope(user, *, school=None, department=None, course=None, batch=None):
             return False
         if course and course.department != user_dept:
             return False
-        if batch and batch.course.department != user_dept:
-            return False
-        return True
+        return not (batch and batch.course.department != user_dept)
 
     if role == "TEACHER":
         teacher = scope["teacher_profile"]
@@ -262,9 +258,9 @@ def is_in_scope(user, *, school=None, department=None, course=None, batch=None):
             return False
         if department and not assignments.filter(batch__course__department=department).exists():
             return False
-        if school and not assignments.filter(batch__course__department__school=school).exists():
-            return False
-        return True
+        return not (
+            school and not assignments.filter(batch__course__department__school=school).exists()
+        )
 
     return False
 
@@ -319,4 +315,6 @@ def capabilities_for(user) -> list[str]:
         return []
 
     role = getattr(user, "role", None)
+    if not role:
+        return []
     return list(ROLE_CAPABILITIES.get(role, []))

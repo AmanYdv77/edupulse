@@ -4,29 +4,28 @@ Enforces default-deny, role capabilities, scope isolation, and OpenAPI documenta
 """
 
 from decimal import Decimal
-from django.conf import settings
-from django.contrib.auth import authenticate, login, logout
-from django.db import transaction
-from django.middleware.csrf import get_token
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
-from rest_framework import permissions, status, views
-from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.response import Response
 
 from academics.models import (
     Batch,
     HabitCheckInLog,
     Result,
     SemesterResult,
-    StudentProfile,
     StudentHabitPreference,
+    StudentProfile,
     Subject,
     TeachingAssignment,
 )
+from django.contrib.auth import authenticate, login, logout
+from django.db import transaction
+from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from predictions.models import ModelVersion
 from predictions.services import PredictorService, predict_for_students
+from rest_framework import permissions, status, views
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
 from .caching import (
     get_student_prediction_version,
@@ -40,15 +39,14 @@ from .permissions import (
     IsStudentUser,
     IsSystemAdminUser,
     IsTeacherUser,
-    StaffOrDevOnly,
 )
 from .serializers import (
     BulkInternalMarksRequestSerializer,
     BulkInternalMarksResponseSerializer,
     CSRFResponseSerializer,
-    LogoutResponseSerializer,
     HabitCheckInLogSerializer,
     LoginRequestSerializer,
+    LogoutResponseSerializer,
     ModelVersionSerializer,
     StudentPredictionsResponseSerializer,
     StudentResultsSerializer,
@@ -56,7 +54,6 @@ from .serializers import (
     UserMeSerializer,
 )
 from .throttling import LoginRateThrottle
-
 
 # ============================================================================
 # 1. CSRF & Authentication Views

@@ -1,8 +1,8 @@
 import logging
 import mimetypes
-from pathlib import Path
+
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseServerError, FileResponse
+from django.http import FileResponse, HttpResponse, HttpResponseServerError
 from django.views import View
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class SPAIndexView(View):
                     elif not mime_type:
                         mime_type = "application/octet-stream"
 
-                    response = FileResponse(open(target_file, "rb"), content_type=mime_type)
+                    response = FileResponse(target_file.open("rb"), content_type=mime_type)
                     # Cache hashed assets indefinitely
                     response["Cache-Control"] = "public, max-age=31536000, immutable"
                     return response

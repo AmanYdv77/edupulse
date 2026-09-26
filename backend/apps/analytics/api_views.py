@@ -5,12 +5,6 @@ score distributions, paginated at-risk rosters, and audited CSV exports.
 """
 
 import csv
-from django.http import HttpResponse
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
-from rest_framework import permissions, status
-from rest_framework.exceptions import ParseError
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from api.caching import (
     get_analytics_cache_version,
@@ -21,6 +15,12 @@ from api.caching import (
 from api.pagination import StandardResultsSetPagination
 from api.permissions import CanExportAtRiskRoster, CanViewAnalytics, CanViewAtRiskRoster
 from api.throttling import ExportRateThrottle, UserReadRateThrottle
+from django.http import HttpResponse
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
+from rest_framework import permissions, status
+from rest_framework.exceptions import ParseError
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import ExportAuditLog
 from .selectors import (
@@ -230,7 +230,7 @@ class AnalyticsDistributionAPIView(APIView):
         try:
             subject_id = int(subject_id_raw)
         except ValueError:
-            raise ParseError("The 'subject' query parameter must be a valid integer ID.")
+            raise ParseError("The 'subject' query parameter must be a valid integer ID.") from None
 
         scope_ctx = get_scope_context(request.user)
         cache_key = make_analytics_cache_key(

@@ -3,26 +3,24 @@ Data selectors and query builders for the accounts domain.
 Extracts dashboard telemetry and KPI computation out of view handlers.
 """
 
-from datetime import timedelta
-from django.db.models import Avg, Count
-from django.utils import timezone
+from typing import Any
 
+from academics.forms import HabitCheckInForm, HabitPreferenceForm
 from academics.models import (
-    Result,
-    StudentProfile,
-    SemesterResult,
     Course,
     Department,
-    School,
-    University,
-    TeacherProfile,
-    TeachingAssignment,
     InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
     StudentHabitPreference,
+    StudentProfile,
+    TeachingAssignment,
+    University,
 )
-from academics.forms import HabitCheckInForm, HabitPreferenceForm
-from predictions.services import predict_for_students, predict_current_subjects
-
+from django.db.models import Avg
+from django.utils import timezone
+from predictions.services import predict_current_subjects, predict_for_students
 
 ROLE_DASHBOARDS = {
     "STUDENT": {
@@ -263,7 +261,7 @@ def get_teacher_dashboard_context(user) -> dict:
         ]
     )
     all_preds = predict_for_students(teacher_students)
-    preds_by_student = {}
+    preds_by_student: dict[int, list[Any]] = {}
     for p in all_preds:
         preds_by_student.setdefault(p.student_id, []).append(p)
 

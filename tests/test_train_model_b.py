@@ -4,21 +4,20 @@ Verifies dataset thresholds, temporal splitting, grouped-CV anti-leakage,
 demographic fairness suppression, promotion decision engine, and CLI command execution.
 """
 
-import os
-import pytest
-import numpy as np
-import pandas as pd
 from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
+
+import numpy as np
+import pandas as pd
+import pytest
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
-
 from edupulse_ml.datasets.institute import (
+    InsufficientDataError,
     load_institute_dataset,
     validate_institute_thresholds,
-    InsufficientDataError,
 )
 from edupulse_ml.fairness import audit_demographic_fairness
 from edupulse_ml.train_b import split_temporal_holdout, train_and_evaluate_model_b
@@ -93,6 +92,7 @@ class TestDatasetAndThresholds:
     @pytest.mark.django_db
     def test_refuses_demo_records(self):
         from academics.models import Result
+
         from tests.factories import make_university
 
         tree = make_university(students_per_batch=5)

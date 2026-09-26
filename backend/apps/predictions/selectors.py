@@ -4,10 +4,11 @@ Guarantees that institutional models are trained strictly on verified real-world
 Synthetic demo or seeded records are strictly barred from all model training pipelines.
 """
 
-from typing import Union
+from typing import Any
+
 import pandas as pd
-from django.db.models import QuerySet
 from academics.models import Result
+from django.db.models import QuerySet
 
 
 def training_rows(allow_demo: bool = False) -> QuerySet[Result]:
@@ -30,7 +31,7 @@ def training_rows(allow_demo: bool = False) -> QuerySet[Result]:
     )
 
 
-def assert_real_training_data(data: Union[QuerySet, pd.DataFrame]) -> bool:
+def assert_real_training_data(data: QuerySet | pd.DataFrame) -> bool:
     """
     Guards model training pipelines by verifying that every record in the provided
     queryset or DataFrame belongs to verified real-world institutional data.
@@ -69,7 +70,7 @@ def assert_real_training_data(data: Union[QuerySet, pd.DataFrame]) -> bool:
     return True
 
 
-def scoped_snapshots_for(user) -> tuple[QuerySet, str]:
+def scoped_snapshots_for(user: Any) -> tuple[QuerySet, str]:
     """
     Returns (snapshots_queryset, scope_label) adhering to the academic organizational hierarchy.
     Enforces strict object-level access boundaries in a single database query.

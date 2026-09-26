@@ -56,8 +56,20 @@ describe('StudentDashboard Component', () => {
                 model_label: 'Ridge (α=1.0)',
                 insufficient_data: false,
                 factors: [
-                  { feature: 'study_hours', name: 'Study Hours', impact: '+4.2 pts', direction: 'positive', description: 'Consistent study routine' },
-                  { feature: 'attendance', name: 'Attendance', impact: '+2.1 pts', direction: 'positive', description: 'High class attendance' },
+                  {
+                    feature: 'study_hours',
+                    name: 'Study Hours',
+                    impact: '+4.2 pts',
+                    direction: 'positive',
+                    description: 'Consistent study routine',
+                  },
+                  {
+                    feature: 'attendance',
+                    name: 'Attendance',
+                    impact: '+2.1 pts',
+                    direction: 'positive',
+                    description: 'High class attendance',
+                  },
                 ],
               },
             ],

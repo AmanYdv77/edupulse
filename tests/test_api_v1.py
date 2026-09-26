@@ -12,41 +12,32 @@ Verifies:
 """
 
 import pytest
-from decimal import Decimal
+from academics.models import (
+    HabitCheckInLog,
+    Result,
+    StudentHabitPreference,
+)
 from django.urls import reverse
+from predictions.models import ModelVersion
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from accounts.models import User
-from accounts.permissions import ROLE_CAPABILITIES, capabilities_for
-from academics.models import (
-    Result,
-    SemesterResult,
-    HabitCheckInLog,
-    StudentHabitPreference,
-    TeachingAssignment,
-)
-from predictions.models import ModelVersion
-
 from .factories import (
-    StudentUserFactory,
-    TeacherUserFactory,
-    HODUserFactory,
-    DeanUserFactory,
-    VCUserFactory,
-    RegistrarUserFactory,
-    ControllerUserFactory,
     AdminUserFactory,
-    SchoolFactory,
-    DepartmentFactory,
-    CourseFactory,
     BatchFactory,
-    SubjectFactory,
-    StudentProfileFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
-    SemesterResultFactory,
+    ControllerUserFactory,
+    DeanUserFactory,
+    HODUserFactory,
+    RegistrarUserFactory,
     ResultFactory,
+    SemesterResultFactory,
+    StudentProfileFactory,
+    StudentUserFactory,
+    SubjectFactory,
+    TeacherProfileFactory,
+    TeacherUserFactory,
+    TeachingAssignmentFactory,
+    VCUserFactory,
 )
 
 
@@ -562,6 +553,7 @@ class TestOpenAPISchema:
     def test_openapi_yaml_exists_and_valid(self):
         """Validates that docs/openapi.yaml exists and schema command completes with 0 warnings."""
         from pathlib import Path
+
         from django.conf import settings
         from django.core.management import call_command
 

@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import { apiClient } from '../../api/client';
 import { Card, CardHeader, CardBody } from '../../components/ui/Card';
@@ -49,7 +57,12 @@ export const StudentResults: React.FC = () => {
   }
 
   if (!resultsData || !resultsData.semester_results || resultsData.semester_results.length === 0) {
-    return <EmptyState title="No results available" description="Official academic results have not been published yet." />;
+    return (
+      <EmptyState
+        title="No results available"
+        description="Official academic results have not been published yet."
+      />
+    );
   }
 
   const semesterResults = resultsData.semester_results;
@@ -81,15 +94,29 @@ export const StudentResults: React.FC = () => {
     { key: 'subject_code', header: 'Subject Code' },
     { key: 'subject_name', header: 'Subject Title' },
     { key: 'subject_credits', header: 'Credits' },
-    { key: 'internal_marks', header: 'Internal Marks', render: (row: SubjectRow) => row.internal_marks ?? '-' },
-    { key: 'total_secured', header: 'Total Score', render: (row: SubjectRow) => `${row.total_secured ?? '-'} / ${row.max_marks ?? 100}` },
-    { key: 'grade', header: 'Grade', render: (row: SubjectRow) => <strong>{row.grade || '-'}</strong> },
+    {
+      key: 'internal_marks',
+      header: 'Internal Marks',
+      render: (row: SubjectRow) => row.internal_marks ?? '-',
+    },
+    {
+      key: 'total_secured',
+      header: 'Total Score',
+      render: (row: SubjectRow) => `${row.total_secured ?? '-'} / ${row.max_marks ?? 100}`,
+    },
+    {
+      key: 'grade',
+      header: 'Grade',
+      render: (row: SubjectRow) => <strong>{row.grade || '-'}</strong>,
+    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>Academic Performance Records</h1>
+        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+          Academic Performance Records
+        </h1>
         <p style={{ color: 'var(--color-text-muted)' }}>
           Official semester grades, marks, and SGPA progression
         </p>
@@ -111,7 +138,13 @@ export const StudentResults: React.FC = () => {
 
       {/* Active Semester Summary Stats */}
       {activeSemResult && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--space-4)',
+          }}
+        >
           <StatCard
             label="Semester SGPA"
             value={activeSemResult.sgpa !== undefined ? activeSemResult.sgpa.toFixed(2) : 'N/A'}
@@ -120,13 +153,22 @@ export const StudentResults: React.FC = () => {
           />
           <StatCard
             label="Percentage"
-            value={activeSemResult.percentage !== undefined ? `${activeSemResult.percentage.toFixed(1)}%` : 'N/A'}
+            value={
+              activeSemResult.percentage !== undefined
+                ? `${activeSemResult.percentage.toFixed(1)}%`
+                : 'N/A'
+            }
             subtitle="Weighted aggregate"
             icon="📊"
           />
           <StatCard
             label="Recorded Attendance"
-            value={activeSemResult.attendance_percentage !== null && activeSemResult.attendance_percentage !== undefined ? `${activeSemResult.attendance_percentage.toFixed(1)}%` : 'Unrecorded'}
+            value={
+              activeSemResult.attendance_percentage !== null &&
+              activeSemResult.attendance_percentage !== undefined
+                ? `${activeSemResult.attendance_percentage.toFixed(1)}%`
+                : 'Unrecorded'
+            }
             subtitle="Official institutional records"
             icon="⏱️"
           />
@@ -158,7 +200,10 @@ export const StudentResults: React.FC = () => {
       {/* Longitudinal SGPA Trend */}
       {trendData.length > 1 && (
         <Card>
-          <CardHeader title="Longitudinal SGPA Trajectory" subtitle="Semester-by-semester grade point average progression" />
+          <CardHeader
+            title="Longitudinal SGPA Trajectory"
+            subtitle="Semester-by-semester grade point average progression"
+          />
           <CardBody>
             <AccessibleChart
               title="SGPA Trajectory"
@@ -176,8 +221,20 @@ export const StudentResults: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="semester" stroke="#9ca3af" />
                   <YAxis domain={[0, 10]} stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#f9fafb' }} />
-                  <Line type="monotone" dataKey="sgpa" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      borderColor: '#374151',
+                      color: '#f9fafb',
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="sgpa"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    dot={{ r: 5 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </AccessibleChart>

@@ -14,27 +14,22 @@ Verifies:
 10. import_institute_data validation correctly flags corrupt rows and headers.
 """
 
-import os
 import random
-import tempfile
-from pathlib import Path
+
 import pytest
+from academics.models import (
+    InternalAssessment,
+    Result,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+)
+from accounts.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
 
-from accounts.models import User
-from academics.models import (
-    StudentProfile,
-    Subject,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-)
 from tests.factories import (
     StudentProfileFactory,
-    CourseFactory,
-    BatchFactory,
-    SubjectFactory,
 )
 
 

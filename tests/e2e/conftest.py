@@ -3,28 +3,28 @@ Playwright End-to-End (E2E) browser test fixtures and configuration.
 Enforces that tests run against the edupulse_e2e database with live Django server.
 """
 
+import contextlib
 import os
+from pathlib import Path
 
 os.environ["DJANGO_ALLOW_ASYNC_UNSAFE"] = "true"
 
 import pytest
-from pathlib import Path
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
     Batch,
+    Course,
+    Department,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
     Subject,
     TeacherProfile,
-    StudentProfile,
     TeachingAssignment,
-    SemesterResult,
-    Result,
-    HabitCheckInLog,
+    University,
 )
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from predictions.models import ModelVersion
 
 User = get_user_model()
@@ -72,10 +72,8 @@ def e2e_page(page, live_server, request):
     if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
         test_name = request.node.name.replace("/", "_").replace("::", "_")
         screenshot_path = ARTIFACTS_DIR / f"fail_{test_name}.png"
-        try:
+        with contextlib.suppress(Exception):
             page.screenshot(path=str(screenshot_path), full_page=True)
-        except Exception:
-            pass
 
     # Strict hygiene assertions: zero third-party requests and zero console errors
     assert not third_party_requests, (

@@ -4,12 +4,12 @@ Serves the versioned REST API (/api/v1/), OpenAPI documentation, Django Admin,
 and the React Single-Page Application (SPA) at /app/.
 """
 
-from django.contrib import admin
-from django.urls import path, include
-from django.views.generic import RedirectView
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from api.permissions import StaffOrDevOnly
 from core.spa import SPAIndexView
+from django.contrib import admin
+from django.urls import include, path
+from django.views.generic import RedirectView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),

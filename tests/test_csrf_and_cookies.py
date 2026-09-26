@@ -2,12 +2,14 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
+from accounts.middleware import NoCacheAuthenticatedMiddleware
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse, JsonResponse
 from django.test import Client, RequestFactory
-from accounts.middleware import NoCacheAuthenticatedMiddleware
+
 from tests.factories import make_university
 
 

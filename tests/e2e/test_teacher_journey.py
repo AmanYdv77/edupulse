@@ -3,6 +3,7 @@ E2E Test: Teacher Journey, Internal Marks Assessment & At-Risk Roster.
 """
 
 import pytest
+
 from tests.e2e.conftest import login_via_ui
 
 pytestmark = [pytest.mark.e2e, pytest.mark.django_db(transaction=True)]

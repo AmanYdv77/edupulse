@@ -14,24 +14,23 @@ Guarded:
 import csv
 import os
 from pathlib import Path
-from django.conf import settings
+
+from academics.models import (
+    Batch,
+    Course,
+    Department,
+    InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+)
+from accounts.models import User
+from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from django.db import transaction
-
-from accounts.models import User
-from academics.models import (
-    School,
-    Department,
-    Course,
-    Batch,
-    Subject,
-    StudentProfile,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-)
 
 
 class Command(BaseCommand):
@@ -65,13 +64,12 @@ class Command(BaseCommand):
 
         # 1. Environment Guard for --commit
         django_env = os.environ.get("DJANGO_ENV", "").strip().lower()
-        if commit:
-            if django_env not in ("prod", "test"):
-                raise CommandError(
-                    f"Security Violation: Real institutional data import with --commit is restricted "
-                    f"to 'prod' and 'test' environments (got DJANGO_ENV='{django_env}'). "
-                    f"Use default dry-run mode for schema validation in development."
-                )
+        if commit and django_env not in ("prod", "test"):
+            raise CommandError(
+                f"Security Violation: Real institutional data import with --commit is restricted "
+                f"to 'prod' and 'test' environments (got DJANGO_ENV='{django_env}'). "
+                f"Use default dry-run mode for schema validation in development."
+            )
 
         # 2. Resolve CSV file paths
         data_dir = options.get("data_dir")
@@ -115,7 +113,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            with open(path, "r", encoding="utf-8-sig") as f:
+            with open(path, encoding="utf-8-sig") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
                 parsed_data[key] = rows

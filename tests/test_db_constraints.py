@@ -5,14 +5,13 @@ and exact boundary values are accepted.
 """
 
 import pytest
+from academics.models import HabitCheckInLog, Result, SemesterResult
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
-from academics.models import Result, SemesterResult, HabitCheckInLog
+
 from tests.factories import (
     StudentProfileFactory,
     SubjectFactory,
-    BatchFactory,
-    TeacherProfileFactory,
 )
 
 
@@ -48,41 +47,38 @@ class TestResultConstraints:
     def test_result_negative_secured_rejected(self):
         student = StudentProfileFactory()
         subject = SubjectFactory(max_marks=100)
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                Result.objects.create(
-                    student=student,
-                    subject=subject,
-                    semester=1,
-                    total_secured=-1,
-                    max_marks=100,
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            Result.objects.create(
+                student=student,
+                subject=subject,
+                semester=1,
+                total_secured=-1,
+                max_marks=100,
+            )
 
     def test_result_secured_exceeding_max_marks_rejected(self):
         student = StudentProfileFactory()
         subject = SubjectFactory(max_marks=100)
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                Result.objects.create(
-                    student=student,
-                    subject=subject,
-                    semester=1,
-                    total_secured=105,
-                    max_marks=100,
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            Result.objects.create(
+                student=student,
+                subject=subject,
+                semester=1,
+                total_secured=105,
+                max_marks=100,
+            )
 
     def test_result_non_positive_max_marks_rejected(self):
         student = StudentProfileFactory()
         subject = SubjectFactory(max_marks=100)
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                Result.objects.create(
-                    student=student,
-                    subject=subject,
-                    semester=1,
-                    total_secured=0,
-                    max_marks=0,
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            Result.objects.create(
+                student=student,
+                subject=subject,
+                semester=1,
+                total_secured=0,
+                max_marks=0,
+            )
 
 
 @pytest.mark.django_db(transaction=True)
@@ -100,14 +96,12 @@ class TestSemesterResultConstraints:
         assert sr2.percentage == 100.0
 
         # Rejection < 0.0
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=3, percentage=-0.1)
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=3, percentage=-0.1)
 
         # Rejection > 100.0
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(student=student, semester=4, percentage=100.5)
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=4, percentage=100.5)
 
     def test_attendance_boundaries_and_rejection(self):
         student = StudentProfileFactory()
@@ -126,17 +120,11 @@ class TestSemesterResultConstraints:
         assert sr3.attendance_percentage == 100.0
 
         # Out of bounds
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(
-                    student=student, semester=4, attendance_percentage=-1.0
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=4, attendance_percentage=-1.0)
 
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(
-                    student=student, semester=5, attendance_percentage=101.0
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=5, attendance_percentage=101.0)
 
     def test_sleep_and_study_boundaries_and_rejection(self):
         student = StudentProfileFactory()
@@ -152,18 +140,12 @@ class TestSemesterResultConstraints:
         assert sr.hours_studied_per_week == 168.0
 
         # Sleep > 24 rejected
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(
-                    student=student, semester=2, sleep_hours_per_night=24.5
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=2, sleep_hours_per_night=24.5)
 
         # Study > 168 rejected
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                SemesterResult.objects.create(
-                    student=student, semester=3, hours_studied_per_week=170.0
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            SemesterResult.objects.create(student=student, semester=3, hours_studied_per_week=170.0)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -181,13 +163,11 @@ class TestHabitCheckInLogConstraints:
         assert log2.sleep_hours == 24.0
 
         # Invalid sleep
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                HabitCheckInLog.objects.create(student=student, sleep_hours=-0.5)
+        with pytest.raises(IntegrityError), transaction.atomic():
+            HabitCheckInLog.objects.create(student=student, sleep_hours=-0.5)
 
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                HabitCheckInLog.objects.create(student=student, sleep_hours=24.5)
+        with pytest.raises(IntegrityError), transaction.atomic():
+            HabitCheckInLog.objects.create(student=student, sleep_hours=24.5)
 
     def test_hours_studied_cadence_constraints(self):
         student = StudentProfileFactory()
@@ -197,11 +177,8 @@ class TestHabitCheckInLogConstraints:
         assert d_ok.hours_studied == 24.0
 
         # DAILY > 24 rejected
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                HabitCheckInLog.objects.create(
-                    student=student, log_type="DAILY", hours_studied=25.0
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            HabitCheckInLog.objects.create(student=student, log_type="DAILY", hours_studied=25.0)
 
         # WEEKLY: 0 to 168 accepted
         w_ok = HabitCheckInLog.objects.create(
@@ -210,11 +187,8 @@ class TestHabitCheckInLogConstraints:
         assert w_ok.hours_studied == 168.0
 
         # WEEKLY > 168 rejected
-        with pytest.raises(IntegrityError):
-            with transaction.atomic():
-                HabitCheckInLog.objects.create(
-                    student=student, log_type="WEEKLY", hours_studied=170.0
-                )
+        with pytest.raises(IntegrityError), transaction.atomic():
+            HabitCheckInLog.objects.create(student=student, log_type="WEEKLY", hours_studied=170.0)
 
 
 @pytest.mark.django_db(transaction=True)

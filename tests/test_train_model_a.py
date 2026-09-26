@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -168,7 +169,7 @@ class TestTrainModelA:
         # 4. Verify metrics.json exists alongside artifact
         metrics_file = artifact_dir / "metrics.json"
         assert metrics_file.is_file()
-        with open(metrics_file, "r", encoding="utf-8") as f:
+        with open(metrics_file, encoding="utf-8") as f:
             saved_metrics = json.load(f)
         assert saved_metrics["slot"] == "baseline"
 

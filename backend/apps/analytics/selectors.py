@@ -5,7 +5,19 @@ differential privacy thresholds (ANALYTICS_MIN_GROUP_SIZE = 10), and strict acad
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
+
+from academics.models import (
+    Batch,
+    Course,
+    Department,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+    TeachingAssignment,
+)
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
@@ -21,18 +33,6 @@ from django.db.models import (
     Subquery,
     Value,
     When,
-)
-
-from academics.models import (
-    Batch,
-    Course,
-    Department,
-    Result,
-    School,
-    SemesterResult,
-    StudentProfile,
-    Subject,
-    TeachingAssignment,
 )
 from predictions.models import ModelVersion, PredictionSnapshot
 
@@ -223,7 +223,7 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
         try:
             school_id = int(school_id)
         except (ValueError, TypeError):
-            raise PermissionDenied("Invalid school filter.")
+            raise PermissionDenied("Invalid school filter.") from None
         if not scope_ctx.is_university_wide and school_id not in scope_ctx.allowed_school_ids:
             raise PermissionDenied("Requested school is outside your authorized academic scope.")
         elif scope_ctx.is_university_wide and not School.objects.filter(id=school_id).exists():
@@ -234,7 +234,7 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
         try:
             department_id = int(department_id)
         except (ValueError, TypeError):
-            raise PermissionDenied("Invalid department filter.")
+            raise PermissionDenied("Invalid department filter.") from None
         if (
             not scope_ctx.is_university_wide
             and department_id not in scope_ctx.allowed_department_ids
@@ -253,7 +253,7 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
         try:
             course_id = int(course_id)
         except (ValueError, TypeError):
-            raise PermissionDenied("Invalid course filter.")
+            raise PermissionDenied("Invalid course filter.") from None
         if not scope_ctx.is_university_wide and course_id not in scope_ctx.allowed_course_ids:
             raise PermissionDenied("Requested course is outside your authorized academic scope.")
         elif scope_ctx.is_university_wide and not Course.objects.filter(id=course_id).exists():
@@ -264,7 +264,7 @@ def validate_and_filter_students(scope_ctx: ScopeContext, filters: dict) -> tupl
         try:
             batch_id = int(batch_id)
         except (ValueError, TypeError):
-            raise PermissionDenied("Invalid batch filter.")
+            raise PermissionDenied("Invalid batch filter.") from None
         if not scope_ctx.is_university_wide and batch_id not in scope_ctx.allowed_batch_ids:
             raise PermissionDenied("Requested batch is outside your authorized academic scope.")
         elif scope_ctx.is_university_wide and not Batch.objects.filter(id=batch_id).exists():

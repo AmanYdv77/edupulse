@@ -1,7 +1,8 @@
 import subprocess
+
 import pytest
-from django.db.models import QuerySet
 from academics.models import Result, StudentProfile
+
 from tests.factories import make_university
 
 

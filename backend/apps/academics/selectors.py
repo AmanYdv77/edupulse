@@ -3,12 +3,12 @@ Query selectors for the academics domain.
 Extracts complex database queries and aggregations out of view functions.
 """
 
-from typing import Any, Tuple
-from django.db.models import Avg, Count
+from typing import Any
+
 from accounts.permissions import scope_for
 
 
-def scoped_results_for(user: Any) -> Tuple[Any, str]:
+def scoped_results_for(user: Any) -> tuple[Any, str]:
     """
     Returns (results_queryset, scope_label) for what THIS user is allowed to see.
     Encodes the academic organizational hierarchy via permissions.scope_for.
@@ -17,7 +17,7 @@ def scoped_results_for(user: Any) -> Tuple[Any, str]:
     return scope["results"], scope["scope_label"]
 
 
-def get_student_results_by_semester(student: Any) -> Tuple[list[dict], bool]:
+def get_student_results_by_semester(student: Any) -> tuple[list[dict], bool]:
     """
     Retrieves and calculates semester-grouped results and SGPA for a student.
     Restricted to published semesters.

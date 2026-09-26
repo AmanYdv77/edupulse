@@ -2,6 +2,8 @@
 Management command to list all registered machine learning model versions.
 """
 
+from typing import Any
+
 from django.core.management.base import BaseCommand
 from predictions.models import ModelVersion
 
@@ -9,7 +11,7 @@ from predictions.models import ModelVersion
 class Command(BaseCommand):
     help = "Lists all registered machine learning model versions and their active statuses."
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         models = ModelVersion.objects.all().order_by("slot", "version")
 
         if not models.exists():

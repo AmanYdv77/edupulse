@@ -5,8 +5,9 @@ Shared configuration inherited by environment-specific settings (dev, test, e2e,
 
 import sys
 from pathlib import Path
-from django.core.exceptions import ImproperlyConfigured
+
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project: BASE_DIR is 'backend/', REPO_DIR is repo root
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

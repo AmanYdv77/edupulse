@@ -6,12 +6,13 @@ Ported from legacy scripts/test_analytics_suite.py to pytest using model factori
 import pytest
 from analytics.engine import (
     compute_cohort_deep_dive,
-    get_student_analytics,
-    get_teacher_analytics,
-    get_hod_analytics,
     get_dean_analytics,
     get_executive_analytics,
+    get_hod_analytics,
+    get_student_analytics,
+    get_teacher_analytics,
 )
+
 from tests.factories import make_university
 
 

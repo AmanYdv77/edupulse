@@ -7,8 +7,9 @@ NEVER reads from the application database.
 import hashlib
 import logging
 from pathlib import Path
-from typing import Tuple
+
 import pandas as pd
+
 from edupulse_ml.contract import FEATURES, validate_feature_list
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ DROPPED_COLUMNS_REASONS = {
 }
 
 
-def load_kaggle_spf(csv_path: Path) -> Tuple[pd.DataFrame, pd.Series, dict]:
+def load_kaggle_spf(csv_path: Path) -> tuple[pd.DataFrame, pd.Series, dict]:
     """
     Loads and cleans the Kaggle Student Performance Factors dataset from the given CSV path.
 

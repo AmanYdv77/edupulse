@@ -6,6 +6,7 @@ Tests academic and institutional scoping across institutional roles.
 import pytest
 from academics.models import Result
 from academics.selectors import scoped_results_for
+
 from tests.factories import make_university
 
 

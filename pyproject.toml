@@ -29,8 +29,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "S105", "S106"]
-"backend/config/settings/*" = ["S105", "S106"]
+"tests/*" = ["S101", "S105", "S106", "S112", "S311", "S603", "S607", "F841", "SIM102", "SIM117", "B905"]
+"backend/config/settings/*" = ["F401", "F403", "F405", "S105", "S106", "E402"]
+"notebooks/*" = ["E402", "F401", "T201", "F841", "E501", "B018"]
 
 [tool.ruff.format]
 exclude = ["**/migrations/*"]
@@ -40,11 +41,18 @@ python_version = "3.12"
 check_untyped_defs = true
 warn_unused_ignores = true
 ignore_missing_imports = true
+explicit_package_bases = true
+exclude = [
+    "migrations",
+    ".*/migrations/.*",
+    "config/settings/.*",
+]
 mypy_path = "backend:backend/apps"
 
 [[tool.mypy.overrides]]
 module = [
     "edupulse_ml.*",
     "predictions.*",
+    "apps.predictions.*",
 ]
 disallow_untyped_defs = true

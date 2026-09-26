@@ -2,12 +2,10 @@
 REST API permission classes enforcing role-based and scope-based access control.
 """
 
+from academics.models import StudentProfile, TeachingAssignment
+from accounts.permissions import capabilities_for
 from django.conf import settings
 from rest_framework import permissions
-from rest_framework.exceptions import PermissionDenied
-
-from accounts.permissions import capabilities_for, scope_for
-from academics.models import StudentProfile, TeachingAssignment
 
 
 def has_capability(user, capability: str) -> bool:
@@ -126,9 +124,7 @@ class IsSelfOrInStaffScope(permissions.BasePermission):
             school = getattr(user, "school", None)
             if not school:
                 return False
-            if obj.department and obj.department.school_id == school.id:
-                return True
-            return False
+            return bool(obj.department and obj.department.school_id == school.id)
 
         return False
 

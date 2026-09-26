@@ -14,44 +14,22 @@ Verifies:
 """
 
 import pytest
+from analytics.models import ExportAuditLog
 from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
+from predictions.models import ModelVersion, PredictionSnapshot
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from academics.models import (
-    Batch,
-    Course,
-    Department,
-    Result,
-    School,
-    SemesterResult,
-    StudentProfile,
-    Subject,
-    TeachingAssignment,
-)
-from analytics.models import ExportAuditLog
-from predictions.models import ModelVersion, PredictionSnapshot
 from tests.factories import (
-    AdminUserFactory,
     BatchFactory,
-    ControllerUserFactory,
     CourseFactory,
-    DeanUserFactory,
     DepartmentFactory,
-    HODUserFactory,
-    RegistrarUserFactory,
-    ResultFactory,
     SchoolFactory,
     SemesterResultFactory,
     StudentProfileFactory,
-    StudentUserFactory,
     SubjectFactory,
-    TeacherProfileFactory,
-    TeacherUserFactory,
-    TeachingAssignmentFactory,
-    VCUserFactory,
     make_university,
 )
 
@@ -396,14 +374,14 @@ class TestAnalyticsBreakdownAndPrivacy:
         # Create Course B with 3 students (< 10: masked)
         course_b = CourseFactory.create(name="Course Small 1", code="CS1", department=dept)
         batch_b = BatchFactory.create(course=course_b, strength=3)
-        for i in range(3):
+        for _ in range(3):
             st = StudentProfileFactory.create(course=course_b, batch=batch_b)
             SemesterResultFactory.create(student=st, semester=1, percentage=60.0, is_published=True)
 
         # Create Course C with 4 students (< 10: masked)
         course_c = CourseFactory.create(name="Course Small 2", code="CS2", department=dept)
         batch_c = BatchFactory.create(course=course_c, strength=4)
-        for i in range(4):
+        for _ in range(4):
             st = StudentProfileFactory.create(course=course_c, batch=batch_c)
             SemesterResultFactory.create(student=st, semester=1, percentage=70.0, is_published=True)
 

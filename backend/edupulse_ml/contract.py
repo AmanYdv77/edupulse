@@ -12,8 +12,9 @@ and fairness reporting (Task A18). However, they MUST NEVER be fed as features o
 any model training, fine-tuning, or inference workflow.
 """
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -119,7 +120,7 @@ FEATURES: dict[str, FeatureSpec] = {
 }
 
 
-def validate_feature_list(names: Sequence[str], model_kind: Optional[str] = None) -> bool:
+def validate_feature_list(names: Sequence[str], model_kind: str | None = None) -> bool:
     """
     Validates a list of candidate feature names against the ML contract.
 
@@ -179,7 +180,7 @@ def validate_row(mapping: Mapping[str, Any]) -> list[str]:
         spec = FEATURES[name]
 
         # Type validation (allowing int for float fields, but rejecting string/invalid types)
-        if spec.dtype is float and not isinstance(value, (int, float)):
+        if spec.dtype is float and not isinstance(value, int | float):
             problems.append(
                 f"Feature '{name}' has invalid type {type(value).__name__}; expected float."
             )

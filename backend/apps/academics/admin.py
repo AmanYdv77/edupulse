@@ -1,19 +1,20 @@
 from django.contrib import admin, messages
+
 from .models import (
-    University,
-    School,
-    Department,
-    Course,
     Batch,
+    Course,
+    Department,
+    HabitCheckInLog,
+    InternalAssessment,
+    Result,
+    School,
+    SemesterResult,
+    StudentHabitPreference,
+    StudentProfile,
     Subject,
     TeacherProfile,
-    StudentProfile,
     TeachingAssignment,
-    Result,
-    SemesterResult,
-    InternalAssessment,
-    StudentHabitPreference,
-    HabitCheckInLog,
+    University,
 )
 
 

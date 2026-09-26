@@ -9,39 +9,33 @@ Verifies:
 6. Advisory disclaimer and ethical terminology ('Estimated Risk', never 'AI Grade') in views and templates.
 """
 
-import os
 import joblib
+import pandas as pd
 import pytest
 import sklearn
-from pathlib import Path
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-import pandas as pd
 from django.conf import settings
 from django.test import Client
 from django.urls import reverse
-
+from predictions.explain import (
+    FEATURE_HUMAN_NAMES,
+    explain_prediction,
+)
 from predictions.models import ModelVersion
 from predictions.services import (
     DEFAULT_DISCLAIMER,
     PredictorService,
-    PredictionResult,
     get_model_label,
     predict_for_students,
-    predict_current_subjects,
 )
-from predictions.explain import (
-    explain_prediction,
-    FEATURE_HUMAN_NAMES,
-)
+from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
 from tests.factories import (
+    ResultFactory,
+    SemesterResultFactory,
     StudentProfileFactory,
     SubjectFactory,
-    SemesterResultFactory,
-    ResultFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
 )
 
 

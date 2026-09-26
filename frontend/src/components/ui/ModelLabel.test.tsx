@@ -12,7 +12,9 @@ describe('ModelLabel', () => {
   });
 
   it('renders institute model information correctly', () => {
-    render(<ModelLabel slot="institute" version={2} algorithm="GradientBoosting" isActive={false} />);
+    render(
+      <ModelLabel slot="institute" version={2} algorithm="GradientBoosting" isActive={false} />
+    );
 
     expect(screen.getByText('Model B (Institute)')).toBeInTheDocument();
     expect(screen.getByText('v2')).toBeInTheDocument();

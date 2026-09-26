@@ -5,24 +5,20 @@ cohort toppers, failure registers, longitudinal improvement deltas,
 and role-scoped metrics for Students, Teachers, HODs, Deans, and Executive Officials.
 """
 
-from django.db.models import Avg, Max, Min, Count, Q, F, StdDev
-from django.utils import timezone
-from datetime import timedelta
 from academics.models import (
-    SemesterResult,
-    Result,
-    StudentProfile,
-    TeacherProfile,
-    TeachingAssignment,
-    InternalAssessment,
-    Course,
     Batch,
-    Subject,
+    Course,
     Department,
+    InternalAssessment,
+    Result,
     School,
+    SemesterResult,
+    StudentProfile,
+    Subject,
+    TeachingAssignment,
     University,
-    HabitCheckInLog,
 )
+from django.db.models import Avg, Count, Max, Min, Q
 
 
 def compute_cohort_deep_dive(
@@ -617,7 +613,6 @@ def get_executive_analytics(school_id=None):
         s_sems = SemesterResult.objects.filter(
             student__course__department__school=s, is_published=True
         )
-        total = s_sems.count()
         avg_sgpa = round(s_sems.aggregate(avg=Avg("sgpa"))["avg"] or 7.0, 2)
         school_cards.append(
             {

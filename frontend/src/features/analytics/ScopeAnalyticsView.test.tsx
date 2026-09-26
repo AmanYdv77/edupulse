@@ -61,8 +61,18 @@ describe('ScopeAnalyticsView Component', () => {
           data: {
             dimension: 'department',
             groups: [
-              { name: 'Computer Science', pass_rate: 91.2, average_percentage: 78.4, student_count: 320 },
-              { name: 'Other (hidden)', pass_rate: 85.0, average_percentage: 70.0, student_count: 7 }, // Differential privacy
+              {
+                name: 'Computer Science',
+                pass_rate: 91.2,
+                average_percentage: 78.4,
+                student_count: 320,
+              },
+              {
+                name: 'Other (hidden)',
+                pass_rate: 85.0,
+                average_percentage: 70.0,
+                student_count: 7,
+              }, // Differential privacy
             ],
           },
           error: undefined,

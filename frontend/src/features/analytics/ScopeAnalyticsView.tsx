@@ -38,7 +38,11 @@ export const ScopeAnalyticsView: React.FC = () => {
   const trendMetric = searchParams.get('metric') || 'pass_rate';
 
   // 1. Fetch Overview KPIs
-  const { data: overview, isLoading: loadingOverview, error: errorOverview } = useQuery({
+  const {
+    data: overview,
+    isLoading: loadingOverview,
+    error: errorOverview,
+  } = useQuery({
     queryKey: ['analytics-overview', searchParams.toString()],
     queryFn: async () => {
       const { data, error } = await apiClient.GET('/api/v1/analytics/overview/');
@@ -64,7 +68,9 @@ export const ScopeAnalyticsView: React.FC = () => {
     queryKey: ['analytics-trend', trendMetric],
     queryFn: async () => {
       const { data, error } = await apiClient.GET('/api/v1/analytics/trend/', {
-        params: { query: { metric: trendMetric as 'pass_rate' | 'average_score' | 'retention_rate' } },
+        params: {
+          query: { metric: trendMetric as 'pass_rate' | 'average_score' | 'retention_rate' },
+        },
       });
       if (error) throw error;
       return data;
@@ -107,18 +113,40 @@ export const ScopeAnalyticsView: React.FC = () => {
   }));
 
   const breakdownColumns = [
-    { key: 'name', header: 'Entity Name', render: (row: BreakdownChartItem) => row.fullName || row.name },
+    {
+      key: 'name',
+      header: 'Entity Name',
+      render: (row: BreakdownChartItem) => row.fullName || row.name,
+    },
     { key: 'studentCount', header: 'Enrolled Count' },
-    { key: 'passRate', header: 'Pass Rate (%)', render: (row: BreakdownChartItem) => `${row.passRate.toFixed(1)}%` },
-    { key: 'avgScore', header: 'Average Score (%)', render: (row: BreakdownChartItem) => `${row.avgScore.toFixed(1)}%` },
+    {
+      key: 'passRate',
+      header: 'Pass Rate (%)',
+      render: (row: BreakdownChartItem) => `${row.passRate.toFixed(1)}%`,
+    },
+    {
+      key: 'avgScore',
+      header: 'Average Score (%)',
+      render: (row: BreakdownChartItem) => `${row.avgScore.toFixed(1)}%`,
+    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       {/* Top Header with Scope Label */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 'var(--space-4)',
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>Institutional Academic Analytics</h1>
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+            Institutional Academic Analytics
+          </h1>
           <p style={{ color: 'var(--color-text-muted)' }}>
             Aggregated performance insights for {user?.scope_label || 'University Scope'}
           </p>
@@ -127,7 +155,13 @@ export const ScopeAnalyticsView: React.FC = () => {
 
       {/* KPI Overview Cards */}
       {loadingOverview ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--space-4)',
+          }}
+        >
           <Skeleton height="7rem" />
           <Skeleton height="7rem" />
           <Skeleton height="7rem" />
@@ -136,7 +170,13 @@ export const ScopeAnalyticsView: React.FC = () => {
       ) : errorOverview ? (
         <ErrorState title="Failed to load analytics overview" />
       ) : overview ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: 'var(--space-4)',
+          }}
+        >
           <StatCard
             label="Total Students"
             value={overview.total_students?.toLocaleString() ?? 0}
@@ -151,14 +191,22 @@ export const ScopeAnalyticsView: React.FC = () => {
           />
           <StatCard
             label="Average Score"
-            value={overview.average_percentage != null ? `${overview.average_percentage.toFixed(1)}%` : 'N/A'}
+            value={
+              overview.average_percentage != null
+                ? `${overview.average_percentage.toFixed(1)}%`
+                : 'N/A'
+            }
             subtitle="Across all evaluations"
             icon="📊"
           />
           <StatCard
             label="At-Risk Rate"
             value={overview.at_risk_rate != null ? `${overview.at_risk_rate.toFixed(1)}%` : 'N/A'}
-            subtitle={isExecutive ? 'Suppressed per privacy policy' : `${overview.at_risk_count ?? 0} total flagged students`}
+            subtitle={
+              isExecutive
+                ? 'Suppressed per privacy policy'
+                : `${overview.at_risk_count ?? 0} total flagged students`
+            }
             icon="⚠️"
           />
         </div>
@@ -174,8 +222,8 @@ export const ScopeAnalyticsView: React.FC = () => {
               {(user?.role === 'DEAN'
                 ? ['department', 'course']
                 : user?.role === 'HOD'
-                ? ['course', 'batch', 'subject', 'teacher']
-                : ['school', 'department']
+                  ? ['course', 'batch', 'subject', 'teacher']
+                  : ['school', 'department']
               ).map((lvl) => (
                 <Button
                   key={`lvl-${lvl}`}
@@ -193,7 +241,9 @@ export const ScopeAnalyticsView: React.FC = () => {
           {loadingBreakdown ? (
             <Skeleton height="18rem" />
           ) : chartBreakdown.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No breakdown data available for this scope.</p>
+            <p style={{ color: 'var(--color-text-muted)' }}>
+              No breakdown data available for this scope.
+            </p>
           ) : (
             <AccessibleChart
               title={`Pass Rate Breakdown by ${breakdownBy}`}
@@ -203,13 +253,38 @@ export const ScopeAnalyticsView: React.FC = () => {
               keyExtractor={(item) => item.fullName}
             >
               <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={chartBreakdown} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
+                <BarChart
+                  data={chartBreakdown}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="name" stroke="#9ca3af" interval={0} angle={-15} textAnchor="end" />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#9ca3af"
+                    interval={0}
+                    angle={-15}
+                    textAnchor="end"
+                  />
                   <YAxis domain={[0, 100]} stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#f9fafb' }} />
-                  <Bar dataKey="passRate" fill="#3b82f6" name="Pass Rate (%)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="avgScore" fill="#10b981" name="Avg Score (%)" radius={[4, 4, 0, 0]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      borderColor: '#374151',
+                      color: '#f9fafb',
+                    }}
+                  />
+                  <Bar
+                    dataKey="passRate"
+                    fill="#3b82f6"
+                    name="Pass Rate (%)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="avgScore"
+                    fill="#10b981"
+                    name="Avg Score (%)"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </AccessibleChart>
@@ -245,7 +320,9 @@ export const ScopeAnalyticsView: React.FC = () => {
           {loadingTrend ? (
             <Skeleton height="18rem" />
           ) : trendPoints.length === 0 ? (
-            <p style={{ color: 'var(--color-text-muted)' }}>No historical trend data recorded yet.</p>
+            <p style={{ color: 'var(--color-text-muted)' }}>
+              No historical trend data recorded yet.
+            </p>
           ) : (
             <AccessibleChart
               title={`Trend Analysis: ${trendMetric}`}
@@ -263,8 +340,20 @@ export const ScopeAnalyticsView: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="semester" stroke="#9ca3af" />
                   <YAxis domain={[0, 100]} stroke="#9ca3af" />
-                  <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#f9fafb' }} />
-                  <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} dot={{ r: 5 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#111827',
+                      borderColor: '#374151',
+                      color: '#f9fafb',
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    dot={{ r: 5 }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </AccessibleChart>

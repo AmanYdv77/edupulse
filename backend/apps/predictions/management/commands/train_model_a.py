@@ -2,15 +2,15 @@
 Management command to train, evaluate, and register Model A (baseline).
 """
 
-import os
 import platform
 from pathlib import Path
+from typing import Any
+
 import sklearn
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from edupulse_ml.train_a import train_baseline_pipeline
 from predictions.models import ModelVersion
-
 
 MODEL_CARD_TEMPLATE = """# Model Card: Model A (Academic Baseline)
 
@@ -70,7 +70,7 @@ Evaluation conducted on an untouched 20% holdout test split ({n_test_rows} sampl
 class Command(BaseCommand):
     help = "Trains, evaluates, and registers Model A (baseline) from the Kaggle dataset."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
             "--data-dir",
             type=str,
@@ -78,7 +78,7 @@ class Command(BaseCommand):
             help="Directory containing StudentPerformanceFactors.csv (defaults to parent directory)",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         # 1. Resolve CSV path
         data_dir_arg = options["data_dir"]
         if data_dir_arg:

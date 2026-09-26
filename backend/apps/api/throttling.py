@@ -1,4 +1,4 @@
-from rest_framework.throttling import UserRateThrottle, SimpleRateThrottle
+from rest_framework.throttling import SimpleRateThrottle, UserRateThrottle
 
 
 class UserReadRateThrottle(UserRateThrottle):

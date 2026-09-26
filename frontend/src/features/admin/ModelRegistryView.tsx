@@ -27,9 +27,16 @@ export const ModelRegistryView: React.FC = () => {
   const queryClient = useQueryClient();
   const [activatingId, setActivatingId] = useState<number | null>(null);
   const [confirmModalVersion, setConfirmModalVersion] = useState<ModelVersionItem | null>(null);
-  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(
+    null
+  );
 
-  const { data: models, isLoading, error, refetch } = useQuery({
+  const {
+    data: models,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['model-registry'],
     queryFn: async () => {
       const { data, error: apiErr } = await apiClient.GET('/api/v1/models/');
@@ -56,7 +63,10 @@ export const ModelRegistryView: React.FC = () => {
       return res.json();
     },
     onSuccess: () => {
-      setFeedback({ message: 'Model version activated successfully! Serving slot updated.', type: 'success' });
+      setFeedback({
+        message: 'Model version activated successfully! Serving slot updated.',
+        type: 'success',
+      });
       setConfirmModalVersion(null);
       queryClient.invalidateQueries({ queryKey: ['model-registry'] });
     },
@@ -79,7 +89,13 @@ export const ModelRegistryView: React.FC = () => {
   };
 
   const columns = [
-    { key: 'slot', header: 'Slot', render: (row: ModelVersionItem) => <strong>{row.slot === 'baseline' ? 'Model A (Baseline)' : 'Model B (Institute)'}</strong> },
+    {
+      key: 'slot',
+      header: 'Slot',
+      render: (row: ModelVersionItem) => (
+        <strong>{row.slot === 'baseline' ? 'Model A (Baseline)' : 'Model B (Institute)'}</strong>
+      ),
+    },
     { key: 'version', header: 'Version', render: (row: ModelVersionItem) => `v${row.version}` },
     {
       key: 'is_active',
@@ -91,8 +107,16 @@ export const ModelRegistryView: React.FC = () => {
       ),
     },
     { key: 'trained_on', header: 'Training Dataset / Provenance' },
-    { key: 'n_train_rows', header: 'Train Size', render: (row: ModelVersionItem) => `${row.n_train_rows ?? 0} rows` },
-    { key: 'n_test_rows', header: 'Test Size', render: (row: ModelVersionItem) => `${row.n_test_rows ?? 0} rows` },
+    {
+      key: 'n_train_rows',
+      header: 'Train Size',
+      render: (row: ModelVersionItem) => `${row.n_train_rows ?? 0} rows`,
+    },
+    {
+      key: 'n_test_rows',
+      header: 'Test Size',
+      render: (row: ModelVersionItem) => `${row.n_test_rows ?? 0} rows`,
+    },
     {
       key: 'metrics',
       header: 'Evaluation Metrics',
@@ -108,7 +132,11 @@ export const ModelRegistryView: React.FC = () => {
       header: 'Actions',
       render: (row: ModelVersionItem) => {
         if (row.is_active) {
-          return <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>Serving Live</span>;
+          return (
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)' }}>
+              Serving Live
+            </span>
+          );
         }
         return (
           <Button
@@ -127,9 +155,12 @@ export const ModelRegistryView: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <div>
-        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>Machine Learning Model Registry</h1>
+        <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+          Machine Learning Model Registry
+        </h1>
         <p style={{ color: 'var(--color-text-muted)' }}>
-          Inspect registered model artifacts, holdout evaluation metrics, and active deployment slots
+          Inspect registered model artifacts, holdout evaluation metrics, and active deployment
+          slots
         </p>
       </div>
 
@@ -137,7 +168,8 @@ export const ModelRegistryView: React.FC = () => {
         <div
           style={{
             padding: 'var(--space-3) var(--space-4)',
-            backgroundColor: feedback.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
+            backgroundColor:
+              feedback.type === 'success' ? 'var(--color-success-bg)' : 'var(--color-danger-bg)',
             border: `1px solid ${feedback.type === 'success' ? 'var(--color-success-border)' : 'var(--color-danger-border)'}`,
             borderRadius: 'var(--radius-md)',
             color: feedback.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)',
@@ -149,7 +181,10 @@ export const ModelRegistryView: React.FC = () => {
       )}
 
       <Card>
-        <CardHeader title="Registered Model Versions" subtitle="Transparent provenance and promotion tracking" />
+        <CardHeader
+          title="Registered Model Versions"
+          subtitle="Transparent provenance and promotion tracking"
+        />
         <CardBody>
           {isLoading ? (
             <Skeleton height="15rem" />
@@ -184,14 +219,22 @@ export const ModelRegistryView: React.FC = () => {
             <CardHeader title="Confirm Model Activation" />
             <CardBody>
               <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)' }}>
-                Are you sure you want to activate <strong>{confirmModalVersion.slot} v{confirmModalVersion.version}</strong>?
-                This will immediately route all student predictions in the <code>{confirmModalVersion.slot}</code> slot to this version artifact.
+                Are you sure you want to activate{' '}
+                <strong>
+                  {confirmModalVersion.slot} v{confirmModalVersion.version}
+                </strong>
+                ? This will immediately route all student predictions in the{' '}
+                <code>{confirmModalVersion.slot}</code> slot to this version artifact.
               </p>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-3)' }}>
                 <Button variant="ghost" onClick={() => setConfirmModalVersion(null)}>
                   Cancel
                 </Button>
-                <Button variant="primary" onClick={handleConfirmActivation} isLoading={activateMutation.isPending}>
+                <Button
+                  variant="primary"
+                  onClick={handleConfirmActivation}
+                  isLoading={activateMutation.isPending}
+                >
                   Confirm & Activate
                 </Button>
               </div>

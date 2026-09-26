@@ -7,7 +7,6 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-
 # ---------------------------------------------------------------------------
 # STRUCTURE
 # ---------------------------------------------------------------------------
@@ -423,7 +422,6 @@ class InternalAssessment(models.Model):
 # ---------------------------------------------------------------------------
 # HABIT TRACKING & DATA COLLECTION
 # ---------------------------------------------------------------------------
-from django.utils import timezone
 
 
 class StudentHabitPreference(models.Model):

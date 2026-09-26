@@ -6,44 +6,37 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 import pytest
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
-    Batch,
-    Subject,
-    TeacherProfile,
-    StudentProfile,
-    TeachingAssignment,
+    HabitCheckInLog,
     Result,
     SemesterResult,
-    HabitCheckInLog,
 )
+from django.contrib.auth import get_user_model
+
 from tests.factories import (
-    UserFactory,
-    StudentUserFactory,
-    TeacherUserFactory,
-    HODUserFactory,
-    DeanUserFactory,
-    VCUserFactory,
-    RegistrarUserFactory,
-    ControllerUserFactory,
     AdminUserFactory,
-    UniversityFactory,
-    SchoolFactory,
-    DepartmentFactory,
-    CourseFactory,
     BatchFactory,
+    ControllerUserFactory,
+    CourseFactory,
+    DeanUserFactory,
+    DepartmentFactory,
+    HabitCheckInLogFactory,
+    HODUserFactory,
+    RegistrarUserFactory,
+    ResultFactory,
+    SchoolFactory,
+    SemesterResultFactory,
+    StudentProfileFactory,
+    StudentUserFactory,
     SubjectFactory,
     TeacherProfileFactory,
-    StudentProfileFactory,
+    TeacherUserFactory,
     TeachingAssignmentFactory,
-    ResultFactory,
-    SemesterResultFactory,
-    HabitCheckInLogFactory,
+    UniversityFactory,
+    UserFactory,
+    VCUserFactory,
     make_university,
 )
 

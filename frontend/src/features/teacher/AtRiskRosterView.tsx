@@ -14,7 +14,9 @@ export const AtRiskRosterView: React.FC = () => {
   const { hasCapability } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const semesterFilter = searchParams.get('semester') ? Number(searchParams.get('semester')) : undefined;
+  const semesterFilter = searchParams.get('semester')
+    ? Number(searchParams.get('semester'))
+    : undefined;
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['at-risk-roster', semesterFilter],
@@ -99,9 +101,19 @@ export const AtRiskRosterView: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 'var(--space-4)',
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>Early Warning & At-Risk Roster</h1>
+          <h1 style={{ fontSize: 'var(--text-2xl)', fontWeight: 700 }}>
+            Early Warning & At-Risk Roster
+          </h1>
           <p style={{ color: 'var(--color-text-muted)' }}>
             Students flagged by ML prediction models requiring academic advisory or intervention
           </p>
@@ -122,7 +134,10 @@ export const AtRiskRosterView: React.FC = () => {
           title={`At-Risk Students (${totalCount} Total)`}
           action={
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-              <label htmlFor="semester-filter-select" style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+              <label
+                htmlFor="semester-filter-select"
+                style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}
+              >
                 Filter Semester:
               </label>
               <select

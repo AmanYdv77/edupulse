@@ -3,6 +3,8 @@ Model registry database models for EduPulse.
 Tracks trained model versions, evaluation metrics, compatibility metadata, and active status.
 """
 
+from typing import Any
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -91,7 +93,7 @@ class ModelVersion(models.Model):
             ),
         ]
 
-    def __str__(self):
+    def __str__(self) -> str:
         status = "ACTIVE" if self.is_active else "inactive"
         return f"{self.slot} v{self.version} [{status}] ({self.artifact_file})"
 
@@ -175,12 +177,12 @@ class PredictionSnapshot(models.Model):
         """Convenience property for views and templates."""
         return self.risk_band in ("high", "insufficient_data")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         if self.pk is not None and PredictionSnapshot.objects.filter(pk=self.pk).exists():
             raise ValidationError("PredictionSnapshot records are immutable and cannot be updated.")
         super().save(*args, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         score_repr = (
             f"{self.predicted_percentage}%" if self.predicted_percentage is not None else "N/A"
         )

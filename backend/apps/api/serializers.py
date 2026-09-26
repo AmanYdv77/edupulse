@@ -3,20 +3,16 @@ DRF Serializers for EduPulse Core REST API.
 Enforces contract boundary ranges, data privacy, and uniform serialization shapes.
 """
 
-from rest_framework import serializers
-from accounts.models import User
-from accounts.permissions import capabilities_for, scope_for
 from academics.models import (
-    StudentProfile,
+    HabitCheckInLog,
     Result,
     SemesterResult,
-    HabitCheckInLog,
     TeachingAssignment,
-    Subject,
-    Batch,
 )
+from accounts.models import User
+from accounts.permissions import capabilities_for, scope_for
 from predictions.models import ModelVersion
-
+from rest_framework import serializers
 
 # ============================================================================
 # Auth & Identity Serializers

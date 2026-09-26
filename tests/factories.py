@@ -3,23 +3,25 @@ Model factories and synthetic data generation for EduPulse test suite.
 Uses factory_boy and Faker. Enforces independent behavioral telemetry to prevent ML target leakage.
 """
 
+import itertools
 import random
+
 import factory
-from django.contrib.auth import get_user_model
 from academics.models import (
-    University,
-    School,
-    Department,
-    Course,
     Batch,
+    Course,
+    Department,
+    HabitCheckInLog,
+    Result,
+    School,
+    SemesterResult,
+    StudentProfile,
     Subject,
     TeacherProfile,
-    StudentProfile,
     TeachingAssignment,
-    Result,
-    SemesterResult,
-    HabitCheckInLog,
+    University,
 )
+from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -300,8 +302,6 @@ class HabitCheckInLogFactory(factory.django.DjangoModelFactory):
 # ---------------------------------------------------------------------------
 # HIERARCHY HELPER
 # ---------------------------------------------------------------------------
-
-import itertools
 
 _univ_counter = itertools.count(1000)
 

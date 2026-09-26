@@ -6,8 +6,6 @@ without requiring explicit manual invalidation in every view or task.
 """
 
 import logging
-from django.db.models.signals import post_delete, post_save
-from django.dispatch import receiver
 
 from academics.models import (
     HabitCheckInLog,
@@ -15,6 +13,8 @@ from academics.models import (
     SemesterResult,
     StudentHabitPreference,
 )
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from predictions.models import ModelVersion, PredictionSnapshot
 
 from .caching import (

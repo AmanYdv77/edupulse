@@ -15,47 +15,32 @@ Verifies:
 """
 
 from unittest.mock import patch
-import pytest
-from django.core.cache import cache
-from django.urls import reverse
-from rest_framework import status
-from rest_framework.test import APIClient
 
+import pytest
 from academics.models import (
     HabitCheckInLog,
     Result,
     SemesterResult,
-    StudentHabitPreference,
 )
 from api.caching import (
     get_analytics_cache_version,
     get_model_cache_version,
     get_student_prediction_version,
-    invalidate_analytics_cache,
-    invalidate_model_cache,
-    invalidate_student_prediction_cache,
     make_analytics_cache_key,
     make_prediction_cache_key,
     safe_cache_get,
     safe_cache_set,
 )
+from django.core.cache import cache
+from django.urls import reverse
 from predictions.models import ModelVersion, PredictionSnapshot
+from rest_framework import status
+from rest_framework.test import APIClient
+
 from tests.factories import (
-    BatchFactory,
-    CourseFactory,
-    DepartmentFactory,
-    HabitCheckInLogFactory,
-    HODUserFactory,
     ResultFactory,
-    SchoolFactory,
     SemesterResultFactory,
-    StudentProfileFactory,
-    StudentUserFactory,
-    SubjectFactory,
-    TeacherProfileFactory,
-    TeacherUserFactory,
     TeachingAssignmentFactory,
-    VCUserFactory,
     make_university,
 )
 

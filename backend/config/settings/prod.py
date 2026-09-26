@@ -4,6 +4,7 @@ Enforces that DEBUG is False and database name does NOT end with '_dev', '_test'
 """
 
 from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
 
 if DEBUG:

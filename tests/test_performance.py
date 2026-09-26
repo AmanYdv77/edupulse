@@ -5,6 +5,7 @@ Validates bounded query execution for REST API endpoints.
 
 import pytest
 from django.urls import reverse
+
 from tests.factories import make_university
 
 

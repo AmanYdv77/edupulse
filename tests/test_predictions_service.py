@@ -1,13 +1,12 @@
-import os
+from io import StringIO
+
 import joblib
 import pytest
 import sklearn
-from io import StringIO
-from pathlib import Path
-from sklearn.linear_model import Ridge
 from django.conf import settings
 from django.core.management import call_command
 from django.db import IntegrityError
+from sklearn.linear_model import Ridge
 
 
 @pytest.mark.django_db
@@ -126,7 +125,7 @@ class TestPredictionsService:
     def test_predictor_service_refuses_mismatched_sklearn_version(self, dummy_pipeline):
         """PredictorService refuses to load an artifact trained with an incompatible sklearn version."""
         from predictions.models import ModelVersion
-        from predictions.services import PredictorService, IncompatibleEnvironmentError
+        from predictions.services import IncompatibleEnvironmentError, PredictorService
 
         PredictorService.clear_cache()
 

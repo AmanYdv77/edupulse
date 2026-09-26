@@ -86,6 +86,8 @@ describe('InternalMarksEntry Component', () => {
     const submitBtn = screen.getByRole('button', { name: /Submit Assessment Marks/i });
     fireEvent.submit(submitBtn.closest('form')!);
 
-    expect(screen.getByText(/Marks for student 101 must be between 0 and 30./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Marks for student 101 must be between 0 and 30./i)
+    ).toBeInTheDocument();
   });
 });

@@ -4,15 +4,14 @@ Extracts verified institutional records strictly from students with data_origin=
 Guarantees zero leakage and validates minimum dataset thresholds before training.
 """
 
-from typing import Any, Optional, Tuple
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
+from academics.models import SemesterResult
 from django.conf import settings
 from django.db.models import QuerySet
-
-from academics.models import Result, SemesterResult
-from predictions.selectors import training_rows, assert_real_training_data
-from edupulse_ml.contract import validate_feature_list
+from predictions.selectors import assert_real_training_data, training_rows
 
 
 class InsufficientDataError(Exception):
@@ -22,9 +21,9 @@ class InsufficientDataError(Exception):
 
 
 def load_institute_dataset(
-    queryset: Optional[QuerySet] = None,
+    queryset: QuerySet | None = None,
     enforce_thresholds: bool = True,
-    use_habits: Optional[bool] = None,
+    use_habits: bool | None = None,
 ) -> pd.DataFrame:
     """
     Extracts and prepares institutional training data from Result records.
@@ -66,7 +65,7 @@ def load_institute_dataset(
         student__data_origin="real",
     )
     # Map (student_id, semester) -> SemesterResult
-    sem_map: dict[Tuple[int, int], SemesterResult] = {
+    sem_map: dict[tuple[int, int], SemesterResult] = {
         (sr.student_id, sr.semester): sr for sr in sem_results
     }
 
@@ -98,10 +97,7 @@ def load_institute_dataset(
         # Internal assessment score percentage
         int_max = float(getattr(r.subject, "internal_max", 0) or 0)
         int_marks = float(r.internal_marks or 0.0)
-        if int_max > 0:
-            internal_pct = (int_marks / int_max) * 100.0
-        else:
-            internal_pct = 0.0
+        internal_pct = (int_marks / int_max) * 100.0 if int_max > 0 else 0.0
 
         row_dict: dict[str, Any] = {
             "student_id": r.student_id,
@@ -178,5 +174,5 @@ def validate_institute_thresholds(df: pd.DataFrame) -> None:
 
     if reasons:
         raise InsufficientDataError(
-            f"Insufficient institutional data to train Model B:\n - " + "\n - ".join(reasons)
+            "Insufficient institutional data to train Model B:\n - " + "\n - ".join(reasons)
         )

@@ -3,11 +3,12 @@ Tests for Django Admin publication actions and administrative workflows.
 """
 
 import pytest
-from django.contrib.admin.sites import AdminSite
-from django.test import RequestFactory
-from django.contrib.messages.storage.fallback import FallbackStorage
 from academics.admin import SemesterResultAdmin
 from academics.models import SemesterResult
+from django.contrib.admin.sites import AdminSite
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.test import RequestFactory
+
 from tests.factories import make_university
 
 
@@ -31,8 +32,8 @@ def test_admin_publish_and_revert_actions():
     factory = RequestFactory()
     req = factory.get("/")
     req.user = admin_user
-    setattr(req, "session", {})
-    setattr(req, "_messages", FallbackStorage(req))
+    req.session = {}
+    req._messages = FallbackStorage(req)
 
     # Test publish
     admin_instance.publish_final_results(req, queryset)

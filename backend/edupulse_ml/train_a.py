@@ -9,9 +9,9 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
 import joblib
 import numpy as np
-import pandas as pd
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import Ridge

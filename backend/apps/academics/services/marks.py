@@ -4,7 +4,8 @@ Service functions for continuous internal assessment and marks processing.
 
 import csv
 import io
-from typing import Any, Tuple
+from typing import Any
+
 from academics.models import InternalAssessment, StudentProfile
 
 
@@ -16,7 +17,7 @@ def process_internal_marks_csv(
     assessment_type: str,
     max_marks: float,
     csv_file: Any,
-) -> Tuple[int, str | None]:
+) -> tuple[int, str | None]:
     """
     Parses an uploaded CSV file and creates InternalAssessment records.
     Returns (saved_count, error_message).
@@ -27,7 +28,7 @@ def process_internal_marks_csv(
         io_string = io.StringIO(decoded_file)
         reader = csv.DictReader(io_string)
         for row in reader:
-            keys = {k.lower().strip(): k for k in row.keys()}
+            keys = {k.lower().strip(): k for k in row}
             roll_key = (
                 keys.get("roll_no")
                 or keys.get("roll")

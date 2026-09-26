@@ -4,20 +4,23 @@ Enforces artifact path sandboxing, runtime library compatibility, and strict dat
 Provides true batch inference (services.predict_for_students) for constant query counts.
 """
 
+import logging
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import timedelta
-import logging
 from pathlib import Path
-from typing import Any, Mapping, Optional, Sequence
+from typing import Any
+
 import joblib
 import pandas as pd
 import sklearn
 from django.conf import settings
 from django.utils import timezone
 from edupulse_ml.contract import validate_feature_list, validate_row
-from .models import ModelVersion
-from .grades import PASS_MARK_PERCENT, RISK_BAND_INSUFFICIENT_DATA, risk_band_for, is_at_risk
+
 from .explain import explain_prediction
+from .grades import PASS_MARK_PERCENT, RISK_BAND_INSUFFICIENT_DATA, is_at_risk, risk_band_for
+from .models import ModelVersion
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +30,7 @@ DEFAULT_DISCLAIMER: str = (
 )
 
 
-def get_model_label(model_version: Optional[ModelVersion]) -> str:
+def get_model_label(model_version: ModelVersion | None) -> str:
     """Returns honest, standardized provenance label for model predictions."""
     if model_version is None:
         return "No calibrated model available"
@@ -94,14 +97,14 @@ class PredictionResult:
     subject_title: str
     subject_credits: int
     semester: int
-    predicted_percentage: Optional[float]
+    predicted_percentage: float | None
     risk_band: str
     is_at_risk: bool
     reasons: list[str]
     features: dict[str, Any]
-    model_version_id: Optional[int]
-    model_slot: Optional[str] = None
-    model_version: Optional[int] = None
+    model_version_id: int | None
+    model_slot: str | None = None
+    model_version: int | None = None
     model_label: str = "Baseline estimate (public sample data)"
     factors: list[dict[str, Any]] = field(default_factory=list)
     disclaimer: str = DEFAULT_DISCLAIMER
@@ -131,7 +134,7 @@ class PredictorService:
         cls._cache.clear()
 
     @classmethod
-    def get_active_model_version(cls, slot: str) -> Optional[ModelVersion]:
+    def get_active_model_version(cls, slot: str) -> ModelVersion | None:
         """Returns the currently active ModelVersion for the given slot, or None."""
         return ModelVersion.objects.filter(slot=slot, is_active=True).first()
 
@@ -151,7 +154,7 @@ class PredictorService:
         Inspects existing academic and telemetry records to identify which features
         are non-null and available for this student.
         """
-        from academics.models import SemesterResult, HabitCheckInLog, Result
+        from academics.models import HabitCheckInLog, Result, SemesterResult
         from academics.services.habits import compute_habit_summary_from_logs
 
         available: set[str] = set()
@@ -197,9 +200,9 @@ class PredictorService:
     def active_for(
         cls,
         student: Any,
-        available_features: Optional[set[str]] = None,
-        active_models: Optional[dict[str, ModelVersion]] = None,
-    ) -> Optional[ModelVersion]:
+        available_features: set[str] | None = None,
+        active_models: dict[str, ModelVersion] | None = None,
+    ) -> ModelVersion | None:
         """
         Model Router: selects the most authoritative active model applicable to the given student.
         1. Checks 'institute' slot: returned if active AND all required features are available.
@@ -268,7 +271,7 @@ class PredictorService:
         return loaded_model
 
     @classmethod
-    def predict(cls, slot: str, rows: Sequence[Mapping[str, Any]]) -> list[dict]:
+    def predict(cls, slot: str, rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
         """
         Generates score forecasts for a collection of sample rows in a single batch.
         Validates every row with validate_row; NEVER invents or substitutes default numbers.
@@ -280,7 +283,7 @@ class PredictorService:
 
         model = cls.load(slot)
         feature_names = model_version.feature_names
-        results = [None] * len(rows)
+        results: list[dict[str, Any]] = [{} for _ in range(len(rows))]
 
         batch_indices = []
         batch_rows = []
@@ -307,7 +310,7 @@ class PredictorService:
             input_df = pd.DataFrame(batch_rows)[feature_names]
             raw_predictions = model.predict(input_df)
 
-            for idx, raw_prediction in zip(batch_indices, raw_predictions):
+            for idx, raw_prediction in zip(batch_indices, raw_predictions, strict=False):
                 score = max(0.0, min(100.0, float(raw_prediction)))
                 results[idx] = {
                     "status": "success",
@@ -320,9 +323,9 @@ class PredictorService:
 
 def predict_for_students(
     students: Sequence[Any],
-    semester: Optional[int] = None,
-    model_version: Optional[ModelVersion] = None,
-    slot: Optional[str] = "baseline",
+    semester: int | None = None,
+    model_version: ModelVersion | None = None,
+    slot: str | None = "baseline",
 ) -> list[PredictionResult]:
     """
     Executes true batch machine learning inference across multiple students and subjects.
@@ -351,7 +354,7 @@ def predict_for_students(
 
     model_label = get_model_label(model_version)
 
-    from academics.models import Subject, SemesterResult, HabitCheckInLog, Result
+    from academics.models import HabitCheckInLog, Result, SemesterResult, Subject
     from academics.services.habits import compute_habit_summary_from_logs
 
     # 1. Bulk prefetch subjects for all relevant courses and target semesters
@@ -503,7 +506,7 @@ def predict_for_students(
         input_df = pd.DataFrame(batch_rows)[model_version.feature_names]
         raw_preds = model.predict(input_df)
 
-        for (s, subj, sem_num, feats), raw_pred in zip(batch_queue, raw_preds):
+        for (s, subj, sem_num, feats), raw_pred in zip(batch_queue, raw_preds, strict=False):
             score = max(0.0, min(100.0, round(float(raw_pred), 1)))
             band = risk_band_for(score)
             risk = is_at_risk(score)

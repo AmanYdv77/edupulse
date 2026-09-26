@@ -4,20 +4,20 @@ Verifies nullable habit fields on SemesterResult, habit_summary service correctn
 and that check-in submissions do NOT mutate official academic records.
 """
 
-from datetime import timedelta
 import pathlib
-import pytest
 import warnings
-from django.utils import timezone
-from django.urls import reverse
+from datetime import timedelta
 
+import pytest
 from academics.models import (
-    SemesterResult,
     HabitCheckInLog,
-    StudentHabitPreference,
+    SemesterResult,
     sync_habits_to_semester_result,
 )
-from academics.services.habits import habit_summary, HabitSummary
+from academics.services.habits import HabitSummary, habit_summary
+from django.urls import reverse
+from django.utils import timezone
+
 from tests.factories import StudentProfileFactory
 
 

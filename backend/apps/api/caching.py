@@ -7,7 +7,8 @@ fault-tolerant safe get/set wrappers, and event-driven invalidation helpers.
 
 import hashlib
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
+
 from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ DEFAULT_ANALYTICS_CACHE_TTL = 300  # 5 minutes
 DEFAULT_PREDICTION_CACHE_TTL = 600  # 10 minutes
 
 
-def _hash_params(params: Optional[Dict[str, Any]]) -> str:
+def _hash_params(params: dict[str, Any] | None) -> str:
     """Generate deterministic MD5 hash for query parameters or scope dictionaries."""
     if not params:
         return "none"
@@ -32,7 +33,7 @@ def _hash_params(params: Optional[Dict[str, Any]]) -> str:
         if not clean_items:
             return "none"
         raw_str = "&".join(clean_items)
-        return hashlib.md5(raw_str.encode("utf-8")).hexdigest()[:12]
+        return hashlib.md5(raw_str.encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
     except Exception as e:
         logger.warning("Error hashing cache params: %s", e)
         return "fallback"
@@ -41,8 +42,8 @@ def _hash_params(params: Optional[Dict[str, Any]]) -> str:
 def make_analytics_cache_key(
     endpoint: str,
     scope: Any,
-    scope_id_or_params: Optional[Any] = None,
-    params: Optional[Dict[str, Any]] = None,
+    scope_id_or_params: Any | None = None,
+    params: dict[str, Any] | None = None,
 ) -> str:
     """
     Constructs a deterministic cache key for analytics endpoints.
@@ -56,10 +57,10 @@ def make_analytics_cache_key(
         if getattr(scope, "is_university_wide", False):
             s_id = "all"
         elif getattr(scope, "allowed_department_ids", None):
-            depts = sorted(list(scope.allowed_department_ids))
+            depts = sorted(scope.allowed_department_ids)
             s_id = f"dept_{'_'.join(map(str, depts))}"
         elif getattr(scope, "allowed_school_ids", None):
-            schools = sorted(list(scope.allowed_school_ids))
+            schools = sorted(scope.allowed_school_ids)
             s_id = f"sch_{'_'.join(map(str, schools))}"
         else:
             s_id = f"u_{getattr(getattr(scope, 'user', None), 'id', 0)}"
@@ -82,7 +83,7 @@ def make_prediction_cache_key(student_id: int, semester: int) -> str:
     return f"prediction:student:{student_id}:sem:{semester}"
 
 
-def safe_cache_get(key: str, default: Any = None, version: Optional[int] = None) -> Any:
+def safe_cache_get(key: str, default: Any = None, version: int | None = None) -> Any:
     """Fault-tolerant cache retrieval that falls back to default on Redis error."""
     try:
         return cache.get(key, default=default, version=version)
@@ -95,7 +96,7 @@ def safe_cache_set(
     key: str,
     value: Any,
     timeout: int = DEFAULT_ANALYTICS_CACHE_TTL,
-    version: Optional[int] = None,
+    version: int | None = None,
 ) -> bool:
     """Fault-tolerant cache set that logs error and does not raise on Redis failure."""
     try:

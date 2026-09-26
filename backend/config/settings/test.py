@@ -19,7 +19,7 @@ if "DATABASE_URL" not in os.environ:
     env_file = repo_root / ".env"
     db_url_in_env = None
     if env_file.is_file():
-        with open(env_file, "r", encoding="utf-8") as f:
+        with open(env_file, encoding="utf-8") as f:
             lines = f.readlines()
             # First look for TEST_DATABASE_URL
             for line in lines:

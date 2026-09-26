@@ -9,8 +9,10 @@ Requirements:
 3. Safe to re-run: skips existing snapshots for the given checkpoint.
 """
 
-from django.core.management.base import BaseCommand, CommandError
+from typing import Any
+
 from academics.models import StudentProfile
+from django.core.management.base import BaseCommand, CommandError
 from predictions.models import PredictionSnapshot
 from predictions.services import PredictorService, predict_for_students
 
@@ -18,7 +20,7 @@ from predictions.services import PredictorService, predict_for_students
 class Command(BaseCommand):
     help = "Generates and saves immutable prediction snapshots for all active students."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument(
             "--checkpoint",
             type=str,
@@ -32,7 +34,7 @@ class Command(BaseCommand):
             help="Model registry slot to use ('baseline' or 'institute'). Default: 'baseline'",
         )
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         checkpoint = options["checkpoint"].strip()
         slot = options["slot"].strip()
 

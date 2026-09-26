@@ -1,8 +1,10 @@
 import ast
 from pathlib import Path
+
 import pytest
 from django.conf import settings
 from django.test import Client
+
 from tests.factories import make_university
 
 
@@ -135,7 +137,7 @@ class TestMLFeatureContract:
                     if "feature" in lower_name or "column" in lower_name or "input" in lower_name:
                         # Inspect the value being assigned
                         val_node = node.value if hasattr(node, "value") else None
-                        if isinstance(val_node, (ast.List, ast.Set, ast.Tuple)):
+                        if isinstance(val_node, ast.List | ast.Set | ast.Tuple):
                             for elt in val_node.elts:
                                 if isinstance(elt, ast.Constant) and isinstance(elt.value, str):
                                     if elt.value in banned_strings:
@@ -143,7 +145,7 @@ class TestMLFeatureContract:
                                             f"{py_file.name}:{node.lineno} variable '{name}' contains banned '{elt.value}'"
                                         )
 
-        assert not violations, f"Protected attributes found in feature/column lists:\n" + "\n".join(
+        assert not violations, "Protected attributes found in feature/column lists:\n" + "\n".join(
             violations
         )
 

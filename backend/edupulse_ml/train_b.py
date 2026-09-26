@@ -6,9 +6,9 @@ and anti-leakage guards across institutional student cohorts.
 
 import copy
 import hashlib
-import json
 from pathlib import Path
-from typing import Any, Mapping, Optional, Tuple
+from typing import Any
+
 import joblib
 import numpy as np
 import pandas as pd
@@ -30,10 +30,10 @@ class NaiveBaselineRegressor(BaseEstimator, RegressorMixin):
     Falls back to global training mean if student has no prior history.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.global_mean_ = 50.0
 
-    def fit(self, X: pd.DataFrame, y: np.ndarray):
+    def fit(self, X: pd.DataFrame, y: np.ndarray) -> "NaiveBaselineRegressor":
         self.global_mean_ = float(np.mean(y)) if len(y) > 0 else 50.0
         return self
 
@@ -60,7 +60,7 @@ def get_feature_columns(df: pd.DataFrame, use_habits: bool = False) -> list[str]
     return features
 
 
-def split_temporal_holdout(df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def split_temporal_holdout(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Splits dataset chronologically: holds out the latest semester as the test set,
     training exclusively on earlier semesters. Prevents temporal data leakage.
@@ -164,7 +164,7 @@ def train_and_evaluate_model_b(
 
     # Select best ML candidate between Ridge and HistGradientBoosting (excluding naive from artifact)
     ml_candidates = {k: v for k, v in cv_scores.items() if k != "naive_baseline"}
-    best_candidate_name = min(ml_candidates, key=ml_candidates.get)
+    best_candidate_name = min(ml_candidates, key=lambda k: ml_candidates[k])
     best_pipeline = candidates[best_candidate_name]
 
     # Retrain winning candidate on entire train_df

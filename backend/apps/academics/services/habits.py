@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Optional
+
 from django.utils import timezone
 
 
 @dataclass(frozen=True)
 class HabitSummary:
-    hours_studied_per_week: Optional[float]
-    sleep_hours_per_night: Optional[float]
-    motivation_level: Optional[str]
-    tutoring_sessions: Optional[int]
-    physical_activity: Optional[int]
+    hours_studied_per_week: float | None
+    sleep_hours_per_night: float | None
+    motivation_level: str | None
+    tutoring_sessions: int | None
+    physical_activity: int | None
     sample_count: int
 
 
@@ -73,7 +73,7 @@ def compute_habit_summary_from_logs(logs: list) -> HabitSummary:
 
 def habit_summary(
     student,
-    semester: Optional[int] = None,
+    semester: int | None = None,
     window_days: int = 28,
 ) -> HabitSummary:
     """

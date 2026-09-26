@@ -4,17 +4,15 @@ Verifies out-of-scope queries, post verification, and security logging without P
 """
 
 import logging
+
 import pytest
 from django.urls import reverse
+
 from tests.factories import (
-    make_university,
-    HODUserFactory,
     DeanUserFactory,
-    TeacherUserFactory,
-    TeacherProfileFactory,
-    TeachingAssignmentFactory,
+    HODUserFactory,
+    make_university,
 )
-from academics.models import Department, School, Batch
 
 
 @pytest.mark.django_db
