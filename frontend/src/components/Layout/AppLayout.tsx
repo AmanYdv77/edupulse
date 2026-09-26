@@ -15,6 +15,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: '📊' },
   { label: 'My Results', to: '/student/results', capability: 'view_own_results', icon: '📝' },
   { label: 'Habit Check-In', to: '/student/habits', capability: 'log_habits', icon: '⏱️' },
+  { label: 'My Classes', to: '/classes', capability: 'enter_internal_marks', icon: '🏫' },
   { label: 'Institutional Analytics', to: '/analytics', capability: 'view_analytics', icon: '📈' },
   { label: 'At-Risk Roster', to: '/roster', capability: 'view_at_risk_roster', icon: '⚠️' },
   { label: 'Internal Marks Entry', to: '/marks', capability: 'enter_internal_marks', icon: '✏️' },

@@ -8,7 +8,17 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { UnauthorizedPage } from './pages/UnauthorizedPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { CapabilityPlaceholderPage } from './pages/CapabilityPlaceholderPage';
+
+// Role-Based Screen Components
+import { StudentDashboard } from './features/student/StudentDashboard';
+import { StudentResults } from './features/student/StudentResults';
+import { HabitCheckIn } from './features/student/HabitCheckIn';
+import { TeacherClassesView } from './features/teacher/TeacherClassesView';
+import { AtRiskRosterView } from './features/teacher/AtRiskRosterView';
+import { InternalMarksEntry } from './features/teacher/InternalMarksEntry';
+import { ScopeAnalyticsView } from './features/analytics/ScopeAnalyticsView';
+import { ModelRegistryView } from './features/admin/ModelRegistryView';
+
 import './styles/base.css';
 
 const queryClient = new QueryClient({
@@ -41,80 +51,74 @@ export const App: React.FC = () => {
             >
               <Route index element={<DashboardPage />} />
 
+              {/* Student Routes */}
+              <Route
+                path="student/dashboard"
+                element={
+                  <RouteGuard requiredCapability="view_own_results">
+                    <StudentDashboard />
+                  </RouteGuard>
+                }
+              />
               <Route
                 path="student/results"
                 element={
                   <RouteGuard requiredCapability="view_own_results">
-                    <CapabilityPlaceholderPage
-                      title="Academic Results"
-                      capability="view_own_results"
-                      description="Semester results, SGPA, grades, and marks cards."
-                    />
+                    <StudentResults />
                   </RouteGuard>
                 }
               />
-
               <Route
                 path="student/habits"
                 element={
                   <RouteGuard requiredCapability="log_habits">
-                    <CapabilityPlaceholderPage
-                      title="Daily & Weekly Habit Check-In"
-                      capability="log_habits"
-                      description="Study hours, sleep, attendance, and routine trackers."
-                    />
+                    <HabitCheckIn />
                   </RouteGuard>
                 }
               />
 
+              {/* Analytics & Rosters (Teacher, HOD, Dean, Executive) */}
               <Route
                 path="analytics"
                 element={
                   <RouteGuard requiredCapability="view_analytics">
-                    <CapabilityPlaceholderPage
-                      title="Institutional Analytics"
-                      capability="view_analytics"
-                      description="Scoped performance KPIs, cohort breakdown, and longitudinal trends."
-                    />
+                    <ScopeAnalyticsView />
                   </RouteGuard>
                 }
               />
-
+              <Route
+                path="classes"
+                element={
+                  <RouteGuard requiredCapability="view_analytics">
+                    <TeacherClassesView />
+                  </RouteGuard>
+                }
+              />
               <Route
                 path="roster"
                 element={
                   <RouteGuard requiredCapability="view_at_risk_roster">
-                    <CapabilityPlaceholderPage
-                      title="At-Risk Student Roster"
-                      capability="view_at_risk_roster"
-                      description="Scoped early-warning roster and explanation factors."
-                    />
+                    <AtRiskRosterView />
                   </RouteGuard>
                 }
               />
 
+              {/* Faculty Marks Entry */}
               <Route
                 path="marks"
                 element={
                   <RouteGuard requiredCapability="enter_internal_marks">
-                    <CapabilityPlaceholderPage
-                      title="Internal Marks Entry"
-                      capability="enter_internal_marks"
-                      description="Spreadsheet grid and CSV bulk marks upload."
-                    />
+                    <InternalMarksEntry />
                   </RouteGuard>
                 }
               />
 
+              {/* Admin Model Registry */}
               <Route
                 path="models"
                 element={
                   <RouteGuard requiredCapability="manage_model_registry">
-                    <CapabilityPlaceholderPage
-                      title="Model Registry"
-                      capability="manage_model_registry"
-                      description="Algorithm versioning, holdout metrics, and activation controls."
-                    />
+                    <ModelRegistryView />
                   </RouteGuard>
                 }
               />
