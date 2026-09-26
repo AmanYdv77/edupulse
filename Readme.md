@@ -1,190 +1,254 @@
-# 🎓 EduPulse: Student Performance Prediction & Habit Telemetry Platform
+# 🎓 EduPulse: Student Performance Prediction & Academic Early-Warning Platform
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-6.0-green.svg)](https://www.djangoproject.com/)
-[![Scikit--Learn](https://img.shields.io/badge/Scikit--Learn-ML%20Inference-orange.svg)](https://scikit-learn.org/)
-[![Theme](https://img.shields.io/badge/Design%20System-Stitch%20Monolith%20Dark-white.svg)]()
+[![CI Pipeline](https://github.com/AmanYdv77/edupulse/actions/workflows/ci.yml/badge.svg)](https://github.com/AmanYdv77/edupulse/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg?logo=python&logoColor=white)](https://www.python.org/)
+[![Django 6.0](https://img.shields.io/badge/Django-6.0-092E20.svg?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![React 19](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg?logo=redis&logoColor=white)](https://redis.io/)
+[![Celery](https://img.shields.io/badge/Celery-5.4-37814A.svg?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.4-F7931E.svg?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-EduPulse is an institutional Academic Information System and Predictive Telemetry Engine built with **Django 6**, **Scikit-Learn**, and the **Stitch "Monolith Academic" Design System**.
+**EduPulse** is an institutional academic platform that helps universities spot learning difficulties and academic risks **weeks before semester exams happen** — giving educators and students the time they need to take action and improve outcomes.
 
-Unlike traditional Student Information Systems (SIS) that record student grades only after final exams (post-mortem analysis), EduPulse integrates **continuous student habit telemetry** with a **Dual-Model ML Architecture** to detect academic risks and provide prescriptive interventions before semester exams take place.
-
----
-
-## 🌟 Key Features & Innovations
-
-### 1. 🧠 Dual-Model ML Architecture
-*   **Model 1 (Academic Baseline Prior)**: Computes a baseline trajectory using historical semester exams, mid-term internal assessments ($M_{internal} \in [0, 30]$), and course difficulty weights.
-*   **Model 2 (Dynamic Behavioral Multiplier)**: Dynamically scales and calibrates expected subject scores using continuous lifestyle vectors:
-    *   Weekly Study Hours ($0 - 60$ hrs)
-    *   Sleep Consistency ($3 - 12$ hrs/night)
-    *   Motivation Indices (Low / Medium / High)
-    *   Tutoring Attendance & Physical Activity
-    *   Daily Attendance Tracking ($0 - 100\%$)
-
-### 2. ⚡ Flexible Habit Collection (Daily vs. Weekly Cadence)
-To prevent logging fatigue, students choose their preferred input rhythm:
-*   **Daily Quick-Check (30 sec)**: High-frequency tracking of daily study hours, sleep duration, and motivation streaks.
-*   **Weekly Summary (2 min)**: Low-frequency aggregated summary for busy weekends.
-*   **Automated Normalization**: A rolling 7-day mathematical aggregation pipeline converts daily inputs into normalized weekly metrics:
-    $$\text{Normalized Weekly Study} = \left(\frac{1}{N}\sum_{i=1}^N \text{Daily Study}_i\right) \times 7$$
-
-### 3. 🎯 Faculty Early Warning & Risk Radar
-*   **At-Risk Detection**: Automatically flags students whose forecasted subject marks drop below the university passing threshold ($< 40\%$).
-*   **Root-Cause Diagnostics**: Isolates whether failure is driven by academic gaps (low internal test marks) or behavioral deficits (study volume $< 8$ hrs/week or attendance $< 75\%$).
-*   **Direct Interventions**: Allows faculty to trigger advising sessions or revision assignments.
-
-### 4. 🎨 Stitch "Monolith Academic" Design System
-*   **Strict Dual-Tone Color Palette**:
-    *   **Canvas & Surfaces**: Deep Charcoal & Dark Grey (`#090a0c`, `#0e1014`, `#14161c`, `#1b1e26`)
-    *   **Text & Accents**: Crisp High-Contrast White (`#ffffff`)
-    *   **Muted Typography**: Neutral Grey (`#9da3b4`, `#5e6475`)
-    *   **Badges**: Monochromatic high-contrast risk tags (`tag-high-risk`, `tag-moderate-risk`, `tag-low-risk`).
-*   **Modern Typography**: `Geist` / `Inter` for layout and `JetBrains Mono` for data and telemetry readouts.
-
-### 5. 🛡️ Robust CSRF Synchronization & Session Reliability
-*   **Client-Side Auto-Synchronizer**: Automatically detects browser Back/Forward navigation (`pageshow` / bfcache) and updates form tokens with the active `csrftoken` cookie before submission.
-*   **Graceful Recovery**: Includes custom `403_csrf.html` with one-click reload recovery.
+Most traditional college management systems only record grades *after* exams are already over (when it's too late to help). EduPulse bridges this gap by combining **daily/weekly habit tracking** (study hours, sleep, attendance) with an **ethical, privacy-first Machine Learning engine** that provides personalized insights and early warnings.
 
 ---
 
-## 🏛️ System Architecture
+## 💡 Why EduPulse?
 
+* **For Students:** Understand your learning habits, track study streaks, get realistic grade forecasts, and see clear, actionable advice on how to improve.
+* **For Faculty & Teachers:** An **At-Risk Radar** flags students who are slipping behind in specific subjects early in the semester so you can offer timely support or tutoring.
+* **For Department Heads (HODs) & Deans:** Monitor department-wide academic health, course-level difficulty trends, and cohort distributions across semesters.
+* **For University Leadership:** High-level institutional intelligence dashboards with **complete privacy protection** (zero student names or sensitive personal information exposed).
+
+---
+
+## ⚡ Key Highlights & Architecture
+
+### 1. 🧠 Dual-Model Machine Learning Engine
+EduPulse uses a two-tier approach to ensure reliable predictions:
+* **Model A (Prior Baseline):** Trained on student behavioral factors to provide early baseline expectations when historical campus data is still limited.
+* **Model B (Longitudinal Institutional Model):** Trained strictly on verified campus records using `GroupedKFold` cross-validation — ensuring student records never leak across training and evaluation splits.
+* **Demographic Quarantine (Ethical AI):** We strictly prohibit sensitive attributes (such as gender, ethnicity, socioeconomic status, and family income) from being used as model inputs. Predictions are based purely on academic effort and habits.
+* **Transparent Explanations:** Every prediction is broken down into plain-English factors (e.g., *"Low weekly study hours (-4.2 pts)"* or *"Strong internal assessment score (+6.1 pts)"*).
+
+### 2. 🛡️ Role-Based Access Control (RBAC) & Privacy
+Permissions are enforced strictly on the server:
+* Every user only accesses the data they have permission to see.
+* Student privacy is preserved: executive analytics aggregate statistics and strip all Personally Identifiable Information (PII).
+
+### 3. 🚀 High-Performance Asynchronous Stack
+* **Dual Redis Setup:** One isolated Redis instance for caching (`redis-cache`) and another dedicated to background task queues (`redis-broker`).
+* **Celery Background Workers:** Automatically compute and update campus-wide predictions and score snapshots in the background without slowing down the user experience.
+* **Generational Caching:** Fast response times with automatic cache invalidation whenever new marks or attendance records are submitted.
+
+### 4. 🎨 Modern Dark-Theme React Frontend
+* Built with **React 19**, **TypeScript**, and **Vite** with a polished, accessible dark theme.
+* Fast, responsive interface with interactive dashboards, habit logging studios, and real-time performance radars.
+
+---
+
+## 🏛️ System Overview
+
+```mermaid
+flowchart TB
+    subgraph Frontend["Frontend Client"]
+        SPA["React 19 SPA (Vite / TypeScript)"]
+    end
+
+    subgraph Backend["Django 6.0 Backend API"]
+        Gunicorn["Gunicorn WSGI Server"]
+        WhiteNoise["WhiteNoise Static File Delivery"]
+        API["REST API (/api/v1/)"]
+        Security["Server-Derived Scope & RBAC Security"]
+    end
+
+    subgraph BackgroundJobs["Background Processing"]
+        CeleryWorker["Celery Worker (ML Inference & Snapshots)"]
+        CeleryBeat["Celery Beat (Periodic University Jobs)"]
+    end
+
+    subgraph Storage["Databases & Models"]
+        Postgres[(PostgreSQL 16 Database)]
+        RedisCache[(Redis Cache - DB 0)]
+        RedisBroker[(Redis Task Queue - DB 1)]
+        ModelRegistry["ML Model Registry (Versioned Pickles & Metadata)"]
+    end
+
+    SPA -->|REST API Requests| Gunicorn
+    Gunicorn --> WhiteNoise
+    Gunicorn --> Security
+    Security --> API
+    API --> Postgres
+    API --> RedisCache
+    API --> ModelRegistry
+    API -->|Queue Jobs| RedisBroker
+    RedisBroker --> CeleryWorker
+    CeleryBeat -->|Trigger Schedules| RedisBroker
+    CeleryWorker --> Postgres
+    CeleryWorker --> RedisCache
+    CeleryWorker --> ModelRegistry
 ```
-                       ┌──────────────────────────────────────────────┐
-                       │           EduPulse Web Application           │
-                       └──────────────────────┬───────────────────────┘
-                                              │
-                    ┌─────────────────────────┴─────────────────────────┐
-                    ▼                                                   ▼
-       ┌────────────────────────┐                          ┌────────────────────────┐
-       │     Student Portal     │                          │     Faculty Portal     │
-       └────────────┬───────────┘                          └────────────┬───────────┘
-                    │                                                   │
-     ┌──────────────┴──────────────┐                      ┌─────────────┴─────────────┐
-     ▼                             ▼                      ▼                           ▼
-[Habit Check-In]          [AI Predictions]         [At-Risk Radar]            [Dept Ledger]
-(Daily / Weekly)          (Risk Diagnostics)       (Early Warnings)           (Master Transcripts)
-     │                             ▲                      ▲                           │
-     │                             │                      │                           │
-     └──────────────┬──────────────┘                      └─────────────┬─────────────┘
-                    │                                                   │
-                    ▼                                                   ▼
-       ┌────────────────────────┐                          ┌────────────────────────┐
-       │   sync_habits_to_sem   │                          │   Scoped Permissions   │
-       │ (7-Day Rolling Normal) │                          │  (Teacher/HOD/Dean/VC) │
-       └────────────┬───────────┘                          └────────────┬───────────┘
-                    │                                                   │
-                    └─────────────────────────┬─────────────────────────┘
-                                              │
-                                              ▼
-                             ┌───────────────────────────────────┐
-                             │       Relational DB Schema        │
-                             │ (Users, Academics, Habits, Sem)   │
-                             └───────────────────────────────────┘
-```
 
 ---
 
-## 🚀 Quick Start & Installation
+## 🚀 Quickstart with Docker Compose
 
-### 1. Prerequisites
-*   Python 3.12 installed
-*   Git
+The easiest way to run the entire EduPulse stack (Database, Dual Redis, Web Server, Celery Worker, and Beat) is using Docker Compose:
 
-### 2. Setup Virtual Environment
+### Prerequisites
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (v24.0+)
+* [Docker Compose](https://docs.docker.com/compose/) (v2.20+)
+
+### 1. Clone & Launch
 ```bash
-# Clone the repository
-git clone https://github.com/AmanYdv77/Students_Performance_Prediction.git
-cd Students_Performance_Prediction
+# Clone repository
+git clone https://github.com/AmanYdv77/edupulse.git
+cd edupulse
 
-# Create and activate virtual environment (Windows)
+# Build and start all services in the background
+docker compose up -d --build
+```
+
+### 2. Check Services Status
+```bash
+docker compose ps
+```
+
+Once up, open **`http://localhost:8000`** in your browser to access EduPulse!
+
+---
+
+## 💻 Local Development Setup
+
+If you prefer to run the backend and frontend directly on your machine:
+
+### 1. Set Up Python Virtual Environment
+```bash
+# 1. Create and activate virtual environment
 python -m venv venv
-.\venv\Scripts\activate
 
-# On macOS/Linux:
+# On Windows:
+.\venv\Scripts\activate
+# On macOS / Linux:
 # source venv/bin/activate
 
-# Install required dependencies
-pip install -r requirements.txt
+# 2. Install dependencies
+pip install -r requirements.txt -r requirements-dev.txt
+
+# 3. Enable pre-commit hooks
+pre-commit install
 ```
 
-### 3. Run Database Migrations
+### 2. Database & Background Services
+Make sure PostgreSQL and Redis are running locally (or use Docker for dependencies only via `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db redis-cache redis-broker`).
+
 ```bash
-python app/manage.py migrate
+# Copy example environment variables
+cp .env.example .env
+
+# Run database migrations
+python backend/manage.py migrate
+
+# Train initial baseline ML model
+python backend/manage.py train_model_a
 ```
 
-### 4. Start the Development Server
+### 3. Build & Run Frontend
 ```bash
-python app/manage.py runserver
+cd frontend
+npm install
+npm run build
+cd ..
 ```
-Visit **`http://127.0.0.1:8000/`** in your browser to access the platform.
+
+### 4. Run Development Server
+```bash
+python backend/manage.py runserver 0.0.0.0:8000
+```
+Visit **`http://127.0.0.1:8000`** in your browser.
 
 ---
 
-## 📋 Testing the Workflow
+## 🛠️ Makefile Commands Cheatsheet
 
-### Student Workflow
-1. Navigate to `http://127.0.0.1:8000/accounts/login/`.
-2. Sign in with student credentials (e.g. **`25-engg-cse-ug-001`**).
-3. On the **Command Dashboard**, review forecasted marks, attendance, and habit streaks.
-4. Click **Log Habits** in the sidebar (or visit `/habits/check-in/`):
-   * Switch between **Daily Quick-Check** and **Weekly Summary** modes.
-   * Adjust study and sleep sliders and record a check-in.
-5. Click **AI Predictions** in the sidebar (or visit `/my-predictions/`) to view the updated subject forecast matrix and prescriptive guidance.
+EduPulse includes a convenient `Makefile` with common shortcuts:
 
-### Faculty Workflow
-1. Click **Exit** in the sidebar footer and sign in with faculty credentials (e.g. **`cse_fac01`**).
-2. On the **Faculty Dashboard**, review monitored student counts and at-risk metrics.
-3. Click **At-Risk Radar** (`/at-risk/`) to view flagged students with failing course trajectories.
-4. Click **Dept Records** (`/results-overview/`) to view the department-scoped performance ledger.
-
----
-
-## 📂 Project Structure
-
-```
-Student_Performance_Prediction/
-├── app/
-│   ├── academics/                 # Curriculum, results, and habit tracking
-│   │   ├── migrations/            # Database schema migrations
-│   │   ├── forms.py               # Telemetry and preference forms
-│   │   ├── models.py              # Models: HabitCheckInLog, StudentHabitPreference, etc.
-│   │   ├── analytics_engine.py    # Multi-Tier 5-number summary, topper, & failure engine
-│   │   └── views.py
-│   ├── accounts/                  # User identity, RBAC, and dashboards
-│   │   ├── models.py              # Custom User with role hierarchy
-│   │   ├── views.py               # Dashboard, prediction, and radar controllers
-│   │   ├── analytics_views.py     # Role-based analytics dispatcher & JSON query API
-│   │   └── urls.py                # App routing
-│   ├── resultplatform/            # Django root configuration
-│   │   ├── settings.py            # Trusted origins, CSRF, and session settings
-│   │   └── urls.py                # Master URL dispatcher
-│   └── templates/                 # Stitch Monolith Dark templates
-│       ├── base.html              # Sidebar, topbar, and CSRF synchronizer
-│       ├── 403_csrf.html          # Monolith security recovery view
-│       ├── home.html              # Student & Faculty dashboards
-│       ├── habit_checkin.html     # Telemetry logging studio
-│       ├── my_predictions.html    # Dual-Model AI diagnostics
-│       ├── at_risk_students.html  # Faculty Early Warning Radar
-│       ├── my_results.html        # Academic transcripts
-│       ├── scoped_results.html    # Departmental ledger
-│       ├── analytics/             # Multi-Tier Analytics Cockpits (Student, Teacher, HOD, Dean, VC)
-│       └── registration/
-│           └── login.html         # High-contrast sign-in page
-├── scripts/                       # Seeding and model training utilities
-│   ├── import_university_data.py  # Seed university hierarchy
-│   ├── seed_academics.py          # Seed curriculum and test results
-│   ├── seed_kaggle_features.py    # Seed behavioral features
-│   ├── seed_sample_users.py       # Seed test accounts
-│   └── train_predictor.py         # Train Scikit-Learn inference pipeline
-├── requirements.txt               # Dependencies
-├── .gitignore                     # Git exclusions (data, docs, venv)
-└── Readme.md                      # Project documentation
-```
+| Command | What it does |
+| :--- | :--- |
+| `make up` | Starts the entire Docker Compose production stack |
+| `make up-dev` | Starts services with exposed local database/Redis ports |
+| `make down` | Stops all running Docker containers |
+| `make logs` | Shows live logs from all containers |
+| `make migrate` | Applies any pending database schema migrations |
+| `make test` | Runs the full Python test suite with coverage |
+| `make e2e` | Runs automated browser tests using Playwright |
+| `make lint` | Runs code quality checks (`ruff`, `mypy`, `pre-commit`) |
+| `make fmt` | Automatically formats Python and frontend code |
+| `make lock` | Recompiles `requirements.txt` from `.in` files |
+| `make train-a` | Trains the Model A baseline ML model |
 
 ---
 
-## 📄 License & Attribution
+## 📡 API Documentation & Interactive Explorer
 
-Developed for academic research and institutional result management. Built with modern web engineering and data science best practices.
+EduPulse includes auto-generated OpenAPI 3.0 documentation:
+
+* **Interactive Swagger UI:** `http://localhost:8000/api/docs/`
+* **Raw OpenAPI Schema:** `http://localhost:8000/api/schema/`
+* **Health Check:** `http://localhost:8000/health/`
+* **Readiness Probe:** `http://localhost:8000/ready/`
+
+### Key Endpoints Overview
+
+| Category | Endpoint | Method | Who can access? | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **Auth** | `/api/v1/auth/login/` | `POST` | Public | Log into account and receive session |
+| | `/api/v1/auth/logout/` | `POST` | Authenticated | End active session securely |
+| | `/api/v1/auth/me/` | `GET` | Authenticated | Get currently logged-in user profile & role |
+| **Academics** | `/api/v1/academics/subjects/` | `GET` | Authenticated | List curriculum subjects |
+| | `/api/v1/academics/results/` | `GET`, `POST` | Teacher / Student | Enter student assessment marks / view transcripts |
+| **Habits** | `/api/v1/habits/check-in/` | `GET`, `POST` | Student | Log daily or weekly study hours and sleep |
+| | `/api/v1/habits/preferences/` | `GET`, `PUT` | Student | Change logging frequency (Daily vs. Weekly) |
+| **Predictions** | `/api/v1/predictions/me/` | `GET` | Student | View predicted final marks & improvement advice |
+| | `/api/v1/predictions/at-risk/` | `GET` | Faculty / Staff | Search and filter students needing academic help |
+| | `/api/v1/predictions/batch/` | `POST` | HOD / Admin | Run campus-wide prediction update in the background |
+| **Analytics** | `/api/v1/analytics/overview/` | `GET` | Faculty / Executive | View summary metrics & grade distribution graphs |
+| | `/api/v1/analytics/query/` | `POST` | Faculty / Executive | Filter and analyze student cohort performance |
+
+---
+
+## 🔒 Security, Safety & Governance
+
+* **Safe Session Cookies:** Protected with `HttpOnly`, `SameSite=Lax`, and `Secure` attributes, with automated CSRF protection.
+* **Content Security Policy (CSP):** Strict security headers preventing clickjacking (`X-Frame-Options: DENY`) and cross-site scripting attacks.
+* **Masked Logs (Zero PII):** Log outputs automatically redact student names, emails, and sensitive identifiers.
+* **Database Guards:** Built-in safeguards stop any destructive script or test from accidentally modifying non-test databases.
+
+---
+
+## 🧪 Testing & Quality Assurance
+
+EduPulse features comprehensive automated test coverage:
+
+```bash
+# 1. Run all unit & integration tests (220+ tests)
+pytest -q
+
+# 2. Run browser end-to-end user journey tests
+pytest tests/e2e/ --headed=false
+
+# 3. Static type checks & linting
+mypy backend
+ruff check .
+pre-commit run --all-files
+```
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
