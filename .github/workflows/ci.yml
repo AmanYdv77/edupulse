@@ -1,0 +1,237 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Python Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Ruff Check (Linting)
+        run: ruff check backend tests
+
+      - name: Ruff Format Check
+        run: ruff format --check backend tests
+
+      - name: Mypy Strict ML Type Check
+        run: mypy backend/edupulse_ml backend/apps/predictions
+
+      - name: Mypy Backend Type Check
+        run: mypy backend
+
+  frontend:
+    name: Frontend Checks & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint Check
+        run: npm run lint
+
+      - name: TypeScript Type Check
+        run: npm run typecheck
+
+      - name: Unit & Component Tests
+        run: npm test
+
+      - name: Prettier Format Check
+        run: npm run format:check
+
+      - name: Build Production SPA Bundle
+        run: npm run build
+
+      - name: Upload Frontend Dist Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+
+  backend-tests:
+    name: Backend Unit & Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: edupulse_test
+          POSTGRES_USER: edupulse_ci
+          POSTGRES_PASSWORD: ci_password_123
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        options: --entrypoint redis-server --requirepass ci_redis_pass_123
+        ports:
+          - 6379:6379
+    env:
+      DJANGO_ENV: test
+      DJANGO_SECRET_KEY: ci-test-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
+      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_test
+      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
+      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Django System Check
+        run: python backend/manage.py check
+
+      - name: Migration Dry-Run Check
+        run: python backend/manage.py makemigrations --check --dry-run
+
+      - name: Run Test Suite with Coverage
+        run: pytest --cov=backend --cov-report=term-missing -q
+
+  e2e:
+    name: End-to-End Browser Tests
+    needs: [frontend]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: edupulse_e2e
+          POSTGRES_USER: edupulse_ci
+          POSTGRES_PASSWORD: ci_password_123
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DJANGO_ENV: e2e
+      DJANGO_SECRET_KEY: ci-e2e-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
+      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_e2e
+      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
+      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Download Frontend Dist Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Install Playwright Chromium
+        run: playwright install --with-deps chromium
+
+      - name: Run Playwright E2E Tests
+        run: pytest -m e2e
+
+      - name: Upload E2E Failure Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts
+          path: tests/e2e/artifacts
+          if-no-files-found: ignore
+
+  security:
+    name: Security & Deployment Checks
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_ENV: prod
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: ci-deployment-audit-dummy-secret-key-12345-extra-long-random-string-50-chars
+      DJANGO_ALLOWED_HOSTS: example.edu,localhost
+      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_prod
+      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
+      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+      MODEL_ARTIFACT_DIR: artifacts
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Django Production Deployment Check
+        run: python backend/manage.py check --deploy --settings=config.settings.prod
+
+      - name: Python Dependency Security Audit (pip-audit)
+        run: pip-audit -r requirements.txt
+
+      - name: Frontend Dependency Security Audit (npm audit)
+        working-directory: frontend
+        run: npm audit --omit=dev --audit-level=high
