@@ -1,0 +1,14 @@
+# Developer override Compose file
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-54432}:5432"
+
+  redis-cache:
+    ports:
+      - "${REDIS_CACHE_PORT:-56379}:6379"
+
+  redis-broker:
+    ports:
+      - "${REDIS_BROKER_PORT:-56380}:6379"

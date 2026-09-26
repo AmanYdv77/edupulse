@@ -71,6 +71,7 @@ AUTH_USER_MODEL = "accounts.User"
 MIDDLEWARE = [
     "core.middleware.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -152,6 +153,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 FRONTEND_DIST_DIR = REPO_DIR / "frontend" / "dist"
 
 STATICFILES_DIRS = [
@@ -162,6 +164,15 @@ STATICFILES_DIRS = [
     ]
     if d.is_dir()
 ]
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Authentication redirects
 LOGIN_REDIRECT_URL = "/app/"
