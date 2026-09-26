@@ -1,10 +1,41 @@
-"""
-Security headers and Content-Security-Policy (CSP) middleware for EduPulse.
-"""
-
+import re
+import uuid
 from collections.abc import Callable
 
 from django.http import HttpRequest, HttpResponse
+
+from .logging import set_request_id
+
+REQUEST_ID_REGEX = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
+
+
+class RequestIDMiddleware:
+    """
+    Middleware that ensures every request has a validated correlation ID.
+    Reads incoming X-Request-ID, validates format, or generates a UUID4.
+    Sets contextvar for logging and returns X-Request-ID in response header.
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        incoming_id = request.headers.get("X-Request-ID", "").strip()
+        if incoming_id and REQUEST_ID_REGEX.match(incoming_id):
+            request_id = incoming_id
+        else:
+            request_id = str(uuid.uuid4())
+
+        set_request_id(request_id)
+        request.request_id = request_id
+
+        try:
+            response = self.get_response(request)
+        finally:
+            set_request_id("")
+
+        response.headers["X-Request-ID"] = request_id
+        return response
 
 
 class SecurityHeadersMiddleware:

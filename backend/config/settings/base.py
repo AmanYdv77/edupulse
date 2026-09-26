@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = "accounts.User"
 
 MIDDLEWARE = [
+    "core.middleware.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -254,5 +255,62 @@ CELERY_BEAT_SCHEDULE = {
     "warm-analytics-cache-periodic": {
         "task": "analytics.warm_cache",
         "schedule": 1800.0,  # 30 minutes in seconds
+    },
+}
+
+# ============================================================================
+# Structured PII-Free Logging Configuration (Task A32)
+# ============================================================================
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+DJANGO_LOG_JSON = env.bool("DJANGO_LOG_JSON", default=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "request_id": {
+            "()": "core.logging.RequestIDFilter",
+        },
+    },
+    "formatters": {
+        "json": {
+            "()": "core.logging.JSONLogFormatter",
+        },
+        "standard": {
+            "format": "[%(asctime)s] %(levelname)s [%(name)s] [req:%(request_id)s] %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json" if DJANGO_LOG_JSON else "standard",
+            "filters": ["request_id"],
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": DJANGO_LOG_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
+        "edupulse": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": False,
+        },
     },
 }

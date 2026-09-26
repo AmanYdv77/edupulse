@@ -6,12 +6,15 @@ and the React Single-Page Application (SPA) at /app/.
 
 from api.permissions import StaffOrDevOnly
 from core.spa import SPAIndexView
+from core.views import HealthCheckView, ReadinessCheckView
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
+    path("health/", HealthCheckView.as_view(), name="health"),
+    path("ready/", ReadinessCheckView.as_view(), name="readiness"),
     path("admin/", admin.site.urls),
     path("api/v1/", include("api.urls")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
