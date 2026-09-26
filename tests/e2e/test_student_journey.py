@@ -33,6 +33,8 @@ def test_student_habit_checkin_and_results_flow(e2e_page, live_server, e2e_seed_
 
     # Assert feedback message and immediate table appearance
     e2e_page.wait_for_selector("text=Habit check-in recorded successfully!", timeout=8000)
+    e2e_page.wait_for_selector("td:has-text('5.5')", timeout=8000)
+    e2e_page.wait_for_selector("td:has-text('High')", timeout=8000)
     assert e2e_page.locator("td:has-text('5.5')").is_visible()
     assert e2e_page.locator("td:has-text('High')").is_visible()
 
@@ -40,5 +42,6 @@ def test_student_habit_checkin_and_results_flow(e2e_page, live_server, e2e_seed_
     e2e_page.goto(f"{live_server.url}/app/student/results")
     e2e_page.wait_for_selector("text=Academic Performance Records", state="visible")
     e2e_page.wait_for_selector("text=Database Management Systems", timeout=8000)
+    e2e_page.wait_for_selector("text=CS301", timeout=8000)
     assert e2e_page.locator("text=CS301").is_visible()
     assert e2e_page.locator("text=A+").is_visible()

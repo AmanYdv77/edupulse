@@ -33,8 +33,10 @@ def test_edupulse_ml_imports_zero_django():
     repo_root = Path(__file__).resolve().parent.parent
     backend_dir = repo_root / "backend"
 
+    import os
+
     env = {
-        "PYTHONPATH": f"{repo_root};{backend_dir}",
+        "PYTHONPATH": os.pathsep.join([str(repo_root), str(backend_dir)]),
         "SYSTEMROOT": subprocess.os.environ.get("SYSTEMROOT", "C:\\Windows"),
         "PATH": subprocess.os.environ.get("PATH", ""),
     }
