@@ -116,6 +116,7 @@ jobs:
           --health-retries 5
     env:
       DJANGO_ENV: test
+      DJANGO_SETTINGS_MODULE: config.settings.test
       DJANGO_SECRET_KEY: ci-test-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
       DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_test
       REDIS_URL: redis://localhost:6379/1
@@ -140,10 +141,10 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Django System Check
-        run: python backend/manage.py check
+        run: python backend/manage.py check --settings=config.settings.test
 
       - name: Migration Dry-Run Check
-        run: python backend/manage.py makemigrations --check --dry-run
+        run: python backend/manage.py makemigrations --check --dry-run --settings=config.settings.test
 
       - name: Run Test Suite with Coverage
         run: pytest --create-db --cov=backend --cov-report=term-missing -q
@@ -156,7 +157,7 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: edupulse_e2e
+          POSTGRES_DB: edupulse_e2e_test
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ci_password_123
         ports:
@@ -176,9 +177,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DJANGO_ENV: e2e
+      DJANGO_ENV: test
+      DJANGO_SETTINGS_MODULE: config.settings.test
       DJANGO_SECRET_KEY: ci-e2e-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
-      DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_e2e
+      DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_e2e_test
       REDIS_URL: redis://localhost:6379/1
       REDIS_CACHE_URL: redis://localhost:6379/1
       REDIS_BROKER_URL: redis://localhost:6379/2
