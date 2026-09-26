@@ -32,7 +32,7 @@ click-repl==0.4.0
     # via celery
 cloudpickle==3.1.2
     # via joblib
-django==6.0.8
+django==6.1.1
     # via
     #   -r requirements.in
     #   django-redis
@@ -118,10 +118,7 @@ typing-extensions==4.16.0
 tzdata==2026.4
     # via
     #   celery
-    #   django
     #   kombu
-    #   pandas
-    #   psycopg
 uritemplate==4.2.0
     # via drf-spectacular
 vine==5.1.0
