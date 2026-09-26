@@ -94,22 +94,31 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_DB: edupulse_test
-          POSTGRES_USER: edupulse_ci
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ci_password_123
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis:
         image: redis:7
-        options: --entrypoint redis-server --requirepass ci_redis_pass_123
         ports:
           - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DJANGO_ENV: test
       DJANGO_SECRET_KEY: ci-test-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
-      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_test
-      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
-      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+      DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_test
+      REDIS_URL: redis://localhost:6379/1
+      REDIS_CACHE_URL: redis://localhost:6379/1
+      REDIS_BROKER_URL: redis://localhost:6379/2
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -144,17 +153,31 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_DB: edupulse_e2e
-          POSTGRES_USER: edupulse_ci
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: ci_password_123
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DJANGO_ENV: e2e
       DJANGO_SECRET_KEY: ci-e2e-secret-key-for-automated-pipeline-run-12345-extra-long-random-string
-      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_e2e
-      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
-      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+      DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_e2e
+      REDIS_URL: redis://localhost:6379/1
+      REDIS_CACHE_URL: redis://localhost:6379/1
+      REDIS_BROKER_URL: redis://localhost:6379/2
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -196,12 +219,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DJANGO_ENV: prod
-      DJANGO_DEBUG: "0"
+      DJANGO_DEBUG: "false"
       DJANGO_SECRET_KEY: ci-deployment-audit-dummy-secret-key-12345-extra-long-random-string-50-chars
       DJANGO_ALLOWED_HOSTS: example.edu,localhost
-      DATABASE_URL: postgresql://edupulse_ci:ci_password_123@localhost:5432/edupulse_prod
-      REDIS_CACHE_URL: redis://:ci_redis_pass_123@localhost:6379/1
-      REDIS_BROKER_URL: redis://:ci_redis_pass_123@localhost:6379/2
+      DATABASE_URL: postgresql://postgres:ci_password_123@localhost:5432/edupulse_prod
+      REDIS_URL: redis://localhost:6379/1
+      REDIS_CACHE_URL: redis://localhost:6379/1
+      REDIS_BROKER_URL: redis://localhost:6379/2
       MODEL_ARTIFACT_DIR: artifacts
     steps:
       - name: Checkout code
@@ -225,6 +249,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+
+      - name: Install Frontend dependencies
+        working-directory: frontend
+        run: npm ci
 
       - name: Django Production Deployment Check
         run: python backend/manage.py check --deploy --settings=config.settings.prod
