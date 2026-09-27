@@ -83,12 +83,16 @@ export const HabitCheckIn: React.FC = () => {
       setNotes('');
     },
     onError: (err: unknown) => {
-      const msg =
-        err && typeof err === 'object' && 'detail' in err
-          ? String((err as { detail: string }).detail)
-          : err instanceof Error
-            ? err.message
-            : 'Failed to submit habit check-in.';
+      let msg = 'Failed to submit habit check-in.';
+      if (err && typeof err === 'object') {
+        if ('detail' in err) {
+          msg = String((err as { detail: string }).detail);
+        } else if ('non_field_errors' in err && Array.isArray((err as { non_field_errors: unknown[] }).non_field_errors)) {
+          msg = String((err as { non_field_errors: string[] }).non_field_errors[0]);
+        } else if (err instanceof Error) {
+          msg = err.message;
+        }
+      }
       setFormError(msg);
     },
   });
@@ -104,21 +108,31 @@ export const HabitCheckIn: React.FC = () => {
     const tutoring = tutoringSessions !== '' ? Number(tutoringSessions) : 0;
 
     // Strict boundary validation matching ML contract
-    if (isNaN(study) || study < 0 || study > 16) {
-      setFormError('Study hours must be between 0.0 and 16.0 hours.');
+    if (isNaN(study) || study < 0 || study > (logType === 'DAILY' ? 24 : 168)) {
+      setFormError(`Study hours must be between 0.0 and ${logType === 'DAILY' ? '24.0' : '168.0'} hours.`);
       return;
     }
-    if (isNaN(sleep) || sleep < 0 || sleep > 16) {
-      setFormError('Sleep hours must be between 0.0 and 16.0 hours.');
+    if (isNaN(sleep) || sleep < 0 || sleep > 24) {
+      setFormError('Sleep hours must be between 0.0 and 24.0 hours.');
       return;
     }
-    if (activity < 0 || activity > 16) {
-      setFormError('Physical activity must be between 0.0 and 16.0 hours.');
+    if (activity < 0 || activity > 24) {
+      setFormError('Physical activity must be between 0.0 and 24.0 hours.');
       return;
     }
     if (tutoring < 0 || tutoring > 20) {
       setFormError('Tutoring sessions must be between 0 and 20.');
       return;
+    }
+
+    if (logType === 'DAILY') {
+      const totalDaily = study + sleep + activity;
+      if (totalDaily > 24.0) {
+        setFormError(
+          `Total daily hours (Study: ${study}h + Sleep: ${sleep}h + Exercise: ${activity}h = ${totalDaily}h) cannot exceed 24 hours in a single day.`
+        );
+        return;
+      }
     }
 
     checkInMutation.mutate({
