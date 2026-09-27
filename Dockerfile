@@ -49,6 +49,7 @@ USER edupulse
 
 # Run collectstatic with dummy environment variables at build time
 RUN DJANGO_ENV=prod \
+    DJANGO_SETTINGS_MODULE=config.settings.prod \
     DJANGO_SECRET_KEY=build-time-dummy-secret-key-for-collectstatic-only-32chars \
     DJANGO_DEBUG=0 \
     DATABASE_URL=postgresql://dummy:dummy@localhost:5432/edupulse_dummy \

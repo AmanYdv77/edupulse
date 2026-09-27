@@ -196,6 +196,7 @@ class HabitCheckInLogSerializer(serializers.ModelSerializer):
                     {"hours_studied": "Weekly study hours must be between 0.0 and 168.0."}
                 )
 
+        sleep_hours = attrs.get("sleep_hours")
         tutoring = attrs.get("tutoring_sessions")
         if tutoring is not None and tutoring < 0:
             raise serializers.ValidationError(
@@ -207,6 +208,21 @@ class HabitCheckInLogSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"physical_activity": "Physical activity cannot be negative."}
             )
+
+        if log_type == "DAILY":
+            total_daily = (
+                (float(hours_studied) if hours_studied is not None else 0.0)
+                + (float(sleep_hours) if sleep_hours is not None else 0.0)
+                + (float(physical) if physical is not None else 0.0)
+            )
+            if total_daily > 24.0:
+                raise serializers.ValidationError(
+                    {
+                        "non_field_errors": [
+                            f"Total daily hours (Study: {hours_studied or 0}h + Sleep: {sleep_hours or 0}h + Exercise: {physical or 0}h = {total_daily:.1f}h) cannot exceed 24.0 hours."
+                        ]
+                    }
+                )
 
         return attrs
 
