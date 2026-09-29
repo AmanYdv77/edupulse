@@ -36,8 +36,9 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend codebase and frontend build assets
+# Copy backend codebase, model artifacts, and frontend build assets
 COPY backend/ ./backend/
+COPY artifacts/ ./artifacts/
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Create staticfiles and artifact directories with correct non-root permissions
@@ -58,5 +59,5 @@ RUN DJANGO_ENV=prod \
 
 EXPOSE 8000
 
-# Default entrypoint starts Gunicorn WSGI server
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "2", "--access-logfile", "-", "--error-logfile", "-"]
+# Default entrypoint starts Gunicorn WSGI server dynamically binding to $PORT
+CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --access-logfile - --error-logfile -"]

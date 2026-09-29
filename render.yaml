@@ -1,0 +1,36 @@
+databases:
+  - name: edupulse-db
+    databaseName: edupulse_prod
+    user: edupulse_user
+    plan: free
+
+services:
+  - type: web
+    name: edupulse
+    runtime: docker
+    plan: free
+    healthCheckPath: /health/
+    preDeployCommand: python backend/manage.py migrate --noinput && python backend/manage.py register_baseline_model
+    envVars:
+      - key: DJANGO_ENV
+        value: prod
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: edupulse-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com,localhost,127.0.0.1
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: MODEL_ARTIFACT_DIR
+        value: /app/artifacts/models
+      - key: DJANGO_SECURE_SSL_REDIRECT
+        value: "true"
+      - key: PORT
+        value: "8000"

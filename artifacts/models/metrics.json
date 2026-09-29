@@ -1,0 +1,45 @@
+{
+  "slot": "baseline",
+  "dataset": "Kaggle Student Performance Factors",
+  "n_train_rows": 5284,
+  "n_test_rows": 1322,
+  "chosen_model": "ridge_alpha_0.01",
+  "cv_rmse": 2.4098,
+  "test_metrics": {
+    "rmse": 2.5648,
+    "mae": 1.3007,
+    "r2": 0.5797,
+    "pass_mark_threshold": 40.0,
+    "confusion_matrix": {
+      "true_pass": 1322,
+      "true_fail": 0,
+      "false_pass": 0,
+      "false_fail": 0,
+      "classification_accuracy": 1.0
+    }
+  },
+  "dummy_metrics": {
+    "rmse": 3.9561,
+    "mae": 2.8549,
+    "r2": -0.0,
+    "pass_mark_threshold": 40.0,
+    "confusion_matrix": {
+      "true_pass": 1322,
+      "true_fail": 0,
+      "false_pass": 0,
+      "false_fail": 0,
+      "classification_accuracy": 1.0
+    }
+  },
+  "improvement_over_dummy_rmse": 1.3913,
+  "feature_names": [
+    "attendance_percentage",
+    "hours_studied",
+    "sleep_hours",
+    "previous_score",
+    "tutoring_sessions",
+    "physical_activity"
+  ],
+  "data_fingerprint": "d45ea322d6fa5975d97aac25c35392f01abf5ca24e2b37b4e846235e75fa2040",
+  "artifact_file": "model_a_baseline.joblib"
+}

@@ -9,12 +9,14 @@ data/
 *.csv
 *.tsv
 *.pkl
-*.joblib
 *.sqlite3
 notebooks/
 tests/
 docs/
-artifacts/
+artifacts/*
+!artifacts/models/
+!artifacts/models/model_a_baseline.joblib
+!artifacts/models/metrics.json
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

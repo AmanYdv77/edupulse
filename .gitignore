@@ -13,7 +13,6 @@ env/
 .coverage
 htmlcov/
 
-
 # Database
 *.sqlite3
 
@@ -32,9 +31,12 @@ Thumbs.db
 
 # Machine Learning model artifacts
 *.pkl
-*.joblib
 model_artifacts/
-artifacts/
+artifacts/*
+!artifacts/models/
+artifacts/models/*
+!artifacts/models/model_a_baseline.joblib
+!artifacts/models/metrics.json
 
 # Raw data and datasets (except test fixtures)
 data/
