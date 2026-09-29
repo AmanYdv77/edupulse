@@ -10,7 +10,6 @@ services:
     runtime: docker
     plan: free
     healthCheckPath: /health/
-    preDeployCommand: python backend/manage.py migrate --noinput && python backend/manage.py register_baseline_model
     envVars:
       - key: DJANGO_ENV
         value: prod

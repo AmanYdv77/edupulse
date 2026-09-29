@@ -59,5 +59,5 @@ RUN DJANGO_ENV=prod \
 
 EXPOSE 8000
 
-# Default entrypoint starts Gunicorn WSGI server dynamically binding to $PORT
-CMD ["sh", "-c", "exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --access-logfile - --error-logfile -"]
+# Run migrations, register baseline model, and start Gunicorn dynamically binding to $PORT
+CMD ["sh", "-c", "python backend/manage.py migrate --noinput && python backend/manage.py register_baseline_model && exec gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --threads 2 --access-logfile - --error-logfile -"]
