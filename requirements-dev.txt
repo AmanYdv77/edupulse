@@ -23,8 +23,6 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.5.1
     # via requests
-colorama==0.4.6
-    # via pytest
 coverage[toml]==7.16.1
     # via pytest-cov
 cyclonedx-python-lib==11.12.0
@@ -35,7 +33,7 @@ distlib==0.4.3
     # via virtualenv
 factory-boy==3.3.3
     # via -r requirements-dev.in
-faker==40.39.0
+faker==40.40.0
     # via
     #   -r requirements-dev.in
     #   factory-boy
@@ -186,10 +184,6 @@ typing-extensions==4.16.0
     #   mypy
     #   pyee
     #   referencing
-tzdata==2026.4
-    # via
-    #   -c requirements.txt
-    #   faker
 urllib3==2.8.0
     # via requests
 virtualenv==21.13.0
