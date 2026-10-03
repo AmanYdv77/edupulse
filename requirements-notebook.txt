@@ -4,14 +4,36 @@
 #
 #    pip-compile --output-file=requirements-notebook.txt requirements-notebook.in
 #
+amqp==5.4.0
+    # via kombu
 asgiref==3.12.1
     # via django
 asttokens==3.0.2
     # via stack-data
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   referencing
+billiard==4.3.0
+    # via celery
+brotli==1.2.0
+    # via whitenoise
+celery[redis]==5.6.3
+    # via -r requirements.in
+click==8.5.0
+    # via
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+click-didyoumean==0.3.1
+    # via celery
+click-plugins==1.1.1.2
+    # via celery
+click-repl==0.4.0
+    # via celery
 cloudpickle==3.1.2
     # via joblib
-colorama==0.4.6
-    # via ipython
 comm==0.2.3
     # via ipykernel
 contourpy==1.4.0
@@ -21,12 +43,30 @@ cycler==0.12.1
 debugpy==1.8.22
     # via ipykernel
 django==6.0.8
+    # via
+    #   -r requirements.in
+    #   django-redis
+    #   djangorestframework
+    #   drf-spectacular
+django-environ==0.14.0
+    # via -r requirements.in
+django-redis==7.0.0
+    # via -r requirements.in
+djangorestframework==3.18.1
+    # via
+    #   -r requirements.in
+    #   drf-spectacular
+drf-spectacular==0.30.0
     # via -r requirements.in
 executing==2.2.1
     # via stack-data
 fonttools==4.66.0
     # via matplotlib
-ipykernel==7.3.0
+gunicorn==26.2.0
+    # via -r requirements.in
+inflection==0.5.1
+    # via drf-spectacular
+ipykernel==7.4.0
     # via -r requirements-notebook.in
 ipython==9.17.1
     # via ipykernel
@@ -38,6 +78,10 @@ joblib==1.6.0
     # via
     #   -r requirements.in
     #   scikit-learn
+jsonschema==4.26.0
+    # via drf-spectacular
+jsonschema-specifications==2025.9.1
+    # via jsonschema
 jupyter-client==8.10.0
     # via ipykernel
 jupyter-core==5.9.1
@@ -46,6 +90,8 @@ jupyter-core==5.9.1
     #   jupyter-client
 kiwisolver==1.5.1
     # via matplotlib
+kombu[redis]==5.6.2
+    # via celery
 matplotlib==3.11.2
     # via
     #   -r requirements-notebook.in
@@ -70,6 +116,7 @@ numpy==2.5.3
 packaging==26.3
     # via
     #   ipykernel
+    #   kombu
     #   matplotlib
 pandas==3.0.6
     # via
@@ -77,16 +124,24 @@ pandas==3.0.6
     #   seaborn
 parso==0.8.7
     # via jedi
+pexpect==4.9.0
+    # via ipython
 pillow==12.3.0
     # via matplotlib
 platformdirs==4.11.12
     # via jupyter-core
 prompt-toolkit==3.0.53
-    # via ipython
-psutil==7.2.2
     # via
-    #   ipykernel
+    #   click-repl
     #   ipython
+psutil==7.2.2
+    # via ipython
+psycopg[binary]==3.3.6
+    # via -r requirements.in
+psycopg-binary==3.3.6
+    # via psycopg
+ptyprocess==0.7.0
+    # via pexpect
 pure-eval==0.2.4
     # via stack-data
 pygments==2.21.0
@@ -97,13 +152,29 @@ pyparsing==3.3.3
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
+    #   celery
     #   jupyter-client
     #   matplotlib
     #   pandas
+pyyaml==6.0.3
+    # via drf-spectacular
 pyzmq==27.2.0
     # via
     #   ipykernel
     #   jupyter-client
+redis==6.4.0
+    # via
+    #   -r requirements.in
+    #   django-redis
+    #   kombu
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+rpds-py==2026.6.3
+    # via
+    #   jsonschema
+    #   referencing
 scikit-learn==1.9.1
     # via -r requirements.in
 scipy==1.18.1
@@ -130,10 +201,24 @@ traitlets==5.16.1
     #   jupyter-core
     #   matplotlib-inline
 typing-extensions==4.16.0
-    # via jupyter-client
-tzdata==2026.4
     # via
-    #   django
-    #   pandas
+    #   click-repl
+    #   django-redis
+    #   jupyter-client
+    #   psycopg
+    #   referencing
+tzdata==2026.4
+    # via kombu
+tzlocal==5.4.4
+    # via celery
+uritemplate==4.2.0
+    # via drf-spectacular
+vine==5.1.0
+    # via
+    #   amqp
+    #   celery
+    #   kombu
 wcwidth==0.9.1
     # via prompt-toolkit
+whitenoise[brotli]==6.12.0
+    # via -r requirements.in
