@@ -42,7 +42,7 @@ django-environ==0.14.0
     # via -r requirements.in
 django-redis==7.0.0
     # via -r requirements.in
-djangorestframework==3.18.1
+djangorestframework==3.18.3
     # via
     #   -r requirements.in
     #   drf-spectacular
@@ -118,10 +118,7 @@ typing-extensions==4.16.0
 tzdata==2026.4
     # via
     #   celery
-    #   django
     #   kombu
-    #   pandas
-    #   psycopg
 uritemplate==4.2.0
     # via drf-spectacular
 vine==5.1.0
