@@ -64,7 +64,7 @@ kombu==5.6.2
     # via celery
 narwhals==2.26.0
     # via scikit-learn
-numpy==2.5.3
+numpy==2.5.4
     # via
     #   -r requirements.in
     #   pandas
@@ -118,10 +118,7 @@ typing-extensions==4.16.0
 tzdata==2026.4
     # via
     #   celery
-    #   django
     #   kombu
-    #   pandas
-    #   psycopg
 uritemplate==4.2.0
     # via drf-spectacular
 vine==5.1.0
