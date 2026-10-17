@@ -23,8 +23,6 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.5.1
     # via requests
-colorama==0.4.6
-    # via pytest
 coverage[toml]==7.16.1
     # via pytest-cov
 cyclonedx-python-lib==11.12.0
@@ -128,17 +126,14 @@ pyparsing==3.3.3
 pytest==9.1.1
     # via
     #   -r requirements-dev.in
-    #   pytest-base-url
     #   pytest-cov
     #   pytest-django
     #   pytest-playwright
-pytest-base-url==2.1.0
-    # via pytest-playwright
 pytest-cov==7.1.0
     # via -r requirements-dev.in
 pytest-django==4.14.0
     # via -r requirements-dev.in
-pytest-playwright==0.9.0
+pytest-playwright==0.10.0
     # via -r requirements-dev.in
 python-discovery==1.6.1
     # via virtualenv
@@ -157,7 +152,6 @@ requests==2.34.2
     # via
     #   cachecontrol
     #   pip-audit
-    #   pytest-base-url
 rich==15.0.0
     # via pip-audit
 rpds-py==2026.6.3
@@ -186,10 +180,6 @@ typing-extensions==4.16.0
     #   mypy
     #   pyee
     #   referencing
-tzdata==2026.4
-    # via
-    #   -c requirements.txt
-    #   faker
 urllib3==2.8.0
     # via requests
 virtualenv==21.13.0
