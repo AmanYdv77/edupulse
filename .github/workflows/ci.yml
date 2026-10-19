@@ -198,7 +198,7 @@ jobs:
             requirements-dev.txt
 
       - name: Download Frontend Dist Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: frontend-dist
           path: frontend/dist
